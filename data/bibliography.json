@@ -1,0 +1,24 @@
+[
+  {
+    "id": "sayigh1997",
+    "type": "book",
+    "title": "TODO: Replace with full title",
+    "author": [
+      { "family": "Sayigh", "given": "Rosemary" }
+    ],
+    "issued": { "date-parts": [[1997]] },
+    "publisher": "TODO",
+    "publisher-place": "TODO",
+    "language": "en",
+    "note": "Stub entry; fill with accurate bibliographic data when ready."
+  },
+  {
+    "id": "icj-2004-wall-opinion",
+    "type": "legal_case",
+    "title": "Legal Consequences of the Construction of a Wall in the Occupied Palestinian Territory (Advisory Opinion)",
+    "authority": "International Court of Justice",
+    "issued": { "date-parts": [[2004, 7, 9]] },
+    "URL": "https://www.icj-cij.org/case/131",
+    "language": "en"
+  }
+]
