@@ -1,0 +1,35 @@
+name: Data correction (timeline, gazetteer, sources)
+description: Report a factual correction or citation fix
+labels: ["correction"]
+body:
+  - type: input
+    id: file
+    attributes:
+      label: File path
+      placeholder: e.g., content/timeline/1948-nakba.yml
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text/data
+      description: Paste the excerpt or object that needs correction.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed fix
+      description: Provide the corrected value and a brief rationale.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / sources
+      description: Cite CSL-JSON ids or URLs (ICJ/UN/primary/peer-reviewed preferred).
+      placeholder: |
+        - icj-2004-wall-opinion
+        - https://unispal.un.org/
+    validations:
+      required: true
