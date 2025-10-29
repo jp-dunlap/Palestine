@@ -38,5 +38,24 @@
   "issued": { "date-parts": [[1993, 9, 13]] },
   "language": "en",
   "note": "Stub entry; add repository link (UN/peacemaker) and signatory details later."
+},
+{
+  "id": "icj-2024-provisional-measures-gaza",
+  "type": "legal_case",
+  "title": "Application of the Convention on the Prevention and Punishment of the Crime of Genocide in the Gaza Strip (Provisional Measures)",
+  "authority": "International Court of Justice",
+  "issued": { "date-parts": [[2024, 1, 26]] },
+  "URL": "https://www.icj-cij.org/case/192",
+  "language": "en",
+  "note": "Stub entry; update with exact order title/citation string from ICJ once we formalize citations."
+},
+{
+  "id": "ocha-opt-sitreps",
+  "type": "dataset",
+  "title": "Occupied Palestinian Territory: Situation Reports",
+  "authority": "United Nations OCHA oPt",
+  "URL": "https://www.ochaopt.org/",
+  "language": "en",
+  "note": "Stub entry referencing rolling situation reports; add specific report entries as needed."
 }
 ]
