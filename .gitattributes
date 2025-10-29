@@ -1,0 +1,28 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Treat common media as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.tif binary
+*.tiff binary
+*.pdf binary
+
+# SVG is text (keep diffable)
+*.svg text
+
+# Count MDX as Markdown for linguist and keep it diffable
+*.mdx linguist-language=Markdown
+
+# Mark data files as documentation-ish so code stats stay meaningful
+content/**/*.yml linguist-documentation
+data/**/*.json linguist-documentation
+
+# Keep lockfiles diffable but not counted as "code"
+pnpm-lock.yaml linguist-generated
+package-lock.json linguist-generated
+bun.lockb linguist-generated
