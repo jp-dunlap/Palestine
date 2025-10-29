@@ -39,4 +39,12 @@
     "lon": 35.262,
     "kind": "city"
   }
+  {
+  "id": "ramallah",
+  "name": "Ramallah",
+  "alt_names": ["Rām Allāh", "رام الله"],
+  "lat": 31.907,
+  "lon": 35.205,
+  "kind": "city"
+}
 ]
