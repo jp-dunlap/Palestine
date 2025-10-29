@@ -1,0 +1,21 @@
+# Schema (keep for reference):
+# id: string (unique)
+# title: string
+# start: integer year (negative = BCE, positive = CE)
+# end: integer year or null
+# places: string[] (freeform for now; we'll link to a gazetteer later)
+# sources: string[] (CSL-JSON ids from data/bibliography.json or URLs)
+# summary: short string
+# tags: string[]
+# certainty: low | medium | high
+
+id: "foundations-canaanite-city-states"
+title: "Canaanite city-states in Palestine"
+start: -2000
+end: -1200
+places: ["Gaza", "Jaffa", "Hebron", "Jericho", "Shechem"]
+sources:
+  - "sayigh1997"
+summary: "Urban centers and trade networks in the southern Levant; foundations for later societies."
+tags: ["foundations", "urban", "trade"]
+certainty: "medium"
