@@ -1,0 +1,11 @@
+id: "nakba-1947-1949"
+title: "The Nakba (Catastrophe)"
+start: 1947
+end: 1949
+places: ["Jaffa", "Haifa", "Lydda", "Ramla", "Gaza"]
+sources:
+  - "https://www.un.org/unispal/"          # UN Palestine resources (placeholder hub)
+  - "https://www.badil.org/en/publication.html"  # BADIL publications (placeholder hub)
+summary: "Mass displacement, village depopulations, and the foundational rupture shaping Palestinian life and exile."
+tags: ["nakba","displacement","war","refugees"]
+certainty: "high"
