@@ -20,5 +20,23 @@
     "issued": { "date-parts": [[2004, 7, 9]] },
     "URL": "https://www.icj-cij.org/case/131",
     "language": "en"
-  }
+  },
+  {
+  "id": "un-ga-181-1947",
+  "type": "legislation",
+  "title": "Resolution 181 (II): Future Government of Palestine",
+  "authority": "United Nations General Assembly",
+  "issued": { "date-parts": [[1947, 11, 29]] },
+  "language": "en",
+  "note": "Stub entry; add official URL and document details later."
+},
+{
+  "id": "oslo-i-1993-dop",
+  "type": "treaty",
+  "title": "Declaration of Principles on Interim Self-Government Arrangements (Oslo I)",
+  "authority": "Government of Israel; Palestine Liberation Organization",
+  "issued": { "date-parts": [[1993, 9, 13]] },
+  "language": "en",
+  "note": "Stub entry; add repository link (UN/peacemaker) and signatory details later."
+}
 ]
