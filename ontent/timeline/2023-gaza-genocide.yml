@@ -1,0 +1,15 @@
+id: "gaza-genocide-2023-present"
+title: "Genocide in Gaza (2023–Present)"
+start: 2023
+end: null
+places:
+  - "Gaza"
+  - "Khan Younis"
+  - "Rafah"
+  - "North Gaza"
+sources:
+  - "https://www.icj-cij.org/case/192"            # South Africa v. Israel (genocide) — orders/provisional measures
+  - "https://www.ochaopt.org/"                    # UN OCHA situation reports & data
+summary: "Large-scale destruction, mass displacement, siege and starvation; ICJ indicated provisional measures in the genocide case; ongoing humanitarian catastrophe."
+tags: ["gaza","genocide","siege","displacement","famine"]
+certainty: "high"
