@@ -1,0 +1,114 @@
+# id: stable key; label: UI title; start/end: integer years (negative=BCE, null=ongoing); color: hex for UI
+- id: foundations
+  label: "Foundations"
+  start: -2000
+  end: -1200
+  color: "#9467bd"
+
+- id: iron-age
+  label: "Iron Age & Early Kingdoms"
+  start: -1200
+  end: -586
+  color: "#8c564b"
+
+- id: persian
+  label: "Achaemenid (Persian) Period"
+  start: -539
+  end: -332
+  color: "#e377c2"
+
+- id: hellenistic
+  label: "Hellenistic Period"
+  start: -332
+  end: -63
+  color: "#17becf"
+
+- id: roman-byzantine
+  label: "Roman & Byzantine Periods"
+  start: -63
+  end: 638
+  color: "#1f77b4"
+
+- id: early-islamic
+  label: "Early Islamic Caliphates"
+  start: 638
+  end: 1099
+  color: "#2ca02c"
+
+- id: crusader-ayyubid
+  label: "Crusader & Ayyubid"
+  start: 1099
+  end: 1291
+  color: "#bcbd22"
+
+- id: mamluk
+  label: "Mamluk Sultanate"
+  start: 1291
+  end: 1517
+  color: "#7f7f7f"
+
+- id: ottoman
+  label: "Ottoman Period"
+  start: 1517
+  end: 1917
+  color: "#ff7f0e"
+
+- id: british-mandate
+  label: "British Mandate"
+  start: 1917
+  end: 1948
+  color: "#d62728"
+
+- id: nakba
+  label: "Nakba (Catastrophe)"
+  start: 1947
+  end: 1949
+  color: "#c5b0d5"
+
+- id: post-48
+  label: "1949–1967"
+  start: 1949
+  end: 1967
+  color: "#98df8a"
+
+- id: occupation-1967
+  label: "1967 Occupation & Settler Expansion"
+  start: 1967
+  end: 1987
+  color: "#ff9896"
+
+- id: first-intifada
+  label: "First Intifada"
+  start: 1987
+  end: 1993
+  color: "#aec7e8"
+
+- id: oslo-era
+  label: "Oslo Era"
+  start: 1993
+  end: 2000
+  color: "#dbdb8d"
+
+- id: second-intifada
+  label: "Second Intifada"
+  start: 2000
+  end: 2005
+  color: "#c49c94"
+
+- id: blockade-gaza
+  label: "Gaza Blockade & Wars"
+  start: 2007
+  end: 2022
+  color: "#9edae5"
+
+- id: unity-2021
+  label: "Unity Uprising"
+  start: 2021
+  end: 2021
+  color: "#f7b6d2"
+
+- id: genocide-2023
+  label: "2023–Present Genocide in Gaza"
+  start: 2023
+  end: null
+  color: "#8dd3c7"
