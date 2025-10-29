@@ -1,0 +1,11 @@
+id: "oslo-accords-1993-1995"
+title: "Oslo Accords"
+start: 1993
+end: 1995
+places: ["Gaza","Jericho","Hebron","Ramallah"]
+sources:
+  - "https://peacemaker.un.org/israelopt-osloaccords93"
+  - "https://ihl-databases.icrc.org/en/customary-ihl/"
+summary: "Interim framework producing fragmented authority under occupation; set conditions for intensified settlement and closure regimes."
+tags: ["oslo","accords","occupation","settlements","closures"]
+certainty: "high"
