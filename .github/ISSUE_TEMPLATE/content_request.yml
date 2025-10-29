@@ -1,0 +1,45 @@
+name: Content request (chapter or timeline)
+description: Propose a new chapter (MDX) or timeline entry (YAML)
+labels: ["content"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options: ["chapter", "timeline"]
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Proposed title
+      placeholder: e.g., Ottoman land tenure and taxation (16th c.)
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & significance
+      description: What this adds to the 4,000-year arc; why it matters now.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources (CSL-JSON ids or URLs)
+      description: Prefer primary sources, ICJ/UN docs, respected Palestinian historians.
+      placeholder: |
+        - sayigh1997
+        - https://www.icj-cij.org/case/131
+    validations:
+      required: true
+  - type: textarea
+    id: places
+    attributes:
+      label: Places (match gazetteer ids/names)
+      placeholder: ["Gaza","Jaffa","Hebron"]
+  - type: input
+    id: era
+    attributes:
+      label: Era (from data/eras.yml)
+      placeholder: e.g., ottoman, british-mandate, nakba
