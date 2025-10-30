@@ -24,4 +24,26 @@ export function loadChapterSource(slug: string): string {
   const file = path.join(process.cwd(), 'content', 'chapters', `${slug}.mdx`);
   return fs.readFileSync(file, 'utf8');
 }
+// --- Arabic variants ---
+// Files are named like 001-prologue.ar.mdx
 
+export function loadChapterSlugsAr(): string[] {
+  const dir = fs.readdirSync(path.join(process.cwd(), 'content', 'chapters'));
+  return dir.filter(f => f.endsWith('.ar.mdx')).map(f => f.replace(/\.ar\.mdx$/, ''));
+}
+export function loadChapterSourceAr(slug: string): string {
+  const file = path.join(process.cwd(), 'content', 'chapters', `${slug}.ar.mdx`);
+  return fs.readFileSync(file, 'utf8');
+}
+// --- language helpers ---
+export function hasArChapter(slug: string): boolean {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  return fs.existsSync(path.join(process.cwd(), 'content', 'chapters', `${slug}.ar.mdx`));
+}
+
+export function hasEnChapter(slug: string): boolean {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  return fs.existsSync(path.join(process.cwd(), 'content', 'chapters', `${slug}.mdx`));
+}

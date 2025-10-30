@@ -1,0 +1,16 @@
+// lib/map.style.ts
+const style = {
+  version: 8,
+  name: 'Local OSM Raster',
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors'
+    }
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+};
+
+export default style;

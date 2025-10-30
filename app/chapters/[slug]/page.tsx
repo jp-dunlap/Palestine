@@ -1,5 +1,6 @@
 import { loadChapterSlugs, loadChapterSource } from '@/lib/loaders.chapters';
 import { compileMDX } from 'next-mdx-remote/rsc';
+import { formatSources } from '@/lib/bibliography';
 
 export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
@@ -10,7 +11,6 @@ type Props = { params: { slug: string } };
 export default async function Page({ params }: Props) {
   const source = loadChapterSource(params.slug);
 
-  // compileMDX will parse frontmatter for us
   const { content, frontmatter } = await compileMDX({
     source,
     options: { parseFrontmatter: true }
@@ -23,7 +23,10 @@ export default async function Page({ params }: Props) {
     summary?: string;
     places?: string[];
     tags?: string[];
+    sources?: Array<{ id?: string; url?: string }>;
   };
+
+  const renderedSources = meta.sources ? formatSources(meta.sources) : [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -45,6 +48,17 @@ export default async function Page({ params }: Props) {
       <article className="mt-8 space-y-4">
         {content}
       </article>
+
+      {renderedSources.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold text-gray-700">Sources</h2>
+          <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
+            {renderedSources.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        </section>
+      )}
     </main>
   );
 }

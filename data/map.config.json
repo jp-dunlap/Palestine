@@ -1,9 +1,9 @@
 {
-  "styleUrl": "https://demotiles.maplibre.org/style.json",
+  "styleUrl": "/map/style.json",
   "attribution": "© OpenStreetMap contributors",
-  "center": [35.200, 31.900],     // [lng, lat] ~ Ramallah
+  "center": [35.2, 31.9],
   "zoom": 7.5,
   "minZoom": 5,
   "maxZoom": 12,
-  "bounds": [[34.200, 29.400], [36.000, 33.600]]  // SW/NE lng/lat for Palestine & surroundings
+  "bounds": [[34.2, 29.4], [36.0, 33.6]]
 }
