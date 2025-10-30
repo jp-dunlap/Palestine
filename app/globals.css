@@ -1,4 +1,8 @@
-/* Minimal global styles; Tailwind will be added later */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* minimal a11y-friendly defaults */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height: 1.5; }
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height: 1.6; }
