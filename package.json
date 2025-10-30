@@ -13,6 +13,7 @@
     "react-dom": "^18.2.0",
     "yaml": "^2.5.0"
     "gray-matter": "^4.0.3"
+    "next-mdx-remote": "^4.4.1"
   },
   "devDependencies": {
   "typescript": "^5.4.0",
