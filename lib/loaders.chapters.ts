@@ -19,3 +19,9 @@ export function loadChapterFrontmatter(slug: string): ChapterFrontmatter & { _fi
   const fm = data as ChapterFrontmatter;
   return { ...fm, _file: file };
 }
+
+export function loadChapterSource(slug: string): string {
+  const file = path.join(process.cwd(), 'content', 'chapters', `${slug}.mdx`);
+  return fs.readFileSync(file, 'utf8');
+}
+
