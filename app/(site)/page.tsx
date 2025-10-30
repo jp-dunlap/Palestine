@@ -9,14 +9,33 @@ export default function Page() {
         </p>
       </header>
 
-      <section className="space-y-4">
-        <a href="/timeline" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
-          Explore the timeline
+     <section className="space-y-4">
+  <div className="space-x-3">
+    <a href="/timeline" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
+      Explore the timeline
+    </a>
+    <a href="/maps" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
+      View places on the map
+    </a>
+  </div>
+
+  <div className="mt-6">
+    <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
+    <ul className="mt-2 list-disc pl-5 text-sm">
+      <li>
+        <a className="underline hover:no-underline" href="/chapters/001-prologue">
+          Prologue — On Names, Memory, and Return
         </a>
-        <a href="/maps" className="ml-3 inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
-          View places on the map
+      </li>
+      <li>
+        <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
+          Foundations — Canaanite Urban Networks (-2000 to -1200)
         </a>
-      </section>
+      </li>
+    </ul>
+  </div>
+</section>
+
 
       <footer className="mt-12 text-xs text-gray-500">
         Code: MIT · Content: CC BY-SA 4.0
