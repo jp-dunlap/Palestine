@@ -10,19 +10,21 @@ export default function Page() {
         Loaded from <code>data/gazetteer.json</code>
       </p>
 
-      <ul className="mt-6 divide-y">
-        {places.map(p => (
-          <li key={p.id} className="py-3">
-            <div className="font-medium">{p.name}</div>
-            <div className="text-sm text-gray-600">
-              {p.kind} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
-            </div>
-            {p.alt_names?.length ? (
-              <div className="text-xs text-gray-500">Also known as: {p.alt_names.join(', ')}</div>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+<ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+  {places.map(p => (
+    <li key={p.id} className="rounded border p-3 hover:bg-gray-50">
+      <div className="font-medium">{p.name}</div>
+      <div className="text-sm text-gray-600">
+        {p.kind} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
+      </div>
+      {p.alt_names?.length ? (
+        <div className="text-xs text-gray-500 mt-1">
+          Also known as: {p.alt_names.join(', ')}
+        </div>
+      ) : null}
+    </li>
+  ))}
+</ul>
     </main>
   );
 }
