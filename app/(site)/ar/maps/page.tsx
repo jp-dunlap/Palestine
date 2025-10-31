@@ -17,17 +17,15 @@ export default function MapsPageAr({
   const places = loadGazetteer();
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
-
   const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
-      <p className="mt-2 text-sm text-gray-600 font-arabic">
-        محمّلة من <code>data/gazetteer.json</code>
-      </p>
 
-      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      <div className="mt-4">
+        <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      </div>
 
       <p className="mt-8 text-sm text-gray-600">
         <a className="underline hover:no-underline" href={enHref}>
