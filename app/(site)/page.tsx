@@ -9,44 +9,32 @@ export const metadata = {
   alternates: { languages: { ar: '/ar' } },
 } as const;
 
-type ViewDoc = {
-  title: string;
-  summary: string;
-  tags: string[];
-  lang?: 'en' | 'ar';
-  href: string;
-};
-
-function toView(d: any): ViewDoc {
+type AnyDoc = Record<string, unknown>;
+function toView(d: AnyDoc) {
   const href =
-    d.href ??
-    d.url ??
-    d.path ??
-    (d.slug ? `/chapters/${d.slug}` : '#');
+    (d as any).href ??
+    (d as any).url ??
+    (d as any).path ??
+    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
 
   return {
-    title: String(d.title ?? ''),
-    summary: String(d.summary ?? ''),
-    tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
-    lang: d.lang as 'en' | 'ar' | undefined,
+    title: String((d as any).title ?? ''),
+    summary: String((d as any).summary ?? ''),
+    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
+    lang: ((d as any).lang ?? (d as any).language ?? 'en') as 'en' | 'ar',
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-
-  // Deterministic language ordering: EN-first on the English homepage
-  const en: ViewDoc[] = [];
-  const ar: ViewDoc[] = [];
-  for (const d of all) {
-    if (d.lang === 'ar') ar.push(d);
-    else en.push(d); // includes undefined treated as EN bucket
-  }
+  // EN-first ordering on the English homepage
+  const en = all.filter((x) => x.lang === 'en' || !x.lang);
+  const ar = all.filter((x) => x.lang === 'ar');
   const docs = [...en, ...ar];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto max-w-3xl px-4 py-12" lang="en" dir="ltr">
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Palestine</h1>
         <p className="mt-2 text-base text-gray-600">
@@ -55,7 +43,7 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Client-only search; avoids SSR/CSR mismatches */}
+      {/* Client-only island to avoid hydration mismatches */}
       <div className="mb-6">
         <SearchIsland docs={docs} />
       </div>
