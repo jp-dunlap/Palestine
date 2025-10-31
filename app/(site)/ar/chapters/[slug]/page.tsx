@@ -1,5 +1,6 @@
 import { compileMDX } from 'next-mdx-remote/rsc';
 import { loadChapterSlugsAr, loadChapterSourceAr, hasEnChapter } from '@/lib/loaders.chapters';
+import { mdxComponents } from '@/mdx-components';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
@@ -9,7 +10,11 @@ type Props = { params: { slug: string } };
 
 export default async function Page({ params }: Props) {
   const source = loadChapterSourceAr(params.slug);
-  const { content, frontmatter } = await compileMDX({ source, options: { parseFrontmatter: true } });
+  const { content, frontmatter } = await compileMDX({
+    source,
+    components: mdxComponents,
+    options: { parseFrontmatter: true }
+  });
 
   const meta = frontmatter as {
     title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[];

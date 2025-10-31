@@ -1,6 +1,7 @@
 import { loadChapterSlugs, loadChapterSource } from '@/lib/loaders.chapters';
 import { compileMDX } from 'next-mdx-remote/rsc';
 import { formatSources } from '@/lib/bibliography';
+import { mdxComponents } from '@/mdx-components';
 
 export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
@@ -13,6 +14,7 @@ export default async function Page({ params }: Props) {
 
   const { content, frontmatter } = await compileMDX({
     source,
+    components: mdxComponents,
     options: { parseFrontmatter: true }
   });
 
