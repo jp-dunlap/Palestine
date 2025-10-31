@@ -1,9 +1,27 @@
 import { compileMDX } from 'next-mdx-remote/rsc';
-import { loadChapterSlugsAr, loadChapterSourceAr, hasEnChapter } from '@/lib/loaders.chapters';
+import { loadChapterSlugsAr, loadChapterSourceAr, hasEnChapter, loadChapterFrontmatter } from '@/lib/loaders.chapters';
 import { mdxComponents } from '@/mdx-components';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const fm = loadChapterFrontmatter(params.slug);
+  const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+  const en = hasEnChapter(params.slug);
+  return {
+    title: fm.title,
+    description: fm.summary,
+    alternates: {
+      languages: en ? { en: `/chapters/${params.slug}` } : {},
+    },
+    openGraph: {
+      title: fm.title,
+      description: fm.summary,
+      images: url ? [`${url}/opengraph-image`] : undefined,
+    },
+  };
 }
 
 type Props = { params: { slug: string } };
