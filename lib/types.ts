@@ -24,3 +24,25 @@ export type ChapterFrontmatter = {
   tags: string[];
   date: string; // YYYY-MM-DD
   sources: Array<{
+
+// ---- Timeline types ----
+export type Era = {
+  id: string;             // e.g., "foundations"
+  title: string;          // display name
+  start: number;          // year (negative = BCE)
+  end: number | null;     // null = open
+  color?: string;         // optional accent color for UI lanes
+};
+
+export type TimelineEvent = {
+  id: string;             // stable id, usually the filename (without .yml)
+  title: string;
+  start: number;
+  end: number | null;     // null for instant events
+  places: string[];       // place ids from gazetteer
+  sources: string[];      // CSL-JSON ids or URLs
+  summary: string;        // short, plain-text summary
+  tags: string[];         // topical tags
+  certainty: 'low' | 'medium' | 'high';
+  era?: string;           // optional era id
+};
