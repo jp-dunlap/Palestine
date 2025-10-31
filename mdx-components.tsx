@@ -1,36 +1,38 @@
 // mdx-components.tsx
 import * as React from 'react';
-import { citeById } from '@/lib/bibliography';
+import { citeById, shortCiteById } from '@/lib/bibliography';
 
 /**
- * Usage in MDX:
- *   Palestine is a living archive <Cite id="icj-2004-wall-opinion" /> that refuses imperial erasure.
+ * <Cite id="icj-2004-wall-opinion" />
+ * Renders a compact superscript like [ICJ 2004] with the full citation in the tooltip.
  */
 function Cite({ id, children }: { id?: string; children?: React.ReactNode }) {
-  const text = id ? citeById(id) : (children ? String(children) : '');
+  const short = id ? shortCiteById(id) : (children ? String(children) : '');
+  const full = id ? citeById(id) : short;
   return (
     <sup
       style={{ fontSize: '0.75em', lineHeight: 1 }}
       className="align-super"
       aria-label="citation"
-      title={text}
+      title={full}
     >
-      [{text}]
+      [{short}]
     </sup>
   );
 }
 
 /**
- * Lightweight inline footnote. Example:
- *   ... the camp was bulldozed.<Footnote>UNRWA report, 2002.</Footnote>
+ * <Footnote>UNRWA reported …</Footnote>
+ * Minimal inline footnote mark; full text exposed via tooltip.
  */
 function Footnote({ children }: { children: React.ReactNode }) {
+  const text = typeof children === 'string' ? children : undefined;
   return (
     <sup
       style={{ fontSize: '0.75em', lineHeight: 1 }}
       className="align-super"
       aria-label="footnote"
-      title={typeof children === 'string' ? children : undefined}
+      title={text}
     >
       †
     </sup>

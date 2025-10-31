@@ -1,4 +1,3 @@
-cat > lib/bibliography.ts <<'TS'
 // lib/bibliography.ts
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,14 +9,14 @@ function loadAll(): Record<string, CSL> {
   if (_cache) return _cache;
   const p = path.join(process.cwd(), 'data', 'bibliography.json');
   const arr = JSON.parse(fs.readFileSync(p, 'utf8')) as CSL[];
-  _cache = Object.fromEntries(arr.map((e) => [e.id, e]));
+  _cache = Object.fromEntries(arr.map((e: any) => [e.id, e]));
   return _cache!;
 }
 
 /** Full, human-readable citation string */
 export function citeById(id: string): string {
   const db = loadAll();
-  const ref = db[id];
+  const ref = db[id] as any;
   if (!ref) return `[missing: ${id}]`;
   const parts: string[] = [];
 
@@ -31,10 +30,10 @@ export function citeById(id: string): string {
   if (ref.author?.length || ref.title) parts.push('—');
   if (ref.authority) parts.push(ref.authority);
   if (ref.publisher) parts.push(ref.publisher);
-  if ((ref as any)['publisher-place']) parts.push((ref as any)['publisher-place']);
+  if (ref['publisher-place']) parts.push(ref['publisher-place']);
   const year = ref.issued?.['date-parts']?.[0]?.[0];
   if (year) parts.push(String(year));
-  if ((ref as any).URL) parts.push((ref as any).URL);
+  if (ref.URL) parts.push(ref.URL);
 
   return parts.filter(Boolean).join(' ');
 }
@@ -42,11 +41,11 @@ export function citeById(id: string): string {
 /** Short inline label for superscripts: "Family YEAR" or "Authority YEAR" */
 export function shortCiteById(id: string): string {
   const db = loadAll();
-  const ref = db[id];
+  const ref = db[id] as any;
   if (!ref) return id;
   const year = ref.issued?.['date-parts']?.[0]?.[0];
   const who =
-    (ref.author?.[0]?.family) ||
+    ref.author?.[0]?.family ||
     ref.authority ||
     (ref.publisher ? ref.publisher : '');
   return [who, year].filter(Boolean).join(' ');
@@ -59,4 +58,3 @@ export function formatSources(sources: Array<{ id?: string; url?: string }>): st
     return '[unrecognized source]';
   });
 }
-TS

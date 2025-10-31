@@ -1,4 +1,3 @@
-cat > data/bibliography.json <<'JSON'
 [
   {
     "id": "sayigh1997",
@@ -60,4 +59,3 @@ cat > data/bibliography.json <<'JSON'
     "note": "Stub entry referencing rolling situation reports; add specific report entries as needed."
   }
 ]
-JSON
