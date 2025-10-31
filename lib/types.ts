@@ -46,3 +46,23 @@ export type TimelineEvent = {
   certainty: 'low' | 'medium' | 'high';
   era?: string;           // optional era id
 };
+
+// ---- Map / Places ----
+export type PlaceKind = 'city' | 'port_city' | 'region' | 'site' | 'river' | string;
+
+export type Place = {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  kind?: PlaceKind;
+  alt_names?: string[];
+};
+
+export type MapConfig = {
+  center: [number, number];
+  zoom: number;
+  minZoom: number;
+  maxZoom: number;
+  bounds: [[number, number], [number, number]];
+};
