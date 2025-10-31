@@ -10,29 +10,55 @@ export const metadata = {
 } as const;
 
 type AnyDoc = Record<string, unknown>;
+const AR_RX = /[\u0600-\u06FF]/;
+
+function inferLang(d: AnyDoc): 'en' | 'ar' {
+  const explicit = String(d.lang ?? d.language ?? '').toLowerCase();
+  if (explicit === 'ar' || explicit === 'arabic') return 'ar';
+  if (explicit === 'en' || explicit === 'english') return 'en';
+
+  const href = String(d.href ?? d.url ?? '');
+  const slug = String(d.slug ?? '');
+  const fileHint = String(d.file ?? d.id ?? '').toLowerCase();
+
+  // Path or filename hints
+  if (href.startsWith('/ar')) return 'ar';
+  if (/\.ar(\.|$)/.test(fileHint) || /\.ar(\.|$)/.test(slug)) return 'ar';
+
+  // Content glyphs
+  const text = [d.title, d.summary, ...(Array.isArray(d.tags) ? d.tags : [])]
+    .filter(Boolean)
+    .map(String)
+    .join(' ');
+  if (AR_RX.test(text)) return 'ar';
+
+  return 'en';
+}
+
 function toView(d: AnyDoc) {
-  const href =
-    (d as any).href ??
-    (d as any).url ??
-    (d as any).path ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+  const lang = inferLang(d);
+
+  // Build href deterministically
+  let href = String(d.href ?? d.url ?? '');
+  if (!href) {
+    const slug = d.slug ? String(d.slug) : '';
+    if (slug) href = lang === 'ar' ? `/ar/chapters/${slug}` : `/chapters/${slug}`;
+    else href = '#';
+  }
 
   return {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang ?? (d as any).language ?? 'en',
+    lang,
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-
-  // English-first ordering
-  const en = all.filter((d) => d.lang === 'en');
-  const rest = all.filter((d) => d.lang !== 'en');
-  const docs = [...en, ...rest];
+  // STRICT: English-only for root /
+  const docs = all.filter((d) => d.lang === 'en');
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -45,7 +71,7 @@ export default function Page() {
       </header>
 
       <div className="mb-6">
-        <SearchIsland docs={docs} locale="en" />
+        <SearchIsland docs={docs} />
       </div>
 
       <section className="space-y-4">
