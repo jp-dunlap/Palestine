@@ -1,9 +1,10 @@
 import type { TimelineEvent, Era } from '@/lib/types';
 
-function yearOf(d: string | undefined): string {
-  if (!d) return '';
-  const m = String(d).match(/^(-?\d{1,4})/);
-  return m ? m[1] : String(d);
+function yearOf(d: string | number | undefined): string {
+  if (d === undefined || d === null) return '';
+  const s = String(d);
+  const m = s.match(/^(-?\d{1,4})/);
+  return m ? m[1] : s;
 }
 
 export default function Timeline({
