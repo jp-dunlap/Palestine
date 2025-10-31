@@ -21,20 +21,21 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: ((d as any).lang ?? (d as any).language ?? 'en') as 'en' | 'ar',
+    lang: (d as any).lang ?? (d as any).language ?? 'en',
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-  // EN-first ordering on the English homepage
-  const en = all.filter((x) => x.lang === 'en' || !x.lang);
-  const ar = all.filter((x) => x.lang === 'ar');
-  const docs = [...en, ...ar];
+
+  // English-first ordering
+  const en = all.filter((d) => d.lang === 'en');
+  const rest = all.filter((d) => d.lang !== 'en');
+  const docs = [...en, ...rest];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" lang="en" dir="ltr">
+    <main className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Palestine</h1>
         <p className="mt-2 text-base text-gray-600">
@@ -43,9 +44,8 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Client-only island to avoid hydration mismatches */}
       <div className="mb-6">
-        <SearchIsland docs={docs} />
+        <SearchIsland docs={docs} locale="en" />
       </div>
 
       <section className="space-y-4">
