@@ -1,6 +1,6 @@
 // app/(site)/page.tsx
 import { loadSearchDocs } from '@/lib/loaders.search';
-import Search from '@/Search';
+import Search from '@/components/Search';
 
 export default function Page() {
   const docs = loadSearchDocs();
