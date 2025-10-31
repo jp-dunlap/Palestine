@@ -1,30 +1,19 @@
 // app/(site)/page.tsx
-import { loadSearchDocs, type SearchDoc } from '@/lib/loaders.search';
-import Search from '@/components/Search';
+import dynamic from 'next/dynamic';
+import { loadSearchDocs } from '@/lib/loaders.search';
 
-type SearchDocView = {
-  title: string;
-  summary?: string;
-  tags?: string[];
-  href: string;
-};
+export const metadata = {
+  title: 'Palestine',
+  description:
+    'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
+  alternates: { languages: { ar: '/ar' } },
+} as const;
 
-function toView(d: SearchDoc): SearchDocView {
-  // Map loader docs → Search docs with concrete hrefs
-  if (d.kind === 'chapter' && d.slug) {
-    return { title: d.title, summary: d.summary, tags: d.tags, href: `/chapters/${d.slug}` };
-  }
-  if (d.kind === 'place' && d.slug) {
-    return { title: d.title, summary: d.summary, tags: d.tags, href: `/places/${d.slug}` };
-  }
-  if (d.kind === 'timeline') {
-    return { title: d.title, summary: d.summary, tags: d.tags, href: '/timeline' };
-  }
-  return { title: d.title, summary: d.summary, tags: d.tags, href: '#' };
-}
+// Client-only Search to avoid SSR/client ordering mismatches
+const Search = dynamic(() => import('@/components/Search'), { ssr: false });
 
 export default function Page() {
-  const docs = loadSearchDocs().map(toView);
+  const docs = loadSearchDocs();
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -36,7 +25,6 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Site search */}
       <div className="mb-6">
         <Search docs={docs} />
       </div>
@@ -68,16 +56,13 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Language toggle */}
       <p className="mt-10 text-sm text-gray-600">
         <a className="underline hover:no-underline" href="/ar">
           View this site in Arabic →
         </a>
       </p>
 
-      <footer className="mt-12 text-xs text-gray-500">
-        Code: MIT · Content: CC BY-SA 4.0
-      </footer>
+      <footer className="mt-12 text-xs text-gray-500">Code: MIT · Content: CC BY-SA 4.0</footer>
     </main>
   );
 }
