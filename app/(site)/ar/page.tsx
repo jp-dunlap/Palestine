@@ -10,18 +10,46 @@ export const metadata = {
 } as const;
 
 type AnyDoc = Record<string, unknown>;
+
+function isArabicText(s: unknown): boolean {
+  if (typeof s !== 'string') return false;
+  // Arabic Unicode block
+  return /[\u0600-\u06FF]/.test(s);
+}
+
+function inferLang(d: AnyDoc): 'ar' | 'en' {
+  const lang = (d as any).lang ?? (d as any).language;
+  if (lang === 'ar' || lang === 'en') return lang;
+
+  const slug = String((d as any).slug ?? '');
+  const href = String(
+    (d as any).href ?? (d as any).url ?? (slug ? `/chapters/${slug}` : '')
+  );
+
+  // Path and filename hints
+  if (slug.endsWith('.ar')) return 'ar';
+  if (href.startsWith('/ar/') || href.includes('/ar/chapters/')) return 'ar';
+
+  // Content hint (Arabic characters)
+  if (isArabicText((d as any).title) || isArabicText((d as any).summary)) {
+    return 'ar';
+  }
+
+  return 'en';
+}
+
 function toView(d: AnyDoc) {
+  const slug = String((d as any).slug ?? '');
   const href =
     (d as any).href ??
     (d as any).url ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+    (slug ? `/chapters/${slug}` : '#');
 
   return {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    // Prefer explicit language if present, else infer Arabic for the /ar/ site.
-    lang: (d as any).lang ?? (d as any).language ?? 'ar',
+    lang: inferLang(d),
     href,
   };
 }
@@ -29,13 +57,13 @@ function toView(d: AnyDoc) {
 export default function Page() {
   const all = loadSearchDocs().map(toView);
 
-  // ✅ Arabic-only for /ar (no English docs mixed into the main list)
+  // ✅ Arabic-only for /ar (robustly inferred)
   const ar = all.filter((d) => d.lang === 'ar');
 
-  // Search uses strictly AR docs
+  // Search list is strictly Arabic
   const docs = ar;
 
-  // Featured: strictly AR as well (no EN back-fill to avoid mixing)
+  // Featured: strictly Arabic as well
   const featured = ar.slice(0, 3);
 
   return (
@@ -49,7 +77,6 @@ export default function Page() {
       </header>
 
       <div className="mb-6">
-        {/* Search is a client-only island to avoid hydration issues */}
         <SearchIsland docs={docs} />
       </div>
 

@@ -10,17 +10,39 @@ export const metadata = {
 } as const;
 
 type AnyDoc = Record<string, unknown>;
+
+function isArabicText(s: unknown): boolean {
+  if (typeof s !== 'string') return false;
+  return /[\u0600-\u06FF]/.test(s);
+}
+
+function inferLang(d: AnyDoc): 'ar' | 'en' {
+  const lang = (d as any).lang ?? (d as any).language;
+  if (lang === 'ar' || lang === 'en') return lang;
+
+  const slug = String((d as any).slug ?? '');
+  const href = String(
+    (d as any).href ?? (d as any).url ?? (slug ? `/chapters/${slug}` : '')
+  );
+
+  if (slug.endsWith('.ar')) return 'ar';
+  if (href.startsWith('/ar/') || href.includes('/ar/chapters/')) return 'ar';
+  if (isArabicText((d as any).title) || isArabicText((d as any).summary)) return 'ar';
+  return 'en';
+}
+
 function toView(d: AnyDoc) {
+  const slug = String((d as any).slug ?? '');
   const href =
     (d as any).href ??
     (d as any).url ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+    (slug ? `/chapters/${slug}` : '#');
 
   return {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang ?? (d as any).language ?? 'en',
+    lang: inferLang(d),
     href,
   };
 }
@@ -33,7 +55,7 @@ export default function Page() {
   // EN-first list for /
   const docs = [...en, ...ar];
 
-  // Featured: EN-only (no AR fall-through to keep language consistent)
+  // Featured: EN-only for consistency on /
   const featured = en.slice(0, 3);
 
   return (
