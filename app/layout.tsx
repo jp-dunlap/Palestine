@@ -1,60 +1,36 @@
 // app/layout.tsx
 import './globals.css';
-import type { Metadata, Viewport } from 'next';
-import { Inter, Noto_Naskh_Arabic } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import type { ReactNode } from 'react';
+import { Inter } from 'next/font/google';
+import { Noto_Naskh_Arabic } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const naskh = Noto_Naskh_Arabic({
   subsets: ['arabic'],
-  weight: ['400', '700'],
   variable: '--font-naskh',
+  weight: ['400', '700'],
 });
 
-const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
-const titleDefault = 'Palestine — 4,000 Years of Memory';
-const description =
-  'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.';
-
-export const metadata: Metadata = {
-  metadataBase: new URL(site),
-  title: { default: titleDefault, template: '%s · Palestine' },
-  description,
-  alternates: {
-    canonical: '/',
-    languages: { en: '/', ar: '/ar' },
-  },
+export const metadata = {
+  title: 'Palestine — 4,000 Years of Memory',
+  description:
+    'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
   openGraph: {
+    title: 'Palestine — 4,000 Years of Memory',
+    description:
+      'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
     type: 'website',
-    url: site,
-    siteName: 'Palestine',
-    title: titleDefault,
-    description,
-    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: titleDefault,
-    description,
-    images: ['/opengraph-image'],
+  alternates: {
+    languages: { ar: '/ar' },
   },
-  icons: { icon: '/favicon.ico' },
 };
 
-export const viewport: Viewport = {
-  themeColor: '#ffffff',
-  colorScheme: 'light',
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      {/* Arabic pages set dir/lang on their own page components */}
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${naskh.variable} font-sans`}>
         {children}
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
