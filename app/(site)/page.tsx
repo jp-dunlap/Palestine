@@ -10,20 +10,17 @@ type SearchDocView = {
 };
 
 function toView(d: SearchDoc): SearchDocView {
-  let href = '#';
+  // Map loader docs → Search docs with concrete hrefs
   if (d.kind === 'chapter' && d.slug) {
-    href = `/chapters/${d.slug}`;
-  } else if (d.kind === 'timeline') {
-    href = '/timeline';
-  } else if (d.kind === 'place' && d.slug) {
-    href = `/places/${d.slug}`;
+    return { title: d.title, summary: d.summary, tags: d.tags, href: `/chapters/${d.slug}` };
   }
-  return {
-    title: d.title,
-    summary: d.summary,
-    tags: d.tags,
-    href,
-  };
+  if (d.kind === 'place' && d.slug) {
+    return { title: d.title, summary: d.summary, tags: d.tags, href: `/places/${d.slug}` };
+  }
+  if (d.kind === 'timeline') {
+    return { title: d.title, summary: d.summary, tags: d.tags, href: '/timeline' };
+  }
+  return { title: d.title, summary: d.summary, tags: d.tags, href: '#' };
 }
 
 export default function Page() {
@@ -55,4 +52,32 @@ export default function Page() {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-gray-700">Featured c
+          <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
+          <ul className="mt-2 list-disc pl-5 text-sm">
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/001-prologue">
+                Prologue — On Names, Memory, and Return
+              </a>
+            </li>
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
+                Foundations — Canaanite Urban Networks (-2000 to -1200)
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Language toggle */}
+      <p className="mt-10 text-sm text-gray-600">
+        <a className="underline hover:no-underline" href="/ar">
+          View this site in Arabic →
+        </a>
+      </p>
+
+      <footer className="mt-12 text-xs text-gray-500">
+        Code: MIT · Content: CC BY-SA 4.0
+      </footer>
+    </main>
+  );
+}
