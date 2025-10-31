@@ -1,39 +1,68 @@
-// app/(site)/ar/maps/page.tsx
-import { loadGazetteer } from '@/lib/loaders.places';
-import { loadMapConfig } from '@/lib/loaders.config';
-import MapsPageClientAr from '@/components/MapsPageClient.ar';
+// app/(site)/page.tsx
+import dynamic from 'next/dynamic';
+import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
-  title: 'الأماكن',
-  description: 'خريطة تفاعلية للأماكن الفلسطينية.',
-  alternates: { languages: { en: '/maps' } },
+  title: 'Palestine',
+  description:
+    'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
+  alternates: { languages: { ar: '/ar' } },
 } as const;
 
-export default function MapsPageAr({
-  searchParams,
-}: {
-  searchParams?: { place?: string };
-}) {
-  const places = loadGazetteer();
-  const cfg = loadMapConfig();
-  const initialFocusId = searchParams?.place;
+// Client-only Search to avoid SSR/client ordering mismatches
+const Search = dynamic(() => import('@/components/Search'), { ssr: false });
 
-  const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
+export default function Page() {
+  const docs = loadSearchDocs();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
-      <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
-      <p className="mt-2 text-sm text-gray-600 font-arabic">
-        محمّلة من <code>data/gazetteer.json</code>
-      </p>
+    <main className="mx-auto max-w-3xl px-4 py-12">
+      <header className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Palestine</h1>
+        <p className="mt-2 text-base text-gray-600">
+          A public, art-grade digital history spanning 4,000 years — centering Palestinian life,
+          sources, and anti-colonial memory.
+        </p>
+      </header>
 
-      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      <div className="mb-6">
+        <Search docs={docs} />
+      </div>
 
-      <p className="mt-8 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href={enHref}>
-          ← English
+      <section className="space-y-4">
+        <div className="space-x-3">
+          <a href="/timeline" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
+            Explore the timeline
+          </a>
+          <a href="/maps" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
+            View places on the map
+          </a>
+        </div>
+
+        <div className="mt-6">
+          <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
+          <ul className="mt-2 list-disc pl-5 text-sm">
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/001-prologue">
+                Prologue — On Names, Memory, and Return
+              </a>
+            </li>
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
+                Foundations — Canaanite Urban Networks (-2000 to -1200)
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <p className="mt-10 text-sm text-gray-600">
+        <a className="underline hover:no-underline" href="/ar">
+          View this site in Arabic →
         </a>
       </p>
+
+      <footer className="mt-12 text-xs text-gray-500">Code: MIT · Content: CC BY-SA 4.0</footer>
     </main>
   );
 }
