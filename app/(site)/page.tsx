@@ -14,27 +14,30 @@ function toView(d: AnyDoc) {
   const href =
     (d as any).href ??
     (d as any).url ??
-    (d as any).path ??
     ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
 
   return {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: ((d as any).lang ?? (d as any).language) as 'en' | 'ar' | undefined,
+    lang: (d as any).lang ?? (d as any).language ?? 'en',
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-  // EN-first ordering on the English homepage
-  const en = all.filter((x) => x.lang === 'en' || !x.lang);
-  const ar = all.filter((x) => x.lang === 'ar' || (typeof x.href === 'string' && x.href.startsWith('/ar/')));
+  const en = all.filter((d) => d.lang === 'en');
+  const ar = all.filter((d) => d.lang === 'ar');
+
+  // Search shows EN first on /
   const docs = [...en, ...ar];
 
+  // Featured: show up to 3 EN; if fewer, back-fill with AR
+  const featured = [...en.slice(0, 3), ...ar.slice(0, Math.max(0, 3 - en.length))];
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" lang="en" dir="ltr">
+    <main className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Palestine</h1>
         <p className="mt-2 text-base text-gray-600">
@@ -59,17 +62,15 @@ export default function Page() {
 
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
-          <ul className="mt-2 list-disc pl-5 text-sm">
-            <li>
-              <a className="underline hover:no-underline" href="/chapters/001-prologue">
-                Prologue — On Names, Memory, and Return
-              </a>
-            </li>
-            <li>
-              <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
-                Foundations — Canaanite Urban Networks (-2000 to -1200)
-              </a>
-            </li>
+          <ul className="mt-2 space-y-2 text-sm">
+            {featured.map((d) => (
+              <li key={d.href}>
+                <a className="underline hover:no-underline" href={d.href}>
+                  {d.title}
+                </a>
+                {d.summary ? <div className="text-gray-600">{d.summary}</div> : null}
+              </li>
+            ))}
           </ul>
         </div>
       </section>
