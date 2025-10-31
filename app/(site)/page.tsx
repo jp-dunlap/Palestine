@@ -10,53 +10,29 @@ export const metadata = {
 } as const;
 
 type AnyDoc = Record<string, unknown>;
-
-function isArabicText(s: unknown): boolean {
-  if (typeof s !== 'string') return false;
-  return /[\u0600-\u06FF]/.test(s);
-}
-
-function inferLang(d: AnyDoc): 'ar' | 'en' {
-  const lang = (d as any).lang ?? (d as any).language;
-  if (lang === 'ar' || lang === 'en') return lang;
-
-  const slug = String((d as any).slug ?? '');
-  const href = String(
-    (d as any).href ?? (d as any).url ?? (slug ? `/chapters/${slug}` : '')
-  );
-
-  if (slug.endsWith('.ar')) return 'ar';
-  if (href.startsWith('/ar/') || href.includes('/ar/chapters/')) return 'ar';
-  if (isArabicText((d as any).title) || isArabicText((d as any).summary)) return 'ar';
-  return 'en';
-}
-
 function toView(d: AnyDoc) {
-  const slug = String((d as any).slug ?? '');
   const href =
     (d as any).href ??
     (d as any).url ??
-    (slug ? `/chapters/${slug}` : '#');
+    (d as any).path ??
+    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
 
   return {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: inferLang(d),
+    lang: (d as any).lang ?? (d as any).language ?? 'en',
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
+
+  // English-first ordering
   const en = all.filter((d) => d.lang === 'en');
-  const ar = all.filter((d) => d.lang === 'ar');
-
-  // EN-first list for /
-  const docs = [...en, ...ar];
-
-  // Featured: EN-only for consistency on /
-  const featured = en.slice(0, 3);
+  const rest = all.filter((d) => d.lang !== 'en');
+  const docs = [...en, ...rest];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -69,7 +45,7 @@ export default function Page() {
       </header>
 
       <div className="mb-6">
-        <SearchIsland docs={docs} />
+        <SearchIsland docs={docs} locale="en" />
       </div>
 
       <section className="space-y-4">
@@ -84,15 +60,17 @@ export default function Page() {
 
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
-          <ul className="mt-2 space-y-2 text-sm">
-            {featured.map((d) => (
-              <li key={d.href}>
-                <a className="underline hover:no-underline" href={d.href}>
-                  {d.title}
-                </a>
-                {d.summary ? <div className="text-gray-600">{d.summary}</div> : null}
-              </li>
-            ))}
+          <ul className="mt-2 list-disc pl-5 text-sm">
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/001-prologue">
+                Prologue — On Names, Memory, and Return
+              </a>
+            </li>
+            <li>
+              <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
+                Foundations — Canaanite Urban Networks (-2000 to -1200)
+              </a>
+            </li>
           </ul>
         </div>
       </section>
