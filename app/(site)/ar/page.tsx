@@ -9,29 +9,41 @@ export const metadata = {
   alternates: { languages: { en: '/' } },
 } as const;
 
-type AnyDoc = Record<string, unknown>;
-function toView(d: AnyDoc) {
+type ViewDoc = {
+  title: string;
+  summary: string;
+  tags: string[];
+  lang?: 'en' | 'ar';
+  href: string;
+};
+
+function toView(d: any): ViewDoc {
   const href =
-    (d as any).href ??
-    (d as any).url ??
-    (d as any).path ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+    d.href ??
+    d.url ??
+    d.path ??
+    (d.slug ? `/chapters/${d.slug}` : '#');
 
   return {
-    title: String((d as any).title ?? ''),
-    summary: String((d as any).summary ?? ''),
-    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang ?? (d as any).language ?? 'ar',
+    title: String(d.title ?? ''),
+    summary: String(d.summary ?? ''),
+    tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
+    lang: d.lang as 'en' | 'ar' | undefined,
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-  const ar = all.filter((d) => d.lang === 'ar');
-  const en = all.filter((d) => d.lang === 'en');
-  const rest = all.filter((d) => d.lang !== 'en' && d.lang !== 'ar');
-  const docs = [...ar, ...rest, ...en]; // AR first on Arabic homepage
+
+  // Deterministic language ordering: AR-first on the Arabic homepage
+  const ar: ViewDoc[] = [];
+  const en: ViewDoc[] = [];
+  for (const d of all) {
+    if (d.lang === 'ar') ar.push(d);
+    else en.push(d);
+  }
+  const docs = [...ar, ...en];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">

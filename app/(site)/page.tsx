@@ -9,29 +9,41 @@ export const metadata = {
   alternates: { languages: { ar: '/ar' } },
 } as const;
 
-type AnyDoc = Record<string, unknown>;
-function toView(d: AnyDoc) {
+type ViewDoc = {
+  title: string;
+  summary: string;
+  tags: string[];
+  lang?: 'en' | 'ar';
+  href: string;
+};
+
+function toView(d: any): ViewDoc {
   const href =
-    (d as any).href ??
-    (d as any).url ??
-    (d as any).path ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+    d.href ??
+    d.url ??
+    d.path ??
+    (d.slug ? `/chapters/${d.slug}` : '#');
 
   return {
-    title: String((d as any).title ?? ''),
-    summary: String((d as any).summary ?? ''),
-    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang ?? (d as any).language ?? 'en',
+    title: String(d.title ?? ''),
+    summary: String(d.summary ?? ''),
+    tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
+    lang: d.lang as 'en' | 'ar' | undefined,
     href,
   };
 }
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-  const en = all.filter((d) => d.lang === 'en');
-  const ar = all.filter((d) => d.lang === 'ar');
-  const rest = all.filter((d) => d.lang !== 'en' && d.lang !== 'ar');
-  const docs = [...en, ...rest, ...ar]; // EN first on English homepage
+
+  // Deterministic language ordering: EN-first on the English homepage
+  const en: ViewDoc[] = [];
+  const ar: ViewDoc[] = [];
+  for (const d of all) {
+    if (d.lang === 'ar') ar.push(d);
+    else en.push(d); // includes undefined treated as EN bucket
+  }
+  const docs = [...en, ...ar];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -43,6 +55,7 @@ export default function Page() {
         </p>
       </header>
 
+      {/* Client-only search; avoids SSR/CSR mismatches */}
       <div className="mb-6">
         <SearchIsland docs={docs} />
       </div>
