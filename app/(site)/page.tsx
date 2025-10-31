@@ -47,6 +47,13 @@ export default function Page() {
         </div>
       </section>
 
+      {/* Language toggle */}
+      <p className="mt-10 text-sm text-gray-600">
+        <a className="underline hover:no-underline" href="/ar">
+          View this site in Arabic →
+        </a>
+      </p>
+
       <footer className="mt-12 text-xs text-gray-500">
         Code: MIT · Content: CC BY-SA 4.0
       </footer>
