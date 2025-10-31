@@ -1,9 +1,30 @@
 // app/(site)/page.tsx
-import { loadSearchDocs } from '@/lib/loaders.search';
-import Search from '@/Search';
+import { loadSearchDocs, type SearchDoc } from '@/lib/loaders.search';
+import Search from '@/components/Search';
+
+type SearchDocView = {
+  title: string;
+  summary?: string;
+  tags?: string[];
+  href: string;
+};
+
+function toView(d: SearchDoc): SearchDocView {
+  // Map loader docs → Search docs with concrete hrefs
+  if (d.kind === 'chapter' && d.slug) {
+    return { title: d.title, summary: d.summary, tags: d.tags, href: `/chapters/${d.slug}` };
+  }
+  if (d.kind === 'place' && d.slug) {
+    return { title: d.title, summary: d.summary, tags: d.tags, href: `/places/${d.slug}` };
+  }
+  if (d.kind === 'timeline') {
+    return { title: d.title, summary: d.summary, tags: d.tags, href: '/timeline' };
+  }
+  return { title: d.title, summary: d.summary, tags: d.tags, href: '#' };
+}
 
 export default function Page() {
-  const docs = loadSearchDocs();
+  const docs = loadSearchDocs().map(toView);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
