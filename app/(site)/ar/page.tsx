@@ -9,8 +9,7 @@ export const metadata = {
   alternates: { languages: { en: '/' } },
 } as const;
 
-// Client-only Search to avoid SSR/client ordering mismatches
-const Search = dynamic(() => import('@/components/Search'), { ssr: false });
+const Search = dynamic(() => import('@/components/Search'), { ssr: false, loading: () => null });
 
 type AnyDoc = Record<string, unknown>;
 function toView(d: AnyDoc) {
@@ -41,7 +40,7 @@ export default function Page() {
         </p>
       </header>
 
-      <div className="mb-6">
+      <div className="mb-6" suppressHydrationWarning>
         <Search docs={docs} />
       </div>
 
