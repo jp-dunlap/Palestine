@@ -20,7 +20,7 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    // Prefer explicit lang; default to 'ar' for the /ar/ site
+    // Prefer explicit language if present, else infer Arabic for the /ar/ site.
     lang: (d as any).lang ?? (d as any).language ?? 'ar',
     href,
   };
@@ -28,14 +28,15 @@ function toView(d: AnyDoc) {
 
 export default function Page() {
   const all = loadSearchDocs().map(toView);
+
+  // ✅ Arabic-only for /ar (no English docs mixed into the main list)
   const ar = all.filter((d) => d.lang === 'ar');
-  const en = all.filter((d) => d.lang !== 'ar');
 
-  // Search shows AR first on /ar
-  const docs = [...ar, ...en];
+  // Search uses strictly AR docs
+  const docs = ar;
 
-  // Featured: show up to 3 AR; if fewer, back-fill with EN (so the list never looks empty)
-  const featured = [...ar.slice(0, 3), ...en.slice(0, Math.max(0, 3 - ar.length))];
+  // Featured: strictly AR as well (no EN back-fill to avoid mixing)
+  const featured = ar.slice(0, 3);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
@@ -48,8 +49,7 @@ export default function Page() {
       </header>
 
       <div className="mb-6">
-        {/* NOTE: Search component’s placeholder is currently English-only;
-           we’ll localize it in a follow-up change inside <Search/> itself. */}
+        {/* Search is a client-only island to avoid hydration issues */}
         <SearchIsland docs={docs} />
       </div>
 

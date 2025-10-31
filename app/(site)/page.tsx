@@ -30,11 +30,11 @@ export default function Page() {
   const en = all.filter((d) => d.lang === 'en');
   const ar = all.filter((d) => d.lang === 'ar');
 
-  // Search shows EN first on /
+  // EN-first list for /
   const docs = [...en, ...ar];
 
-  // Featured: show up to 3 EN; if fewer, back-fill with AR
-  const featured = [...en.slice(0, 3), ...ar.slice(0, Math.max(0, 3 - en.length))];
+  // Featured: EN-only (no AR fall-through to keep language consistent)
+  const featured = en.slice(0, 3);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
