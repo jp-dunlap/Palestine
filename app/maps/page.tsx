@@ -1,9 +1,9 @@
-// app/(site)/ar/maps/page.tsx
+// app/maps/page.tsx
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
-import MapsPageClientAr from '@/components/MapsPageClient.ar';
+import MapsPageClient from '@/components/MapsPageClient';
 
-export default function MapsPageAr({
+export default function MapsPage({
   searchParams
 }: {
   searchParams?: { place?: string };
@@ -12,20 +12,20 @@ export default function MapsPageAr({
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
 
-  const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
+  const arHref = initialFocusId ? `/ar/maps?place=${initialFocusId}` : '/ar/maps';
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
-      <h1 className="text-2xl font-semibold tracking-tight">الأماكن</h1>
+    <main className="mx-auto max-w-3xl px-4 py-12">
+      <h1 className="text-2xl font-semibold tracking-tight">Places</h1>
       <p className="mt-2 text-sm text-gray-600">
-        مُحمّل من <code>data/gazetteer.json</code>
+        Loaded from <code>data/gazetteer.json</code>
       </p>
 
-      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      <MapsPageClient places={places} cfg={cfg} initialFocusId={initialFocusId} />
 
       <p className="mt-8 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href={enHref}>
-          ← English
+        <a className="underline hover:no-underline" href={arHref}>
+          View this map in Arabic →
         </a>
       </p>
     </main>
