@@ -1,5 +1,5 @@
 // app/(site)/page.tsx
-import dynamic from 'next/dynamic';
+import SearchIsland from '@/components/SearchIsland';
 import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
@@ -8,8 +8,6 @@ export const metadata = {
     'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
   alternates: { languages: { ar: '/ar' } },
 } as const;
-
-const Search = dynamic(() => import('@/components/Search'), { ssr: false, loading: () => null });
 
 type AnyDoc = Record<string, unknown>;
 function toView(d: AnyDoc) {
@@ -23,13 +21,17 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang,
+    lang: (d as any).lang ?? (d as any).language ?? 'en',
     href,
   };
 }
 
 export default function Page() {
-  const docs = loadSearchDocs().map(toView);
+  const all = loadSearchDocs().map(toView);
+  const en = all.filter((d) => d.lang === 'en');
+  const ar = all.filter((d) => d.lang === 'ar');
+  const rest = all.filter((d) => d.lang !== 'en' && d.lang !== 'ar');
+  const docs = [...en, ...rest, ...ar]; // EN first on English homepage
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -41,9 +43,8 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Client-only island; avoid hydration claims on this subtree */}
-      <div className="mb-6" suppressHydrationWarning>
-        <Search docs={docs} />
+      <div className="mb-6">
+        <SearchIsland docs={docs} />
       </div>
 
       <section className="space-y-4">

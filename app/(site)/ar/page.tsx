@@ -1,5 +1,5 @@
 // app/(site)/ar/page.tsx
-import dynamic from 'next/dynamic';
+import SearchIsland from '@/components/SearchIsland';
 import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
@@ -8,8 +8,6 @@ export const metadata = {
     'تأريخ رقمي عامّ لفلسطين يمتد عبر ٤٠٠٠ سنة — يركز على الحياة الفلسطينية والمصادر والذاكرة المناهضة للاستعمار.',
   alternates: { languages: { en: '/' } },
 } as const;
-
-const Search = dynamic(() => import('@/components/Search'), { ssr: false, loading: () => null });
 
 type AnyDoc = Record<string, unknown>;
 function toView(d: AnyDoc) {
@@ -23,13 +21,17 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang,
+    lang: (d as any).lang ?? (d as any).language ?? 'ar',
     href,
   };
 }
 
 export default function Page() {
-  const docs = loadSearchDocs().map(toView);
+  const all = loadSearchDocs().map(toView);
+  const ar = all.filter((d) => d.lang === 'ar');
+  const en = all.filter((d) => d.lang === 'en');
+  const rest = all.filter((d) => d.lang !== 'en' && d.lang !== 'ar');
+  const docs = [...ar, ...rest, ...en]; // AR first on Arabic homepage
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
@@ -40,8 +42,8 @@ export default function Page() {
         </p>
       </header>
 
-      <div className="mb-6" suppressHydrationWarning>
-        <Search docs={docs} />
+      <div className="mb-6">
+        <SearchIsland docs={docs} />
       </div>
 
       <section className="space-y-4" dir="ltr">
