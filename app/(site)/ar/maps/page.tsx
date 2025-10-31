@@ -1,21 +1,39 @@
 // app/(site)/ar/maps/page.tsx
-import dynamic from 'next/dynamic';
+import { loadGazetteer } from '@/lib/loaders.places';
+import { loadMapConfig } from '@/lib/loaders.config';
+import MapsPageClientAr from '@/components/MapsPageClient.ar';
 
 export const metadata = {
-  title: 'الخريطة',
-  description: 'أماكن فلسطين — عرض تفاعلي.',
+  title: 'الأماكن',
+  description: 'خريطة تفاعلية للأماكن الفلسطينية.',
   alternates: { languages: { en: '/maps' } },
 } as const;
 
-// Client-only Leaflet map
-const MapClient = dynamic(() => import('@/components/MapClient'), { ssr: false });
+export default function MapsPageAr({
+  searchParams,
+}: {
+  searchParams?: { place?: string };
+}) {
+  const places = loadGazetteer();
+  const cfg = loadMapConfig();
+  const initialFocusId = searchParams?.place;
 
-export default function Page() {
+  const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
+
   return (
-    <main className="min-h-screen">
-      <div className="h-[80vh]">
-        <MapClient />
-      </div>
+    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+      <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
+      <p className="mt-2 text-sm text-gray-600 font-arabic">
+        محمّلة من <code>data/gazetteer.json</code>
+      </p>
+
+      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+
+      <p className="mt-8 text-sm text-gray-600">
+        <a className="underline hover:no-underline" href={enHref}>
+          ← English
+        </a>
+      </p>
     </main>
   );
 }
