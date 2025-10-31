@@ -14,3 +14,23 @@ Next.js (App Router) · TypeScript · Tailwind · MDX · MapLibre/Leaflet · D3 
 ```bash
 bun i
 bun dev
+
+## Maps
+
+Routes
+- `/maps` — English
+- `/ar/maps` — Arabic (RTL)
+
+Features
+- Marker clustering, deep links (`?place=<id>`), click any list item to focus the map, “Reset view”, “Copy link”.
+
+Run locally
+```bash
+# with npm
+npm i
+npm run dev
+
+# or with bun (already in README)
+bun i
+bun dev
+
