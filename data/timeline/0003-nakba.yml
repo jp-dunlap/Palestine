@@ -1,0 +1,10 @@
+id: "nakba-1948"
+title: "The Nakba — mass displacement and destruction"
+start: "1948-05-01"
+end: "1949-01-01"
+places: ["Haifa","Jaffa","Lydda","Gaza"]
+sources: ["sayigh1997","ocha-opt-sitreps"]
+summary: "Over 700,000 Palestinians expelled; 400+ villages depopulated or destroyed."
+tags: ["displacement","violence","war"]
+certainty: "high"
+era: "modern"

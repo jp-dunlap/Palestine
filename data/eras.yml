@@ -112,3 +112,13 @@
   start: 2023
   end: null
   color: "#8dd3c7"
+
+- id: "foundations"
+  title: "Foundations"
+  start: "-2000"
+  end: "-1200"
+
+- id: "modern"
+  title: "Modern"
+  start: "1800"
+  end:
