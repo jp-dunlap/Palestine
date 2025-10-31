@@ -12,8 +12,28 @@ export const metadata = {
 // Client-only Search to avoid SSR/client ordering mismatches
 const Search = dynamic(() => import('@/components/Search'), { ssr: false });
 
+type AnyDoc = Record<string, unknown>;
+
+function toView(d: AnyDoc) {
+  // Guarantee href for Search’s prop type
+  const href =
+    (d as any).href ??
+    (d as any).url ??
+    (d as any).path ??
+    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+
+  return {
+    // preserve known fields if present
+    title: String((d as any).title ?? ''),
+    summary: String((d as any).summary ?? ''),
+    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
+    lang: (d as any).lang,
+    href,
+  };
+}
+
 export default function Page() {
-  const docs = loadSearchDocs();
+  const docs = loadSearchDocs().map(toView);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">

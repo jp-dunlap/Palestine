@@ -4,14 +4,33 @@ import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
   title: 'فلسطين',
-  description: 'تأريخ رقمي عامّ لفلسطين يمتد عبر ٤٠٠٠ سنة — يركز على الحياة الفلسطينية والمصادر والذاكرة المناهضة للاستعمار.',
+  description:
+    'تأريخ رقمي عامّ لفلسطين يمتد عبر ٤٠٠٠ سنة — يركز على الحياة الفلسطينية والمصادر والذاكرة المناهضة للاستعمار.',
   alternates: { languages: { en: '/' } },
 } as const;
 
 const Search = dynamic(() => import('@/components/Search'), { ssr: false });
 
+type AnyDoc = Record<string, unknown>;
+
+function toView(d: AnyDoc) {
+  const href =
+    (d as any).href ??
+    (d as any).url ??
+    (d as any).path ??
+    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+
+  return {
+    title: String((d as any).title ?? ''),
+    summary: String((d as any).summary ?? ''),
+    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
+    lang: (d as any).lang,
+    href,
+  };
+}
+
 export default function Page() {
-  const docs = loadSearchDocs();
+  const docs = loadSearchDocs().map(toView);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
@@ -26,8 +45,8 @@ export default function Page() {
         <Search docs={docs} />
       </div>
 
-      <section className="space-y-4">
-        <div className="space-x-3" dir="ltr">
+      <section className="space-y-4" dir="ltr">
+        <div className="space-x-3">
           <a href="/ar/timeline" className="inline-block rounded border px-3 py-2 text-sm hover:bg-gray-50">
             استكشف الخط الزمني
           </a>
