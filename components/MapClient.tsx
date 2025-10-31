@@ -2,19 +2,23 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as L from 'leaflet';
-
-type PlaceLite = { id: string; name: string; lat: number; lon: number };
+// types come from @/lib/types; but we only need lat/lon/name/id at runtime
+import type { Place } from '@/lib/types';
 
 type MapProps = {
-  center?: [number, number];  // [lng, lat]
+  /** [lng, lat] */
+  center?: [number, number];
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
-  bounds?: [[number, number], [number, number]]; // [[west,south],[east,north]]
-  places: PlaceLite[];
+  /** [[west,south],[east,north]] */
+  bounds?: [[number, number], [number, number]];
+  places: Place[];
   className?: string;
-  /** Pan/zoom to this point (if provided). */
+
+  /** Pan/zoom to this point (e.g., from list click or deep link). */
   focus?: { lat: number; lon: number } | null;
+
   /** When incremented, re-fit map to include all places. */
   fitTrigger?: number;
 };
@@ -30,48 +34,48 @@ export default function MapClient({
   focus,
   fitTrigger = 0
 }: MapProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const innerRef = useRef<HTMLDivElement | null>(null); // <- actual Leaflet container
+  // Actual Leaflet attaches to this inner div (avoids double-initialization)
+  const innerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const [status, setStatus] = useState('mounted');
-
-  // keep a copy of lat/lon pairs for quick re-fit
   const latLngsRef = useRef<L.LatLngExpression[]>([]);
 
+  // Create / update map
   useEffect(() => {
     let cancelled = false;
 
     const boot = async () => {
       if (!innerRef.current) return;
 
-      // Load clustering plugin at runtime
+      // Load clustering at runtime (plugin augments L)
       await import('leaflet.markercluster');
 
       const target = innerRef.current;
 
-      // *** IMPORTANT: if a previous Leaflet map used this element, clear it ***
+      // If Leaflet had used this element before, reset it
       if ((target as any)._leaflet_id) {
         try {
-          // remove any leftover children/contexts
           target.innerHTML = '';
           // @ts-ignore
           delete (target as any)._leaflet_id;
-        } catch {}
+        } catch {
+          /* no-op */
+        }
       }
 
       const cLat = center[1];
       const cLng = center[0];
 
-      // Leaflet map (SVG, no animations for dev stability)
+      // Build map (SVG renderer, calm animations for stability)
       const map = L.map(target, {
         center: [cLat, cLng],
         zoom: zoom ?? 7,
-        zoomControl: false,
-        worldCopyJump: false,
-        inertia: false,
+        zoomControl: true,
+        scrollWheelZoom: false, // better page scroll on mobile/trackpads
+        inertia: true,
         zoomAnimation: false,
         fadeAnimation: false,
-        preferCanvas: false // SVG markers
+        preferCanvas: false
       });
       if (cancelled) {
         map.remove();
@@ -79,27 +83,34 @@ export default function MapClient({
       }
       mapRef.current = map;
 
-      // Make sure map sizes correctly after first layout
+      // Ensure proper sizing after first layout
       setTimeout(() => map.invalidateSize(false), 0);
 
+      // Constrain world view if bounds are provided
       if (bounds) {
         const [[west, south], [east, north]] = bounds;
         const maxB = L.latLngBounds([south, west], [north, east]);
         map.setMaxBounds(maxB);
-        // @ts-ignore
+        // @ts-ignore - viscosity exists on options
         map.options.maxBoundsViscosity = 1.0;
       }
 
-      // --- Background pane BELOW everything (so it never covers markers) ---
+      // Background pane sits below tiles/markers
       const bgPaneName = 'bgPane';
       if (!map.getPane(bgPaneName)) {
         map.createPane(bgPaneName);
         const bgPane = map.getPane(bgPaneName)!;
-        bgPane.style.zIndex = '100'; // lower than tilePane(200), overlay(400), marker(600)
+        bgPane.style.zIndex = '100'; // tilePane(200), overlay(400), marker(600)
         bgPane.style.pointerEvents = 'none';
       }
 
-      // Try OSM tiles; if blocked, add a neutral background in bgPane
+      // Tiles (env-driven with safe defaults)
+      const tileUrl =
+        process.env.NEXT_PUBLIC_MAP_TILE_URL ??
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const tileAttrib =
+        process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? '© OpenStreetMap contributors';
+
       let usedFallback = false;
       const useFallback = () => {
         if (usedFallback) return;
@@ -113,21 +124,20 @@ export default function MapClient({
         setStatus('ready (Leaflet — no tiles)');
       };
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      })
-        .on('load', () => setStatus('ready (Leaflet + OSM)'))
+      L.tileLayer(tileUrl, { attribution: tileAttrib })
+        .on('load', () => setStatus('ready (Leaflet + tiles)'))
         .on('tileerror', useFallback)
         .addTo(map);
 
       const fallbackTimer = window.setTimeout(useFallback, 2000);
 
-      // --- Clustered markers (SVG) ---
+      // Clustered markers (SVG)
       const svgRenderer = L.svg();
-      const inBox = (lon: number, lat: number) => lon > 32 && lon < 36 && lat > 29 && lat < 34;
+      const inBox = (lon: number, lat: number) =>
+        lon > 32 && lon < 36 && lat > 29 && lat < 34;
 
-      // plugin augments L at runtime; avoid TS type deps
-      const clusterGroup = (L as any).markerClusterGroup({
+      // Use any to avoid hard plugin typings coupling
+      const clusterGroup: L.MarkerClusterGroup = (L as any).markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: false,
         zoomToBoundsOnClick: true,
@@ -137,8 +147,9 @@ export default function MapClient({
 
       const latLngs: L.LatLngExpression[] = [];
       for (const p of places) {
-        let lon = p.lon;
-        let lat = p.lat;
+        let lon = Number(p.lon);
+        let lat = Number(p.lat);
+        // Heuristic: swap if user accidentally inverted coords
         if (!inBox(lon, lat) && inBox(lat, lon)) [lon, lat] = [lat, lon];
         if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
 
@@ -161,6 +172,7 @@ export default function MapClient({
       clusterGroup.addTo(map);
       latLngsRef.current = latLngs;
 
+      // Initial fit + zoom constraints
       if (latLngs.length) {
         const b = L.latLngBounds(latLngs);
         map.fitBounds(b, { padding: [40, 40], animate: false });
@@ -168,7 +180,7 @@ export default function MapClient({
         if (typeof maxZoom === 'number') map.setMaxZoom(maxZoom);
       }
 
-      // cleanup
+      // Cleanup timer on effect teardown
       return () => {
         window.clearTimeout(fallbackTimer);
       };
@@ -177,24 +189,26 @@ export default function MapClient({
     boot();
 
     return () => {
-      cancelled = true;
-      // remove map if present
+      // tear down map
       const map = mapRef.current;
       if (map) {
         map.remove();
         mapRef.current = null;
       }
-      // also clear inner container to drop any leftover layers/panes
+      // drop any leftover Leaflet state on the inner container
       if (innerRef.current) {
         innerRef.current.innerHTML = '';
         // @ts-ignore
-        if ((innerRef.current as any)._leaflet_id) delete (innerRef.current as any)._leaflet_id;
+        if ((innerRef.current as any)._leaflet_id) {
+          // @ts-ignore
+          delete (innerRef.current as any)._leaflet_id;
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center, zoom, minZoom, maxZoom, bounds, places]);
 
-  // Focus a single point (e.g., from a list click or deep link)
+  // Focus a single point (from list click or deep link)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !focus) return;
@@ -213,14 +227,13 @@ export default function MapClient({
 
   return (
     <div
-      ref={containerRef}
       className={className ?? 'w-full rounded border'}
       style={{ height: 420, position: 'relative' }}
     >
-      {/* Leaflet actually mounts here */}
+      {/* Leaflet mounts here */}
       <div ref={innerRef} style={{ position: 'absolute', inset: 0 }} />
 
-      {/* status badge */}
+      {/* status badge (debug-friendly, harmless in prod) */}
       <div
         style={{
           position: 'absolute',
