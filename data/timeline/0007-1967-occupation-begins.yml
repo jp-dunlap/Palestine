@@ -1,0 +1,10 @@
+id: "occupation-1967"
+title: "Occupation of the West Bank, Gaza, East Jerusalem"
+start: "1967-06-07"
+end:
+places: ["Gaza","Hebron","Jerusalem","Nablus"]
+sources: ["sayigh1997"]
+summary: "Israel’s military occupation begins; annexation of East Jerusalem and a long regime of settlements and military orders follow."
+tags: ["occupation","settlements","law"]
+certainty: "high"
+era: "modern"
