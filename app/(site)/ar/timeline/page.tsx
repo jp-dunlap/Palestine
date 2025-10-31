@@ -3,9 +3,9 @@ import Timeline from '@/components/Timeline';
 import TimelineFilters from '@/components/TimelineFilters';
 
 export const metadata = {
-  title: 'Timeline',
-  description: 'A public, art-grade timeline of Palestine with eras, places, and sources.',
-  alternates: { languages: { ar: '/ar/timeline' } },
+  title: 'الخط الزمني',
+  description: 'خط زمني عامّ لفلسطين مع العصور والأمكنة والمصادر.',
+  alternates: { languages: { en: '/timeline' } },
 };
 
 export default function Page({
@@ -20,8 +20,8 @@ export default function Page({
   const allEras = loadEras();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
+    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic">
+      <h1 className="text-2xl font-semibold tracking-tight">الخط الزمني</h1>
       <TimelineFilters eras={allEras} />
       <Timeline events={events} eras={allEras} />
     </main>
