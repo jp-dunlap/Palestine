@@ -1,4 +1,5 @@
 # id: stable key; label: UI title; start/end: integer years (negative=BCE, null=ongoing); color: hex for UI
+
 - id: foundations
   label: "Foundations"
   start: -2000
@@ -113,12 +114,9 @@
   end: null
   color: "#8dd3c7"
 
-- id: "foundations"
-  title: "Foundations"
-  start: "-2000"
-  end: "-1200"
-
-- id: "modern"
-  title: "Modern"
-  start: "1800"
-  end:
+# Add a stable "modern" bucket so events with era: modern group cleanly
+- id: modern
+  label: "Modern / Nakba → Present"
+  start: 1800
+  end: null
+  color: "#444444"
