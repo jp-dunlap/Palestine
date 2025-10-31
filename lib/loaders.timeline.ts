@@ -6,21 +6,45 @@ import type { Era, TimelineEvent } from '@/lib/types';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TIMELINE_DIR = path.join(DATA_DIR, 'timeline');
 
-function parseDate(s?: string | null): string | null {
-  if (!s) return null;
+function parseDate(s?: string | number | null): string | null {
+  if (s === null || s === undefined) return null;
   return String(s).trim();
+}
+
+function toYearNumber(v: unknown): number | undefined {
+  if (v === null || v === undefined || v === '') return undefined;
+  const n = Number(v);
+  if (Number.isNaN(n)) {
+    throw new Error(`Invalid year value: ${JSON.stringify(v)}`);
+  }
+  return n;
 }
 
 export function loadEras(): Era[] {
   const p = path.join(DATA_DIR, 'eras.yml');
   const raw = fs.readFileSync(p, 'utf8');
   const arr = YAML.parse(raw) as any[];
-  return arr.map((e) => ({
-    id: String(e.id),
-    title: String(e.title),
-    start: String(e.start),
-    end: e.end == null ? undefined : String(e.end),
-  }));
+
+  const eras: Era[] = arr.map((e) => {
+    const start = toYearNumber(e.start);
+    const end = toYearNumber(e.end);
+
+    if (start === undefined) {
+      throw new Error(`Era ${e.id} is missing a valid 'start' year`);
+    }
+    if (end !== undefined && start > end) {
+      throw new Error(`Era ${e.id} has start > end (${start} > ${end})`);
+    }
+
+    return {
+      id: String(e.id),
+      title: String(e.title),
+      start,
+      end,
+    } as Era;
+  });
+
+  return eras;
 }
 
 export function loadTimelineEvents(): TimelineEvent[] {
@@ -41,7 +65,7 @@ export function loadTimelineEvents(): TimelineEvent[] {
     events.push({
       id: String(d.id),
       title: String(d.title),
-      start: start!,
+      start: start!,                    // string or ISO-like string
       end: end ?? undefined,
       places: (d.places ?? []).map(String),
       sources: (d.sources ?? []).map(String),
@@ -52,7 +76,7 @@ export function loadTimelineEvents(): TimelineEvent[] {
     } as TimelineEvent);
   }
 
-  // chronological ordering
+  // chronological
   events.sort((a, b) => String(a.start).localeCompare(String(b.start)));
   return events;
 }
@@ -82,4 +106,3 @@ export function filterTimeline(params: {
     return true;
   });
 }
-
