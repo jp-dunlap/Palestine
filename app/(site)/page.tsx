@@ -1,9 +1,33 @@
 // app/(site)/page.tsx
-import { loadSearchDocs } from '@/lib/loaders.search';
+import { loadSearchDocs, type SearchDoc } from '@/lib/loaders.search';
 import Search from '@/components/Search';
 
+type SearchDocView = {
+  title: string;
+  summary?: string;
+  tags?: string[];
+  href: string;
+};
+
+function toView(d: SearchDoc): SearchDocView {
+  let href = '#';
+  if (d.kind === 'chapter' && d.slug) {
+    href = `/chapters/${d.slug}`;
+  } else if (d.kind === 'timeline') {
+    href = '/timeline';
+  } else if (d.kind === 'place' && d.slug) {
+    href = `/places/${d.slug}`;
+  }
+  return {
+    title: d.title,
+    summary: d.summary,
+    tags: d.tags,
+    href,
+  };
+}
+
 export default function Page() {
-  const docs = loadSearchDocs();
+  const docs = loadSearchDocs().map(toView);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -31,32 +55,4 @@ export default function Page() {
         </div>
 
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-gray-700">Featured chapters</h2>
-          <ul className="mt-2 list-disc pl-5 text-sm">
-            <li>
-              <a className="underline hover:no-underline" href="/chapters/001-prologue">
-                Prologue — On Names, Memory, and Return
-              </a>
-            </li>
-            <li>
-              <a className="underline hover:no-underline" href="/chapters/002-foundations-canaanite-networks">
-                Foundations — Canaanite Urban Networks (-2000 to -1200)
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Language toggle */}
-      <p className="mt-10 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href="/ar">
-          View this site in Arabic →
-        </a>
-      </p>
-
-      <footer className="mt-12 text-xs text-gray-500">
-        Code: MIT · Content: CC BY-SA 4.0
-      </footer>
-    </main>
-  );
-}
+          <h2 className="text-sm font-semibold text-gray-700">Featured c
