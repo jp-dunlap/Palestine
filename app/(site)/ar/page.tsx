@@ -20,17 +20,24 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: ((d as any).lang ?? (d as any).language ?? 'ar') as 'en' | 'ar',
+    lang: ((d as any).lang ?? (d as any).language) as 'en' | 'ar' | undefined,
     href,
   };
 }
 
+function isArabic(doc: ReturnType<typeof toView>) {
+  // Prefer explicit language; also accept locale-prefixed hrefs
+  return doc.lang === 'ar' || (typeof doc.href === 'string' && doc.href.startsWith('/ar/'));
+}
+
 export default function Page() {
   const all = loadSearchDocs().map(toView);
-  // AR-first ordering on the Arabic homepage
-  const ar = all.filter((x) => x.lang === 'ar');
-  const en = all.filter((x) => x.lang === 'en' || !x.lang);
-  const docs = [...ar, ...en];
+
+  // Strict Arabic-first policy on the Arabic homepage:
+  const arOnly = all.filter(isArabic);
+
+  // If there are no Arabic docs yet, gracefully fall back to everything
+  const docs = arOnly.length > 0 ? arOnly : all;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" lang="ar" dir="rtl">

@@ -21,7 +21,7 @@ function toView(d: AnyDoc) {
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: ((d as any).lang ?? (d as any).language ?? 'en') as 'en' | 'ar',
+    lang: ((d as any).lang ?? (d as any).language) as 'en' | 'ar' | undefined,
     href,
   };
 }
@@ -30,7 +30,7 @@ export default function Page() {
   const all = loadSearchDocs().map(toView);
   // EN-first ordering on the English homepage
   const en = all.filter((x) => x.lang === 'en' || !x.lang);
-  const ar = all.filter((x) => x.lang === 'ar');
+  const ar = all.filter((x) => x.lang === 'ar' || (typeof x.href === 'string' && x.href.startsWith('/ar/')));
   const docs = [...en, ...ar];
 
   return (
@@ -43,7 +43,6 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Client-only island to avoid hydration mismatches */}
       <div className="mb-6">
         <SearchIsland docs={docs} />
       </div>
