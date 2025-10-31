@@ -163,7 +163,7 @@ export default function MapClient({
           weight: 1,
           fillOpacity: 0.9
         }).bindPopup(
-          `<strong>${escapeHtml(p.name)}</strong><br/>${lat.toFixed(3)}, ${lon.toFixed(3)}`
+            `<strong><a href="/places/${encodeURIComponent(p.id)}" target="_self" rel="noopener noreferrer">${escapeHtml(p.name)}</a></strong><br/>${lat.toFixed(3)}, ${lon.toFixed(3)}`
         );
 
         clusterGroup.addLayer(marker);
