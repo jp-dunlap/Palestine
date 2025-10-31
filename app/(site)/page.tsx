@@ -9,13 +9,10 @@ export const metadata = {
   alternates: { languages: { ar: '/ar' } },
 } as const;
 
-// Client-only Search to avoid SSR/client ordering mismatches
-const Search = dynamic(() => import('@/components/Search'), { ssr: false });
+const Search = dynamic(() => import('@/components/Search'), { ssr: false, loading: () => null });
 
 type AnyDoc = Record<string, unknown>;
-
 function toView(d: AnyDoc) {
-  // Guarantee href for Search’s prop type
   const href =
     (d as any).href ??
     (d as any).url ??
@@ -23,7 +20,6 @@ function toView(d: AnyDoc) {
     ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
 
   return {
-    // preserve known fields if present
     title: String((d as any).title ?? ''),
     summary: String((d as any).summary ?? ''),
     tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
@@ -45,7 +41,8 @@ export default function Page() {
         </p>
       </header>
 
-      <div className="mb-6">
+      {/* Client-only island; avoid hydration claims on this subtree */}
+      <div className="mb-6" suppressHydrationWarning>
         <Search docs={docs} />
       </div>
 

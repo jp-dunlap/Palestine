@@ -7,24 +7,20 @@ import type { Era, TimelineEvent } from '@/lib/types';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TIMELINE_DIR = path.join(DATA_DIR, 'timeline');
 
-/** Parse a year (supports "-1200" and "1917-11-02") → number. null if empty. */
 function toYearNumber(v: unknown): number | null {
   if (v === null || typeof v === 'undefined' || v === '') return null;
   if (typeof v === 'number' && Number.isFinite(v)) return v;
   if (typeof v === 'string') {
-    const s = v.trim();
-    const m = s.match(/^(-?\d{1,4})/);
+    const m = v.trim().match(/^(-?\d{1,4})/);
     if (m) return Number(m[1]);
   }
   throw new Error(`Invalid year value: ${JSON.stringify(v)}`);
 }
-
 function requireYearNumber(v: unknown, ctx: string): number {
   const n = toYearNumber(v);
   if (n === null) throw new Error(`Missing required year for ${ctx}`);
   return n;
 }
-
 function readYamlObject(filePath: string): Record<string, unknown> {
   const raw = fs.readFileSync(filePath, 'utf8');
   const doc = YAML.parse(raw);
@@ -56,18 +52,15 @@ export function loadEras(): Era[] {
         ...(typeof e.color === 'string' ? { color: e.color } : {}),
       } as Era);
     } catch (err) {
-      console.error(`[eras] skip invalid entry`, e?.id ?? '(no id)', String(err));
+      console.error('[eras] skip invalid entry', e?.id ?? '(no id)', String(err));
     }
   }
-
-  // Stable chronological order
   eras.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
   return eras;
 }
 
 export function loadTimelineEvents(): TimelineEvent[] {
   if (!fs.existsSync(TIMELINE_DIR)) return [];
-
   const files = fs.readdirSync(TIMELINE_DIR).filter((f) => f.endsWith('.yml'));
   const events: TimelineEvent[] = [];
 
@@ -77,7 +70,7 @@ export function loadTimelineEvents(): TimelineEvent[] {
       const d = readYamlObject(full);
 
       const id = d.id != null ? String(d.id) : null;
-      if (!id) throw new Error(`Missing id`);
+      if (!id) throw new Error('Missing id');
 
       const start = requireYearNumber(d.start, `event ${id} start`);
       const endMaybe = toYearNumber(d.end);
@@ -85,7 +78,7 @@ export function loadTimelineEvents(): TimelineEvent[] {
         throw new Error(`start > end (${start} > ${endMaybe})`);
       }
 
-      const evt: TimelineEvent = {
+      events.push({
         id,
         title: String(d.title ?? id),
         start,
@@ -98,20 +91,15 @@ export function loadTimelineEvents(): TimelineEvent[] {
           ? (d.certainty as 'low' | 'medium' | 'high')
           : 'medium'),
         era: d.era ? String(d.era) : undefined,
-      };
-
-      events.push(evt);
+      });
     } catch (err) {
-      console.error(`[timeline] skip ${path.basename(full)} → ${String(err)}`);
-      // Skip bad file, continue loading the rest instead of 500.
+      console.error('[timeline] skip', path.basename(full), '→', String(err));
       continue;
     }
   }
 
-  // Remove any accidental nulls/falsy and sort
-  const clean = events.filter((e): e is TimelineEvent => !!e && typeof e.start === 'number');
-  clean.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
-  return clean;
+  events.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
+  return events;
 }
 
 export function filterTimeline(params: {
