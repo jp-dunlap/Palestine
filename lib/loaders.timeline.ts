@@ -6,17 +6,20 @@ import type { Era, TimelineEvent } from '@/lib/types';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TIMELINE_DIR = path.join(DATA_DIR, 'timeline');
 
-function parseDate(s?: string | number | null): string | null {
-  if (s === null || s === undefined) return null;
-  return String(s).trim();
+function toYearNumber(v: unknown): number | null {
+  if (v === null || typeof v === 'undefined' || v === '') return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    const s = v.trim();
+    const m = s.match(/^(-?\d{1,4})/); // take leading year, supports BCE (e.g., "-1200") or "1917-11-02"
+    if (m) return Number(m[1]);
+  }
+  throw new Error(`Invalid year value: ${JSON.stringify(v)}`);
 }
 
-function toYearNumber(v: unknown): number | undefined {
-  if (v === null || v === undefined || v === '') return undefined;
-  const n = Number(v);
-  if (Number.isNaN(n)) {
-    throw new Error(`Invalid year value: ${JSON.stringify(v)}`);
-  }
+function requireYearNumber(v: unknown, ctx: string): number {
+  const n = toYearNumber(v);
+  if (n === null) throw new Error(`Missing required year for ${ctx}`);
   return n;
 }
 
@@ -25,26 +28,22 @@ export function loadEras(): Era[] {
   const raw = fs.readFileSync(p, 'utf8');
   const arr = YAML.parse(raw) as any[];
 
-  const eras: Era[] = arr.map((e) => {
-    const start = toYearNumber(e.start);
+  return (arr || []).filter(Boolean).map((e: any) => {
+    const start = requireYearNumber(e.start, `era ${e.id} start`);
     const end = toYearNumber(e.end);
 
-    if (start === undefined) {
-      throw new Error(`Era ${e.id} is missing a valid 'start' year`);
-    }
-    if (end !== undefined && start > end) {
+    if (end !== null && start > end) {
       throw new Error(`Era ${e.id} has start > end (${start} > ${end})`);
     }
 
     return {
       id: String(e.id),
-      title: String(e.title),
+      title: String(e.title ?? e.label ?? e.id),
       start,
-      end,
+      end, // number or null
+      color: typeof e.color === 'string' ? e.color : undefined,
     } as Era;
   });
-
-  return eras;
 }
 
 export function loadTimelineEvents(): TimelineEvent[] {
@@ -55,29 +54,33 @@ export function loadTimelineEvents(): TimelineEvent[] {
     const raw = fs.readFileSync(path.join(TIMELINE_DIR, f), 'utf8');
     const d = YAML.parse(raw) as any;
 
-    const start = parseDate(d.start);
-    const end = parseDate(d.end);
+    const start = requireYearNumber(d.start, `event ${d.id} start`);
+    const end = toYearNumber(d.end);
 
-    if (start && end && start > end) {
+    if (end !== null && start > end) {
       throw new Error(`Invalid range in ${f}: start > end`);
     }
 
-    events.push({
+    const evt: TimelineEvent = {
       id: String(d.id),
       title: String(d.title),
-      start: start!,                    // string or ISO-like string
-      end: end ?? undefined,
-      places: (d.places ?? []).map(String),
-      sources: (d.sources ?? []).map(String),
-      summary: d.summary ? String(d.summary) : undefined,
-      tags: (d.tags ?? []).map(String),
-      certainty: d.certainty ? String(d.certainty) : undefined,
+      start,                      // number (year)
+      end,                        // number | null
+      places: Array.isArray(d.places) ? d.places.map(String) : [],
+      sources: Array.isArray(d.sources) ? d.sources.map(String) : [],
+      summary: String(d.summary ?? ''), // required string in types
+      tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
+      certainty: (['low', 'medium', 'high'].includes(d.certainty)
+        ? d.certainty
+        : 'medium') as 'low' | 'medium' | 'high',
       era: d.era ? String(d.era) : undefined,
-    } as TimelineEvent);
+    };
+
+    events.push(evt);
   }
 
-  // chronological
-  events.sort((a, b) => String(a.start).localeCompare(String(b.start)));
+  // sort chronologically, then by title
+  events.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
   return events;
 }
 
