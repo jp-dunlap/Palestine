@@ -1,5 +1,5 @@
 // app/(site)/page.tsx
-import dynamic from 'next/dynamic';
+import SearchIsland from '@/components/SearchIsland';
 import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
@@ -9,27 +9,41 @@ export const metadata = {
   alternates: { languages: { ar: '/ar' } },
 } as const;
 
-const Search = dynamic(() => import('@/components/Search'), { ssr: false, loading: () => null });
+type ViewDoc = {
+  title: string;
+  summary: string;
+  tags: string[];
+  lang?: 'en' | 'ar';
+  href: string;
+};
 
-type AnyDoc = Record<string, unknown>;
-function toView(d: AnyDoc) {
+function toView(d: any): ViewDoc {
   const href =
-    (d as any).href ??
-    (d as any).url ??
-    (d as any).path ??
-    ((d as any).slug ? `/chapters/${(d as any).slug}` : '#');
+    d.href ??
+    d.url ??
+    d.path ??
+    (d.slug ? `/chapters/${d.slug}` : '#');
 
   return {
-    title: String((d as any).title ?? ''),
-    summary: String((d as any).summary ?? ''),
-    tags: Array.isArray((d as any).tags) ? (d as any).tags.map(String) : [],
-    lang: (d as any).lang,
+    title: String(d.title ?? ''),
+    summary: String(d.summary ?? ''),
+    tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
+    lang: d.lang as 'en' | 'ar' | undefined,
     href,
   };
 }
 
 export default function Page() {
-  const docs = loadSearchDocs().map(toView);
+  const all = loadSearchDocs().map(toView);
+
+  // Deterministic language ordering: EN-first on the English homepage
+  const en: ViewDoc[] = [];
+  const ar: ViewDoc[] = [];
+  for (const d of all) {
+    if (d.lang === 'ar') ar.push(d);
+    else en.push(d); // includes undefined treated as EN bucket
+  }
+  const docs = [...en, ...ar];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -41,9 +55,9 @@ export default function Page() {
         </p>
       </header>
 
-      {/* Client-only island; avoid hydration claims on this subtree */}
-      <div className="mb-6" suppressHydrationWarning>
-        <Search docs={docs} />
+      {/* Client-only search; avoids SSR/CSR mismatches */}
+      <div className="mb-6">
+        <SearchIsland docs={docs} />
       </div>
 
       <section className="space-y-4">
