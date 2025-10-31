@@ -1,14 +1,20 @@
+// components/SearchIsland.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import Search, { type Doc } from './Search';
+import Search from './Search';
+import type React from 'react';
 
-type Props = { docs: Doc[] };
+/**
+ * Accept the exact docs prop type that Search expects, without importing a custom Doc type.
+ * This avoids "no exported member 'Doc'" and keeps us aligned with Search's signature.
+ */
+type Props = { docs: React.ComponentProps<typeof Search>['docs'] };
 
-/** Client-only mount gate to avoid SSR/CSR mismatch for the Search UI. */
 export default function SearchIsland({ docs }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+  if (!mounted) return null; // SSR → nothing; CSR → render Search. Prevents hydration mismatches.
+
   return <Search docs={docs} />;
 }
