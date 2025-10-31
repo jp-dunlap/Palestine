@@ -9,10 +9,10 @@ export const metadata = {
   alternates: { languages: { en: '/' } },
 } as const;
 
+// Client-only Search to avoid SSR/client ordering mismatches
 const Search = dynamic(() => import('@/components/Search'), { ssr: false });
 
 type AnyDoc = Record<string, unknown>;
-
 function toView(d: AnyDoc) {
   const href =
     (d as any).href ??
