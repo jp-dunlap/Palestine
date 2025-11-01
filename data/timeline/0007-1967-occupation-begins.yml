@@ -1,11 +1,14 @@
 
 id: "occupation-1967"
 title: "Occupation of the West Bank, Gaza, East Jerusalem"
+title_ar: "احتلال الضفة الغربية وقطاع غزة والقدس الشرقية"
 start: "1967-06-07"
 end:
 places: ["Gaza","Hebron","Jerusalem","Nablus"]
 sources: ["sayigh1997"]
 summary: "Israel’s military occupation begins; annexation of East Jerusalem and a long regime of settlements and military orders follow."
+summary_ar: "بدأ الاحتلال العسكري الإسرائيلي مع ضم القدس الشرقية وفرض نظام طويل من الاستيطان والأوامر العسكرية."
 tags: ["occupation","settlements","law"]
+tags_ar: ["الاحتلال","الاستيطان","القانون"]
 certainty: "high"
 era: "modern"

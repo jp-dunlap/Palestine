@@ -1,11 +1,14 @@
 id: "arab-revolt-1936-39"
 title: "The 1936–39 Arab Revolt"
+title_ar: "ثورة 1936–1939 العربية"
 start: "1936"
 end: "1939"
 places: ["Nablus","Hebron","Jerusalem","Jaffa"]
 sources: ["sayigh1997"]
 summary: "Sustained Palestinian revolt against British colonial rule and Zionist settlement; crushed by massive British repression."
+summary_ar: "انتفاضة فلسطينية متواصلة ضد الحكم الاستعماري البريطاني والاستيطان الصهيوني، قمعتها بريطانيا بقمع واسع."
 tags: ["revolt","british-mandate","colonialism"]
+tags_ar: ["ثورة","الانتداب-البريطاني","الاستعمار"]
 certainty: "high"
 era: "modern"
 

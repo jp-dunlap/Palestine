@@ -1,14 +1,139 @@
 [
-  { "id": "gaza",    "name": "Gaza",    "alt_names": ["Ghazzah","غزة"],                 "lat": 31.5017, "lon": 34.4668, "kind": "city" },
-  { "id": "jaffa",   "name": "Jaffa",   "alt_names": ["Yafo","Yafa","يافا"],            "lat": 32.0500, "lon": 34.7519, "kind": "port_city" },
-  { "id": "hebron",  "name": "Hebron",  "alt_names": ["Al-Khalil","الخليل"],            "lat": 31.5326, "lon": 35.0998, "kind": "city" },
-  { "id": "jericho", "name": "Jericho", "alt_names": ["Ariha","أريحا"],                 "lat": 31.8700, "lon": 35.4432, "kind": "city" },
-  { "id": "shechem", "name": "Shechem", "alt_names": ["Nablus","שכם","نابلس"],          "lat": 32.2211, "lon": 35.2544, "kind": "city" },
-  { "id": "ramallah","name": "Ramallah","alt_names": ["Rām Allāh","رام الله"],          "lat": 31.9038, "lon": 35.2034, "kind": "city" },
-
-  { "id": "haifa",   "name": "Haifa",   "alt_names": ["حيفا","Ḥayfa"],                  "lat": 32.8156, "lon": 34.9896, "kind": "port_city" },
-  { "id": "lydda",   "name": "Lydda",   "alt_names": ["Lod","לוד","اللد"],              "lat": 31.9516, "lon": 34.8885, "kind": "city" },
-  { "id": "ramla",   "name": "Ramla",   "alt_names": ["الرملة"],                        "lat": 31.9312, "lon": 34.8730, "kind": "city" },
-  { "id": "acre",    "name": "Acre",    "alt_names": ["ʿAkka","Akka","عكا"],            "lat": 32.9236, "lon": 35.0818, "kind": "port_city" },
-  { "id": "safad",   "name": "Safad",   "alt_names": ["Safed","Ṣafad","צפת","صفد"],    "lat": 32.9646, "lon": 35.4960, "kind": "city" }
+  {
+    "id": "gaza",
+    "name": "Gaza",
+    "alt_names": [
+      "Ghazzah",
+      "غزة"
+    ],
+    "lat": 31.5017,
+    "lon": 34.4668,
+    "kind": "city",
+    "name_ar": "غزة"
+  },
+  {
+    "id": "jaffa",
+    "name": "Jaffa",
+    "alt_names": [
+      "Yafo",
+      "Yafa",
+      "يافا"
+    ],
+    "lat": 32.05,
+    "lon": 34.7519,
+    "kind": "port_city",
+    "name_ar": "يافا"
+  },
+  {
+    "id": "hebron",
+    "name": "Hebron",
+    "alt_names": [
+      "Al-Khalil",
+      "الخليل"
+    ],
+    "lat": 31.5326,
+    "lon": 35.0998,
+    "kind": "city",
+    "name_ar": "الخليل"
+  },
+  {
+    "id": "jericho",
+    "name": "Jericho",
+    "alt_names": [
+      "Ariha",
+      "أريحا"
+    ],
+    "lat": 31.87,
+    "lon": 35.4432,
+    "kind": "city",
+    "name_ar": "أريحا"
+  },
+  {
+    "id": "shechem",
+    "name": "Shechem",
+    "alt_names": [
+      "Nablus",
+      "שכם",
+      "نابلس"
+    ],
+    "lat": 32.2211,
+    "lon": 35.2544,
+    "kind": "city",
+    "name_ar": "نابلس"
+  },
+  {
+    "id": "ramallah",
+    "name": "Ramallah",
+    "alt_names": [
+      "Rām Allāh",
+      "رام الله"
+    ],
+    "lat": 31.9038,
+    "lon": 35.2034,
+    "kind": "city",
+    "name_ar": "رام الله"
+  },
+  {
+    "id": "haifa",
+    "name": "Haifa",
+    "alt_names": [
+      "حيفا",
+      "Ḥayfa"
+    ],
+    "lat": 32.8156,
+    "lon": 34.9896,
+    "kind": "port_city",
+    "name_ar": "حيفا"
+  },
+  {
+    "id": "lydda",
+    "name": "Lydda",
+    "alt_names": [
+      "Lod",
+      "לוד",
+      "اللد"
+    ],
+    "lat": 31.9516,
+    "lon": 34.8885,
+    "kind": "city",
+    "name_ar": "اللد"
+  },
+  {
+    "id": "ramla",
+    "name": "Ramla",
+    "alt_names": [
+      "الرملة"
+    ],
+    "lat": 31.9312,
+    "lon": 34.873,
+    "kind": "city",
+    "name_ar": "الرملة"
+  },
+  {
+    "id": "acre",
+    "name": "Acre",
+    "alt_names": [
+      "ʿAkka",
+      "Akka",
+      "عكا"
+    ],
+    "lat": 32.9236,
+    "lon": 35.0818,
+    "kind": "port_city",
+    "name_ar": "عكا"
+  },
+  {
+    "id": "safad",
+    "name": "Safad",
+    "alt_names": [
+      "Safed",
+      "Ṣafad",
+      "צפת",
+      "صفد"
+    ],
+    "lat": 32.9646,
+    "lon": 35.496,
+    "kind": "city",
+    "name_ar": "صفد"
+  }
 ]

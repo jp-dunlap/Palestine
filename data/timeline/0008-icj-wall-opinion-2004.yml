@@ -1,10 +1,13 @@
 id: "icj-wall-2004"
 title: "ICJ Wall Advisory Opinion"
+title_ar: "الرأي الاستشاري لمحكمة العدل الدولية حول الجدار"
 start: "2004-07-09"
 end:
 places: ["The Hague"]
 sources: ["icj-2004-wall-opinion"]
 summary: "International Court of Justice finds the Wall/barrier and related regime contrary to international law; calls for dismantling and reparations."
+summary_ar: "اعتبرت محكمة العدل الدولية الجدار والنظام المرتبط به مخالفين للقانون الدولي، ودعت إلى تفكيكه وتعويض المتضررين."
 tags: ["law","icj","barrier"]
+tags_ar: ["القانون","محكمة-العدل-الدولية","الجدار"]
 certainty: "high"
 era: "modern"

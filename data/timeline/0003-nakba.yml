@@ -1,10 +1,13 @@
 id: "nakba-1948"
 title: "The Nakba — mass displacement and destruction"
+title_ar: "النكبة — تهجير جماعي وتدمير"
 start: "1948-05-01"
 end: "1949-01-01"
 places: ["Haifa","Jaffa","Lydda","Gaza"]
 sources: ["sayigh1997","ocha-opt-sitreps"]
 summary: "Over 700,000 Palestinians expelled; 400+ villages depopulated or destroyed."
+summary_ar: "تهجير أكثر من 700 ألف فلسطيني وتدمير أو إفراغ أكثر من 400 قرية."
 tags: ["displacement","violence","war"]
+tags_ar: ["التهجير","العنف","الحرب"]
 certainty: "high"
 era: "modern"
