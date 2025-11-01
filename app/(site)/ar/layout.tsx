@@ -1,5 +1,6 @@
 import '../../globals.css';
 import type { ReactNode } from 'react';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export const metadata = {
   title: 'فلسطين',
@@ -9,7 +10,14 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className="font-arabic">{children}</body>
+      <body className="font-arabic bg-white text-gray-900">
+        <header className="border-b">
+          <div className="mx-auto flex max-w-4xl justify-start px-4 py-3" dir="rtl">
+            <LanguageSwitcher />
+          </div>
+        </header>
+        <div>{children}</div>
+      </body>
     </html>
   );
 }

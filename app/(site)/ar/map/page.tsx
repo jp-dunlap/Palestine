@@ -1,4 +1,4 @@
-// app/(site)/ar/maps/page.tsx
+// app/(site)/ar/map/page.tsx
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClientAr from '@/components/MapsPageClient.ar';
@@ -6,7 +6,7 @@ import MapsPageClientAr from '@/components/MapsPageClient.ar';
 export const metadata = {
   title: 'الأماكن',
   description: 'خريطة تفاعلية للأماكن الفلسطينية.',
-  alternates: { languages: { en: '/maps' } },
+  alternates: { languages: { en: '/map' } },
 } as const;
 
 export default function MapsPageAr({
@@ -17,7 +17,7 @@ export default function MapsPageAr({
   const places = loadGazetteer();
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
-  const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
+  const enHref = initialFocusId ? `/map?place=${initialFocusId}` : '/map';
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">

@@ -16,14 +16,14 @@ export default function Page({
   const q = (searchParams?.q as string) || '';
   const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
 
-  const events = filterTimeline({ q, eras });
   const allEras = loadEras();
+  const events = filterTimeline({ q, eras, locale: 'ar' });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic">
+    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight">الخط الزمني</h1>
-      <TimelineFilters eras={allEras} />
-      <Timeline events={events} eras={allEras} />
+      <TimelineFilters eras={allEras} locale="ar" />
+      <Timeline events={events} eras={allEras} locale="ar" />
     </main>
   );
 }

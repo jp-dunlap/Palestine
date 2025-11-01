@@ -27,6 +27,9 @@ export type ChapterFrontmatter = {
   date: string;                       // YYYY-MM-DD
   sources: Array<{ id?: string; url?: string }>;
   places?: string[];                  // gazetteer ids/names
+  title_ar?: string;
+  summary_ar?: string;
+  tags_ar?: string[];
 };
 
 // ---------- Places & Map ----------
@@ -41,6 +44,7 @@ export type PlaceKind =
 export type Place = {
   id: string;
   name: string;
+  name_ar?: string;
   lat: number;
   lon: number;
   kind?: PlaceKind;
@@ -59,6 +63,7 @@ export type MapConfig = {
 export type Era = {
   id: string;         // e.g., "foundations"
   title: string;
+  title_ar?: string;
   start: number;      // negative = BCE
   end: number | null; // null = open
   color?: string;
@@ -67,12 +72,15 @@ export type Era = {
 export type TimelineEvent = {
   id: string;                          // usually filename without .yml
   title: string;
+  title_ar?: string;
   start: number;
   end: number | null;                  // null for instant events
   places: string[];                    // gazetteer ids
   sources: string[];                   // CSL-JSON ids or URLs
   summary: string;
+  summary_ar?: string;
   tags: string[];
+  tags_ar?: string[];
   certainty: 'low' | 'medium' | 'high';
   era?: string;                        // era id
 };

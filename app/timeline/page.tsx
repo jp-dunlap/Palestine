@@ -16,14 +16,14 @@ export default function Page({
   const q = (searchParams?.q as string) || '';
   const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
 
-  const events = filterTimeline({ q, eras });
   const allEras = loadEras();
+  const events = filterTimeline({ q, eras, locale: 'en' });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
-      <TimelineFilters eras={allEras} />
-      <Timeline events={events} eras={allEras} />
+      <TimelineFilters eras={allEras} locale="en" />
+      <Timeline events={events} eras={allEras} locale="en" />
     </main>
   );
 }

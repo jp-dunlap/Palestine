@@ -1,10 +1,16 @@
-// app/maps/page.tsx
+// app/map/page.tsx
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClient from '@/components/MapsPageClient';
 
+export const metadata = {
+  title: 'Map of Palestinian places',
+  description: 'Interactive map drawn from the project gazetteer.',
+  alternates: { languages: { ar: '/ar/map' } },
+};
+
 export default function MapsPage({
-  searchParams
+  searchParams,
 }: {
   searchParams?: { place?: string };
 }) {
@@ -12,7 +18,7 @@ export default function MapsPage({
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
 
-  const arHref = initialFocusId ? `/ar/maps?place=${initialFocusId}` : '/ar/maps';
+  const arHref = initialFocusId ? `/ar/map?place=${initialFocusId}` : '/ar/map';
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
