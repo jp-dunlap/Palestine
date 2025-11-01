@@ -1,17 +1,9 @@
-// components/SearchIsland.tsx
 'use client';
+import Search from '@/components/Search';
+import type { SearchDoc } from '@/lib/loaders.search';
 
-import { useEffect, useState } from 'react';
-import Search from './Search';
-
-// Keep types aligned with the Search component’s props
-type Props = { docs: React.ComponentProps<typeof Search>['docs'] };
+type Props = { docs: SearchDoc[] };
 
 export default function SearchIsland({ docs }: Props) {
-  // Client-only mount to avoid any SSR/CSR ordering drift
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
-
   return <Search docs={docs} />;
 }

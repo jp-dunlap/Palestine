@@ -1,15 +1,11 @@
-import '../../globals.css';
-import type { ReactNode } from 'react';
-
 export const metadata = {
   title: 'فلسطين',
-  description: 'تاريخ عام وفني لفلسطين'
-};
+} as const;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className="font-arabic">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
