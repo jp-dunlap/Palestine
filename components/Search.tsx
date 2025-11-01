@@ -1,70 +1,85 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { SearchDoc } from '@/lib/loaders.search';
 
-export default function Search({
-  docs,
-  placeholder = 'Search',
-  clearLabel = 'Clear search',
-  tagPrefix = '/timeline?tags='
-}: {
-  docs: SearchDoc[];
+type Doc = { title: string; summary: string; tags: string[]; href: string; lang: 'en' | 'ar' };
+type Props = {
+  docs: Doc[];
   placeholder?: string;
-  clearLabel?: string;
-  tagPrefix?: string;
-}) {
-  const [q, setQ] = useState('');
+  locale?: 'en' | 'ar';
+};
 
-  const filtered = useMemo(() => {
+export default function Search({ docs, placeholder, locale = 'en' }: Props) {
+  const [q, setQ] = useState('');
+  const [visible, setVisible] = useState(8);
+
+  const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return docs;
-    return docs.filter(d =>
-      d.title.toLowerCase().includes(needle) ||
-      d.summary.toLowerCase().includes(needle) ||
-      d.tags.some(t => t.toLowerCase().includes(needle))
-    );
+    return docs.filter((d) => {
+      const hay =
+        `${d.title} ${d.summary} ${d.tags.join(' ')}`.toLowerCase();
+      return hay.includes(needle);
+    });
   }, [q, docs]);
+
+  const shown = results.slice(0, visible);
 
   return (
     <div>
-      <label htmlFor="home-search" className="sr-only">{placeholder}</label>
-      <div className="relative">
+      <label className="block text-sm text-gray-700">
+        <span className={locale === 'ar' ? 'font-arabic' : undefined}>
+          {placeholder ?? (locale === 'ar' ? 'ابحث…' : 'Search…')}
+        </span>
         <input
-          id="home-search"
-          name="q"
+          className="mt-1 w-full rounded border px-3 py-2 text-sm"
           value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder={placeholder}
-          className="w-full rounded border px-3 py-2"
-          aria-label={placeholder}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setVisible(8);
+          }}
+          placeholder={placeholder ?? (locale === 'ar' ? 'ابحث…' : 'Search…')}
         />
-        {q ? (
-          <button
-            type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-sm"
-            onClick={() => setQ('')}
-            aria-label={clearLabel}
-          >
-            ×
-          </button>
-        ) : null}
+      </label>
+
+      <div className="mt-3 text-xs text-gray-600" aria-live="polite">
+        {results.length === 0
+          ? locale === 'ar'
+            ? 'لا توجد نتائج مطابقة'
+            : 'No items match your search'
+          : locale === 'ar'
+          ? `${results.length} نتيجة`
+          : `${results.length} result${results.length === 1 ? '' : 's'}`}
       </div>
+
       <ul className="mt-4 space-y-3">
-        {filtered.map((d, i) => (
-          <li key={d.href + i} className="rounded border p-3">
-            <a href={d.href} className="font-medium hover:underline">{d.title}</a>
-            {d.summary ? <p className="mt-1 text-sm text-gray-600">{d.summary}</p> : null}
-            {d.tags?.length ? (
-              <div className="mt-2 text-xs text-gray-500">
-                {d.tags.map((t, idx) => (
-                  <a key={t + idx} href={`${tagPrefix}${encodeURIComponent(t)}`} className="mr-2 hover:underline">#{t}</a>
-                ))}
-              </div>
-            ) : null}
+        {shown.map((d, i) => (
+          <li key={`${d.href}-${i}`} className="rounded border p-3">
+            <a href={d.href} className="block">
+              <h3 className="text-sm font-semibold">
+                {d.title}
+              </h3>
+              {d.summary ? (
+                <p className="mt-1 text-xs text-gray-600">{d.summary}</p>
+              ) : null}
+              {d.tags?.length ? (
+                <div className="mt-1 text-xs text-gray-500">#{d.tags.join(' #')}</div>
+              ) : null}
+            </a>
           </li>
         ))}
       </ul>
+
+      {results.length > visible ? (
+        <div className="mt-4">
+          <button
+            className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
+            onClick={() => setVisible((v) => v + 8)}
+          >
+            {locale === 'ar' ? 'عرض المزيد' : 'Load more results'}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,14 +1,35 @@
-import Link from 'next/link';
+'use client';
 
-export default function LanguageSwitcher({ locale }: { locale: 'en' | 'ar' }) {
-  const isAr = locale === 'ar';
+import { useEffect, useState } from 'react';
+
+type Props = {
+  className?: string;
+  labelEn?: string;
+  labelAr?: string;
+};
+
+function toggleLocale(pathname: string): string {
+  if (!pathname.startsWith('/ar')) {
+    return pathname === '/' ? '/ar' : `/ar${pathname}`;
+  }
+  const rest = pathname.slice(3) || '/';
+  return rest;
+}
+
+export default function LanguageSwitcher({ className, labelEn = 'English', labelAr = 'العربية' }: Props) {
+  const [href, setHref] = useState('/ar');
+  const [label, setLabel] = useState(labelAr);
+
+  useEffect(() => {
+    const { pathname, search } = window.location;
+    const target = toggleLocale(pathname) + (search || '');
+    setHref(target);
+    setLabel(pathname.startsWith('/ar') ? labelEn : labelAr);
+  }, [labelAr, labelEn]);
+
   return (
-    <div className="flex items-center gap-3">
-      {isAr ? (
-        <Link href="/" className="underline">English</Link>
-      ) : (
-        <Link href="/ar" className="underline">العربية</Link>
-      )}
-    </div>
+    <a href={href} className={className}>
+      {label}
+    </a>
   );
 }

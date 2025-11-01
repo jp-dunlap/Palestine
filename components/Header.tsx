@@ -1,28 +1,28 @@
-import Link from 'next/link';
 import LanguageSwitcher from './LanguageSwitcher';
 
-export default function Header({ locale }: { locale: 'en' | 'ar' }) {
-  const isAr = locale === 'ar';
-  const base = isAr ? '/ar' : '';
-  const t = {
-    title: isAr ? 'فلسطين' : 'Palestine',
-    home: isAr ? 'الرئيسية' : 'Home',
-    timeline: isAr ? 'الخط الزمني' : 'Timeline',
-    map: isAr ? 'الخريطة' : 'Map',
-    chapters: isAr ? 'الفصول' : 'Chapters',
-  };
-
+export default function Header({ locale = 'en' }: { locale?: 'en' | 'ar' }) {
+  const base = locale === 'ar' ? '/ar' : '';
+  const navClass = 'text-sm hover:underline';
   return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <nav className="flex items-center gap-4" aria-label="Primary">
-          <Link href={isAr ? '/ar' : '/'} className="font-semibold">{t.title}</Link>
-          <Link href={`${base}/timeline`} className="hover:underline">{t.timeline}</Link>
-          <Link href={`${base}/map`} className="hover:underline">{t.map}</Link>
-          <Link href={`${base}/chapters`} className="hover:underline">{t.chapters}</Link>
-        </nav>
-        <LanguageSwitcher locale={locale} />
-      </div>
+    <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+      <a href={base || '/'} className="text-base font-semibold">
+        {locale === 'ar' ? 'فلسطين' : 'Palestine'}
+      </a>
+      <nav className="flex items-center gap-5">
+        <a href={`${base}/timeline`} className={navClass}>
+          {locale === 'ar' ? 'الخطّ الزمني' : 'Timeline'}
+        </a>
+        <a href={`${base}/map`} className={navClass}>
+          {locale === 'ar' ? 'الخريطة' : 'Map'}
+        </a>
+        <a href={`${base}/chapters`} className={navClass}>
+          {locale === 'ar' ? 'الفصول' : 'Chapters'}
+        </a>
+        <a href={`${base}/about`} className={navClass}>
+          {locale === 'ar' ? 'عن المشروع' : 'About'}
+        </a>
+        <LanguageSwitcher className="rounded border px-2 py-1" />
+      </nav>
     </header>
   );
 }

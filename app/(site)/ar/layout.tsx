@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 import Header from '@/components/Header';
-import SkipLink from '@/components/SkipLink';
+import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'فلسطين — ٤٠٠٠ سنة من الذاكرة',
-  description: 'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
+  description:
+    'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
   openGraph: {
     title: 'فلسطين — ٤٠٠٠ سنة من الذاكرة',
-    description: 'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
+    description:
+      'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
     type: 'website',
   },
   alternates: {
@@ -15,13 +17,13 @@ export const metadata = {
   },
 };
 
-export default function ArLayout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className="font-sans">
-        <SkipLink label="تجاوز إلى المحتوى" />
+      <body>
         <Header locale="ar" />
-        <main id="main">{children}</main>
+        <main className="font-arabic">{children}</main>
+        <Footer locale="ar" />
       </body>
     </html>
   );
