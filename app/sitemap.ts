@@ -8,10 +8,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const urls: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, alternates: { languages: { en: `${base}/`, ar: `${base}/ar` } } },
-    { url: `${base}/maps`, lastModified: now, alternates: { languages: { en: `${base}/maps`, ar: `${base}/ar/maps` } } },
+    { url: `${base}/map`, lastModified: now, alternates: { languages: { en: `${base}/map`, ar: `${base}/ar/map` } } },
     { url: `${base}/timeline`, lastModified: now },
     { url: `${base}/ar`, lastModified: now, alternates: { languages: { en: `${base}/`, ar: `${base}/ar` } } },
-    { url: `${base}/ar/maps`, lastModified: now, alternates: { languages: { en: `${base}/maps`, ar: `${base}/ar/maps` } } },
+    { url: `${base}/ar/map`, lastModified: now, alternates: { languages: { en: `${base}/map`, ar: `${base}/ar/map` } } },
     // Add chapters as you publish them (EN + AR pairs)
     // { url: `${base}/chapters/001-prologue`, lastModified: now, alternates: { languages: { en: `${base}/chapters/001-prologue`, ar: `${base}/ar/chapters/001-prologue` } } },
   ];
