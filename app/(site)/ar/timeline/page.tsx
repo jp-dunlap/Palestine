@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { loadEras, filterTimeline } from '@/lib/loaders.timeline';
 import Timeline from '@/components/Timeline';
 import TimelineFilters from '@/components/TimelineFilters';
@@ -22,7 +23,13 @@ export default function Page({
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight">الخط الزمني</h1>
-      <TimelineFilters eras={allEras} locale="ar" />
+      <Suspense
+        fallback={
+          <div className="mb-6 h-24 animate-pulse rounded border" aria-hidden="true" dir="rtl" />
+        }
+      >
+        <TimelineFilters eras={allEras} locale="ar" />
+      </Suspense>
       <Timeline events={events} eras={allEras} locale="ar" />
     </main>
   );

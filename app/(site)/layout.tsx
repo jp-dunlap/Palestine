@@ -1,5 +1,6 @@
 // app/(site)/layout.tsx
 import type { ReactNode } from 'react';
+import { Suspense } from 'react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 /**
@@ -11,7 +12,9 @@ export default function SiteSegmentLayout({ children }: { children: ReactNode })
     <div className="min-h-screen bg-white text-gray-900">
       <header className="border-b">
         <div className="mx-auto flex max-w-4xl justify-end px-4 py-3" dir="ltr">
-          <LanguageSwitcher />
+          <Suspense fallback={<span className="text-sm text-gray-400">…</span>}>
+            <LanguageSwitcher />
+          </Suspense>
         </div>
       </header>
       <div>{children}</div>
