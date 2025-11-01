@@ -11,7 +11,10 @@ const naskh = Noto_Naskh_Arabic({
   weight: ['400', '700'],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
+
 export const metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'Palestine — 4,000 Years of Memory',
   description:
     'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
