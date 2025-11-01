@@ -2,8 +2,11 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import { Noto_Naskh_Arabic } from 'next/font/google';
+import Header from '@/components/Header';
+import SkipLink from '@/components/SkipLink';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const naskh = Noto_Naskh_Arabic({
@@ -32,7 +35,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${naskh.variable} font-sans`}>
-        {children}
+        <SkipLink />
+        <Suspense fallback={<div className="h-10" />}>
+          <Header locale="en" />
+        </Suspense>
+        <main id="main">{children}</main>
       </body>
     </html>
   );

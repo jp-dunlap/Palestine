@@ -1,79 +1,105 @@
-// components/Search.tsx
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 
 export type SearchDoc = {
   title: string;
   summary: string;
   tags: string[];
   href: string;
-  lang?: 'en' | 'ar';
+  lang: 'en' | 'ar';
 };
 
 type Props = {
-  /** Docs provided by the server page (already in preferred order) */
   docs: SearchDoc[];
-  /** 'en' (default) or 'ar' to localize placeholder + UI strings */
-  locale?: 'en' | 'ar';
+  placeholder?: string;
+  dir?: 'ltr' | 'rtl';
+  lang?: 'en' | 'ar';
 };
 
-export default function Search({ docs, locale = 'en' }: Props) {
+export default function Search({ docs, placeholder = 'Search…', dir = 'ltr', lang = 'en' }: Props) {
   const [q, setQ] = useState('');
-
-  const t = useMemo(() => {
-    if (locale === 'ar') {
-      return {
-        searchLabel: 'ابحث',
-        placeholder: 'ابحث في الفصول، الأماكن، والخط الزمني…',
-      };
-    }
-    return {
-      searchLabel: 'Search',
-      placeholder: 'Search chapters, places, timeline…',
-    };
-  }, [locale]);
+  const [limit, setLimit] = useState(8);
+  const liveRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
-    if (!qq) return docs;
-    return docs.filter((d) => {
-      const hay = [d.title, d.summary, ...(d.tags ?? [])].join(' ').toLowerCase();
-      return hay.includes(qq);
+    const needle = q.trim().toLowerCase();
+    if (!needle) return docs;
+    return docs.filter(d => {
+      const hay = [d.title, d.summary, ...(d.tags || [])].join(' ').toLowerCase();
+      return hay.includes(needle);
     });
-  }, [q, docs]);
+  }, [docs, q]);
 
-  // Limit initial render for snappy paint
-  const initial = filtered.slice(0, 8);
+  const visible = filtered.slice(0, limit);
+  const hasMore = filtered.length > visible.length;
+
+  useEffect(() => {
+    // Reduce limit when query changes so the user sees the “top” results first
+    setLimit(8);
+  }, [q]);
+
+  useEffect(() => {
+    // Announce results count for screen readers when it changes
+    if (liveRef.current) {
+      liveRef.current.textContent =
+        filtered.length === 0
+          ? (lang === 'ar' ? 'لا نتائج' : 'No results')
+          : (lang === 'ar'
+              ? `عُثر على ${filtered.length} نتيجة`
+              : `${filtered.length} result${filtered.length === 1 ? '' : 's'} found`);
+    }
+  }, [filtered.length, lang]);
 
   return (
-    <div>
-      <label className="block text-sm font-medium mb-1">{t.searchLabel}</label>
+    <div dir={dir}>
+      <label className="block text-sm font-medium mb-2" htmlFor="q">
+        {lang === 'ar' ? 'بحث' : 'Search'}
+      </label>
       <input
+        id="q"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        className="w-full rounded border px-3 py-2 text-sm"
-        placeholder={t.placeholder}
-        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+        placeholder={placeholder}
+        className="w-full rounded border px-3 py-2"
+        aria-describedby="search-status"
+        aria-label={lang === 'ar' ? 'بحث' : 'Search'}
       />
 
-      <ul className="mt-4 space-y-3" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        {initial.map((d, i) => (
-          <li key={`${d.href}-${i}`} className="rounded border p-3 hover:bg-gray-50">
-            <a href={d.href} className="block">
-              <div className="font-semibold">{d.title}</div>
-              {d.summary ? (
-                <div className="text-sm text-gray-600 mt-1">{d.summary}</div>
-              ) : null}
-              {(d.tags?.length ?? 0) > 0 ? (
-                <div className="mt-1 text-xs text-gray-500">
-                  #{d.tags!.join(' #')}
-                </div>
-              ) : null}
-            </a>
-          </li>
-        ))}
-      </ul>
+      <div id="search-status" ref={liveRef} className="sr-only" aria-live="polite" />
+
+      {visible.length === 0 ? (
+        <p className="mt-4 text-sm text-gray-600">
+          {lang === 'ar' ? 'لا توجد نتائج مطابقة.' : 'No results found.'}
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {visible.map((d) => (
+            <li key={`${d.lang}:${d.href}`} className="rounded border p-3 hover:bg-gray-50">
+              <a href={d.href} className="block">
+                <h3 className="font-semibold">{d.title}</h3>
+                {d.summary ? <p className="text-sm text-gray-600 mt-1">{d.summary}</p> : null}
+                {d.tags?.length ? (
+                  <p className="mt-2 text-xs text-gray-500">#{d.tags.join(' #')}</p>
+                ) : null}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {hasMore && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setLimit((n) => n + 12)}
+            className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
+            aria-label={lang === 'ar' ? 'عرض المزيد من النتائج' : 'Show more results'}
+          >
+            {lang === 'ar' ? 'عرض المزيد' : 'Show more'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

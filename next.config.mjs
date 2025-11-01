@@ -12,6 +12,12 @@ const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  async redirects() {
+    return [
+      { source: '/maps', destination: '/map', permanent: true },
+      { source: '/ar/maps', destination: '/ar/map', permanent: true },
+    ];
+  },
 };
 
 export default withMDX(nextConfig);

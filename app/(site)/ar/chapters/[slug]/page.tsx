@@ -14,6 +14,8 @@ export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
 }
 
+type Props = { params: { slug: string } };
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const { frontmatter: arFm, isFallback } = loadChapterFrontmatterAr(params.slug);
   const enFm = loadChapterFrontmatter(params.slug);
@@ -35,8 +37,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-type Props = { params: { slug: string } };
-
 export default async function Page({ params }: Props) {
   const { source, isFallback } = loadChapterSourceAr(params.slug);
   const { content, frontmatter } = await compileMDX({
@@ -49,9 +49,7 @@ export default async function Page({ params }: Props) {
     title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[]; era?: string;
   };
 
-  const enAvailable = hasEnChapter(params.slug);
   const enMeta = loadChapterFrontmatter(params.slug);
-
   const title = meta.title ?? enMeta.title;
   const summary = meta.summary ?? enMeta.summary;
   const authors = meta.authors?.length ? meta.authors : enMeta.authors;
@@ -63,23 +61,21 @@ export default async function Page({ params }: Props) {
   const eraDisplay = (() => {
     if (!era) return undefined;
     const needle = String(era).toLowerCase();
-    const match = (eras as any[]).find((e: any) => {
-      const id = (e?.id ?? '').toString().toLowerCase();
-      const t = (e?.title ?? '').toString().toLowerCase();
-      const ta = (e?.title_ar ?? '').toString().toLowerCase();
-      return id === needle || t === needle || ta === needle;
-    });
+    const match = eras.find(e =>
+      e.id.toLowerCase() === needle ||
+      (e.title || '').toLowerCase() === needle ||
+      ((e as any).title_ar || '').toLowerCase() === needle
+    );
     if (!match) return era;
-    return (match as any).title_ar ?? (match as any).title ?? era;
+    return (match as any).title_ar ?? match.title;
   })();
 
   const gaz = loadGazetteer();
   const placeMap = new Map<string, string>();
-  for (const p of gaz as any[]) {
-    const name = (p as any).name;
-    const ar = (p as any).name_ar ?? name;
-    placeMap.set(String(name).toLowerCase(), ar);
-    for (const alt of ((p as any).alt_names ?? [])) {
+  for (const p of gaz) {
+    const ar = (p as any).name_ar ?? p.name;
+    placeMap.set(String(p.name).toLowerCase(), ar);
+    for (const alt of p.alt_names ?? []) {
       placeMap.set(String(alt).toLowerCase(), ar);
     }
   }
@@ -89,7 +85,7 @@ export default async function Page({ params }: Props) {
   });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight font-arabic">{title}</h1>
 
       {summary && (
@@ -103,9 +99,7 @@ export default async function Page({ params }: Props) {
       ) : null}
 
       <div className="mt-2 text-sm text-gray-600">
-        {enAvailable ? (
-          <a className="underline" href={`/chapters/${params.slug}`}>English</a>
-        ) : null}
+        <a className="underline" href="/ar">الصفحة الرئيسية</a>
       </div>
 
       <dl className="mt-4 space-y-1 text-sm text-gray-600 font-arabic">
@@ -124,13 +118,25 @@ export default async function Page({ params }: Props) {
         {placesAr?.length ? (
           <div>
             <dt className="inline font-semibold">الأماكن:</dt>{' '}
-            <dd className="inline">{placesAr.join('، ')}</dd>
+            <dd className="inline space-x-2">
+              {placesAr.map((p) => (
+                <a key={p as any} className="underline hover:no-underline" href={`/ar/map?place=${encodeURIComponent(String(p))}`}>
+                  {p as any}
+                </a>
+              ))}
+            </dd>
           </div>
         ) : null}
         {tags?.length ? (
           <div>
             <dt className="inline font-semibold">الوسوم:</dt>{' '}
-            <dd className="inline">#{tags.join(' #')}</dd>
+            <dd className="inline space-x-2">
+              {tags.map((t) => (
+                <a key={t} className="underline hover:no-underline" href={`/ar/timeline?query=${encodeURIComponent(String(t))}`}>
+                  #{t}
+                </a>
+              ))}
+            </dd>
           </div>
         ) : null}
       </dl>

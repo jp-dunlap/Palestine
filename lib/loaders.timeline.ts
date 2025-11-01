@@ -2,128 +2,174 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
-import type { Era, TimelineEvent } from '@/lib/types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const TIMELINE_DIR = path.join(DATA_DIR, 'timeline');
+const ROOT = process.cwd();
+const TL_DIR = path.join(ROOT, 'data', 'timeline');
+const ERAS_YML = path.join(ROOT, 'data', 'eras.yml');
+const ERAS_YAML = path.join(ROOT, 'data', 'eras.yaml');
 
-function toYearNumber(v: unknown): number | null {
-  if (v === null || typeof v === 'undefined' || v === '') return null;
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-  if (typeof v === 'string') {
-    const m = v.trim().match(/^(-?\d{1,4})/);
-    if (m) return Number(m[1]);
-  }
-  throw new Error(`Invalid year value: ${JSON.stringify(v)}`);
+export type Era = {
+  id: string;
+  title: string;
+  title_ar?: string;
+  start?: number;
+  end?: number;
+};
+
+export type TimelineEvent = {
+  id: string;
+  title: string;
+  title_ar?: string;
+  summary?: string;
+  summary_ar?: string;
+  tags?: string[];
+  tags_ar?: string[];
+  places?: string[];
+  start: number;
+  end?: number;
+  era?: string; // may be missing in older files
+};
+
+function inferEra(start: number): string | undefined {
+  // coarse defaults; adjust alongside data/eras.yml if needed
+  if (start >= 1517 && start < 1917) return 'ottoman';
+  if (start >= 1917 && start < 1948) return 'british-mandate';
+  if (start >= 1948) return 'modern';
+  return undefined;
 }
-function requireYearNumber(v: unknown, ctx: string): number {
-  const n = toYearNumber(v);
-  if (n === null) throw new Error(`Missing required year for ${ctx}`);
-  return n;
-}
-function readYamlObject(filePath: string): Record<string, unknown> {
-  const raw = fs.readFileSync(filePath, 'utf8');
-  const doc = YAML.parse(raw);
-  if (doc === null || typeof doc !== 'object' || Array.isArray(doc)) {
-    throw new Error(`Expected a YAML object in ${path.relative(process.cwd(), filePath)}`);
+
+let warned = false;
+
+export function loadTimelineEvents(): TimelineEvent[] {
+  if (!fs.existsSync(TL_DIR)) return [];
+  const files = fs.readdirSync(TL_DIR).filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
+  const out: TimelineEvent[] = [];
+
+  for (const file of files) {
+    const raw = fs.readFileSync(path.join(TL_DIR, file), 'utf8');
+    const data = YAML.parse(raw);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      // Skip malformed
+      continue;
+    }
+    const ev = data as Partial<TimelineEvent>;
+    if (typeof ev.start !== 'number') {
+      // Skip if missing required year
+      continue;
+    }
+    const era = ev.era || inferEra(ev.start);
+    if (!ev.era && era && !warned) {
+      console.warn('[timeline] inferred era for events missing "era" (add era to YAML for accuracy)');
+      warned = true;
+    }
+    out.push({
+      id: String(ev.id ?? path.basename(file, path.extname(file))),
+      title: String(ev.title ?? ''),
+      title_ar: ev.title_ar ? String(ev.title_ar) : undefined,
+      summary: ev.summary ? String(ev.summary) : undefined,
+      summary_ar: ev.summary_ar ? String(ev.summary_ar) : undefined,
+      tags: Array.isArray(ev.tags) ? ev.tags.map(String) : [],
+      tags_ar: Array.isArray(ev.tags_ar) ? ev.tags_ar.map(String) : [],
+      places: Array.isArray(ev.places) ? ev.places.map(String) : [],
+      start: Number(ev.start),
+      end: typeof ev.end === 'number' ? ev.end : undefined,
+      era,
+    });
   }
-  return doc as Record<string, unknown>;
+
+  // chronological sort
+  out.sort((a, b) => (a.start - b.start) || a.id.localeCompare(b.id));
+  return out;
 }
 
 export function loadEras(): Era[] {
-  const p = path.join(DATA_DIR, 'eras.yml');
-  const raw = fs.readFileSync(p, 'utf8');
-  const arr = (YAML.parse(raw) as any[]) || [];
+  let eras: Era[] | null = null;
 
-  const eras: Era[] = [];
-  for (const e of arr) {
-    if (!e) continue;
-    try {
-      const start = requireYearNumber(e.start, `era ${e.id ?? '(no id)'} start`);
-      const endMaybe = toYearNumber(e.end);
-      if (endMaybe !== null && start > endMaybe) {
-        throw new Error(`Era ${e.id} has start > end (${start} > ${endMaybe})`);
-      }
-      eras.push({
+  const read = (p: string) => {
+    const raw = fs.readFileSync(p, 'utf8');
+    const data = YAML.parse(raw);
+    if (Array.isArray(data)) {
+      return data.map((e: any) => ({
         id: String(e.id),
-        title: String(e.title ?? e.label ?? e.id),
-        start,
-        ...(endMaybe !== null ? { end: endMaybe } : {}),
-        ...(typeof e.color === 'string' ? { color: e.color } : {}),
-      } as Era);
-    } catch (err) {
-      console.error('[eras] skip invalid entry', e?.id ?? '(no id)', String(err));
+        title: String(e.title ?? ''),
+        title_ar: e.title_ar ? String(e.title_ar) : undefined,
+        start: typeof e.start === 'number' ? e.start : undefined,
+        end: typeof e.end === 'number' ? e.end : undefined,
+      })) as Era[];
     }
+    if (data && typeof data === 'object') {
+      return Object.keys(data).map((k) => {
+        const e = (data as any)[k] ?? {};
+        return {
+          id: String(k),
+          title: String(e.title ?? ''),
+          title_ar: e.title_ar ? String(e.title_ar) : undefined,
+          start: typeof e.start === 'number' ? e.start : undefined,
+          end: typeof e.end === 'number' ? e.end : undefined,
+        } as Era;
+      });
+    }
+    return null;
+  };
+
+  if (fs.existsSync(ERAS_YML)) eras = read(ERAS_YML);
+  if (!eras && fs.existsSync(ERAS_YAML)) eras = read(ERAS_YAML);
+
+  if (!eras) {
+    // Fallback eras
+    eras = [
+      { id: 'bronze-age', title: 'Bronze Age', title_ar: 'العصر البرونزي', start: -3300, end: -1200 },
+      { id: 'iron-age', title: 'Iron Age', title_ar: 'العصر الحديدي', start: -1200, end: -539 },
+      { id: 'classical', title: 'Classical Antiquity', title_ar: 'العصور الكلاسيكية', start: -539, end: 700 },
+      { id: 'islamic', title: 'Islamic', title_ar: 'العصر الإسلامي', start: 700, end: 1517 },
+      { id: 'ottoman', title: 'Ottoman', title_ar: 'العثماني', start: 1517, end: 1917 },
+      { id: 'british-mandate', title: 'British Mandate', title_ar: 'الانتداب البريطاني', start: 1917, end: 1948 },
+      { id: 'modern', title: 'Modern', title_ar: 'الحديث', start: 1948 },
+    ];
   }
-  eras.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
+
   return eras;
 }
 
-export function loadTimelineEvents(): TimelineEvent[] {
-  if (!fs.existsSync(TIMELINE_DIR)) return [];
-  const files = fs.readdirSync(TIMELINE_DIR).filter((f) => f.endsWith('.yml'));
-  const events: TimelineEvent[] = [];
+export function filterTimeline(
+  events: TimelineEvent[],
+  opts: { query?: string; era?: string; tag?: string; place?: string } = {}
+): TimelineEvent[] {
+  const { query, era, tag, place } = opts;
+  const q = (query ?? '').trim().toLowerCase();
+  const eraId = (era ?? '').trim().toLowerCase();
+  const t = (tag ?? '').trim().toLowerCase();
+  const pl = (place ?? '').trim().toLowerCase();
 
-  for (const f of files) {
-    const full = path.join(TIMELINE_DIR, f);
-    try {
-      const d = readYamlObject(full);
-
-      const id = d.id != null ? String(d.id) : null;
-      if (!id) throw new Error('Missing id');
-
-      const start = requireYearNumber(d.start, `event ${id} start`);
-      const endMaybe = toYearNumber(d.end);
-      if (endMaybe !== null && start > endMaybe) {
-        throw new Error(`start > end (${start} > ${endMaybe})`);
-      }
-
-      events.push({
-        id,
-        title: String(d.title ?? id),
-        start,
-        end: endMaybe, // number | null
-        places: Array.isArray(d.places) ? d.places.map(String) : [],
-        sources: Array.isArray(d.sources) ? d.sources.map(String) : [],
-        summary: d.summary ? String(d.summary) : '',
-        tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
-        certainty: (['low', 'medium', 'high'].includes(d.certainty as any)
-          ? (d.certainty as 'low' | 'medium' | 'high')
-          : 'medium'),
-        era: d.era ? String(d.era) : undefined,
-      });
-    } catch (err) {
-      console.error('[timeline] skip', path.basename(full), '→', String(err));
-      continue;
-    }
-  }
-
-  events.sort((a, b) => (a.start - b.start) || a.title.localeCompare(b.title));
-  return events;
-}
-
-export function filterTimeline(params: {
-  q?: string;
-  eras?: string[];
-  tags?: string[];
-  places?: string[];
-}): TimelineEvent[] {
-  const q = (params.q ?? '').toLowerCase();
-  const wantEras = new Set((params.eras ?? []).map(String));
-  const wantTags = new Set((params.tags ?? []).map(String));
-  const wantPlaces = new Set((params.places ?? []).map(String));
-
-  return loadTimelineEvents().filter((e) => {
+  return events.filter((ev) => {
     if (q) {
-      const hay = [e.title, e.summary, ...(e.tags ?? []), ...(e.places ?? [])]
+      const hay = [
+        ev.title,
+        ev.title_ar,
+        ev.summary,
+        ev.summary_ar,
+        ...(ev.tags ?? []),
+        ...(ev.tags_ar ?? []),
+        ...(ev.places ?? []),
+      ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       if (!hay.includes(q)) return false;
     }
-    if (wantEras.size && (!e.era || !wantEras.has(e.era))) return false;
-    if (wantTags.size && !(e.tags ?? []).some((t) => wantTags.has(t))) return false;
-    if (wantPlaces.size && !(e.places ?? []).some((p) => wantPlaces.has(p))) return false;
+    if (eraId) {
+      const e = (ev.era ?? '').toLowerCase();
+      if (e !== eraId) return false;
+    }
+    if (t) {
+      const tagsLower = (ev.tags ?? []).map((x) => x.toLowerCase());
+      const tagsArLower = (ev.tags_ar ?? []).map((x) => x.toLowerCase());
+      if (![...tagsLower, ...tagsArLower].includes(t)) return false;
+    }
+    if (pl) {
+      const placesLower = (ev.places ?? []).map((x) => x.toLowerCase());
+      if (!placesLower.includes(pl)) return false;
+    }
     return true;
   });
 }
