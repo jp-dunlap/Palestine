@@ -1,30 +1,35 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || '';
+type Props = {
+  className?: string;
+  labelEn?: string;
+  labelAr?: string;
+};
 
-export default function LanguageSwitcher({ locale }: { locale: 'en' | 'ar' }) {
-  const pathname = usePathname() || '/';
-  const search = useSearchParams();
-  const query = search?.toString() ? `?${search!.toString()}` : '';
+function toggleLocale(pathname: string): string {
+  if (!pathname.startsWith('/ar')) {
+    return pathname === '/' ? '/ar' : `/ar${pathname}`;
+  }
+  const rest = pathname.slice(3) || '/';
+  return rest;
+}
 
-  const opposite = locale === 'ar' ? 'en' : 'ar';
-  const path =
-    opposite === 'ar'
-      ? (pathname.startsWith('/ar') ? pathname : `/ar${pathname}`) // ensure ar prefix
-      : (pathname.startsWith('/ar') ? pathname.replace(/^\/ar(\/|$)/, '/') : pathname);
+export default function LanguageSwitcher({ className, labelEn = 'English', labelAr = 'العربية' }: Props) {
+  const [href, setHref] = useState('/ar');
+  const [label, setLabel] = useState(labelAr);
 
-  // Build absolute URL to avoid relative edge cases on Vercel runtimes
-  const href = BASE ? new URL(`${path}${query}`, BASE).toString() : `${path}${query}`;
+  useEffect(() => {
+    const { pathname, search } = window.location;
+    const target = toggleLocale(pathname) + (search || '');
+    setHref(target);
+    setLabel(pathname.startsWith('/ar') ? labelEn : labelAr);
+  }, [labelAr, labelEn]);
 
   return (
-    <a
-      href={href}
-      className="inline-flex items-center text-sm underline hover:no-underline"
-      aria-label={opposite === 'ar' ? 'العربية' : 'English'}
-    >
-      {opposite === 'ar' ? 'العربية' : 'English'}
+    <a href={href} className={className}>
+      {label}
     </a>
   );
 }

@@ -1,29 +1,36 @@
-import { loadEras, filterTimeline } from '@/lib/loaders.timeline';
-import Timeline from '@/components/Timeline';
-import TimelineFilters from '@/components/TimelineFilters';
+import TimelinePageClient, { Era, TimelineEvent } from '@/components/TimelinePageClient';
+import { loadTimelineEvents } from '@/lib/loaders.timeline';
 
-export const metadata = {
-  title: 'Timeline',
-  description: 'A public, art-grade timeline of Palestine with eras, places, and sources.',
-  alternates: { languages: { ar: '/ar/timeline' } },
-};
+function toEvent(e: any): TimelineEvent {
+  return {
+    id: String(e.id),
+    title: String(e.title || ''),
+    summary: e.summary ? String(e.summary) : '',
+    tags: Array.isArray(e.tags) ? e.tags.map(String) : [],
+    era: e.era ? String(e.era) : undefined,
+    href: `/timeline#${e.id}`,
+  };
+}
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const q = (searchParams?.q as string) || '';
-  const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
-
-  const events = filterTimeline({ q, eras });
-  const allEras = loadEras();
+export default function Page() {
+  const all = loadTimelineEvents().map(toEvent);
+  const erasMap = new Map<string, Era>();
+  for (const e of all) {
+    if (e.era) {
+      const id = e.era;
+      if (!erasMap.has(id)) {
+        erasMap.set(id, { id, title: id });
+      }
+    }
+  }
+  const eras = Array.from(erasMap.values());
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
-      <TimelineFilters eras={allEras} />
-      <Timeline events={events} eras={allEras} />
+      <div className="mt-6">
+        <TimelinePageClient events={all} eras={eras} locale="en" />
+      </div>
     </main>
   );
 }

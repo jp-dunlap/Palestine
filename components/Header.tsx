@@ -1,28 +1,28 @@
-'use client';
-
 import LanguageSwitcher from './LanguageSwitcher';
-import { usePathname } from 'next/navigation';
 
-export default function Header({ locale = 'en' as 'en' | 'ar' }) {
-  const pathname = usePathname() || '/';
-  const isAr = locale === 'ar';
-
+export default function Header({ locale = 'en' }: { locale?: 'en' | 'ar' }) {
+  const base = locale === 'ar' ? '/ar' : '';
+  const navClass = 'text-sm hover:underline';
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
-      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-        <a href={isAr ? '/ar' : '/'} className="font-semibold">
-          {isAr ? 'فلسطين — ٤٠٠٠ سنة من الذاكرة' : 'Palestine — 4,000 Years of Memory'}
+    <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+      <a href={base || '/'} className="text-base font-semibold">
+        {locale === 'ar' ? 'فلسطين' : 'Palestine'}
+      </a>
+      <nav className="flex items-center gap-5">
+        <a href={`${base}/timeline`} className={navClass}>
+          {locale === 'ar' ? 'الخطّ الزمني' : 'Timeline'}
         </a>
-        <nav className="flex items-center gap-4" dir={isAr ? 'rtl' : 'ltr'}>
-          <a href={isAr ? '/ar/timeline' : '/timeline'} className="text-sm underline hover:no-underline">
-            {isAr ? 'الخطّ الزمني' : 'Timeline'}
-          </a>
-          <a href={isAr ? '/ar/map' : '/map'} className="text-sm underline hover:no-underline">
-            {isAr ? 'الخريطة' : 'Map'}
-          </a>
-          <LanguageSwitcher locale={isAr ? 'ar' : 'en'} />
-        </nav>
-      </div>
+        <a href={`${base}/map`} className={navClass}>
+          {locale === 'ar' ? 'الخريطة' : 'Map'}
+        </a>
+        <a href={`${base}/chapters`} className={navClass}>
+          {locale === 'ar' ? 'الفصول' : 'Chapters'}
+        </a>
+        <a href={`${base}/about`} className={navClass}>
+          {locale === 'ar' ? 'عن المشروع' : 'About'}
+        </a>
+        <LanguageSwitcher className="rounded border px-2 py-1" />
+      </nav>
     </header>
   );
 }
