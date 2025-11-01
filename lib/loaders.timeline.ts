@@ -44,13 +44,21 @@ export function loadEras(): Era[] {
       if (endMaybe !== null && start > endMaybe) {
         throw new Error(`Era ${e.id} has start > end (${start} > ${endMaybe})`);
       }
-      eras.push({
+      const title = String(e.title ?? e.label ?? e.id);
+      const titleArRaw = e.title_ar ?? e.label_ar;
+      const era: Era = {
         id: String(e.id),
-        title: String(e.title ?? e.label ?? e.id),
+        title,
         start,
-        ...(endMaybe !== null ? { end: endMaybe } : {}),
+        end: endMaybe ?? null,
         ...(typeof e.color === 'string' ? { color: e.color } : {}),
-      } as Era);
+      };
+      if (typeof titleArRaw === 'string' && titleArRaw.trim()) {
+        era.title_ar = titleArRaw.trim();
+      }
+      eras.push({
+        ...era,
+      });
     } catch (err) {
       console.error('[eras] skip invalid entry', e?.id ?? '(no id)', String(err));
     }
@@ -81,12 +89,19 @@ export function loadTimelineEvents(): TimelineEvent[] {
       events.push({
         id,
         title: String(d.title ?? id),
+        ...(typeof d.title_ar === 'string' && d.title_ar.trim() ? { title_ar: d.title_ar.trim() } : {}),
         start,
         end: endMaybe, // number | null
         places: Array.isArray(d.places) ? d.places.map(String) : [],
         sources: Array.isArray(d.sources) ? d.sources.map(String) : [],
         summary: d.summary ? String(d.summary) : '',
+        ...(typeof d.summary_ar === 'string' && d.summary_ar.trim()
+          ? { summary_ar: d.summary_ar.trim() }
+          : {}),
         tags: Array.isArray(d.tags) ? d.tags.map(String) : [],
+        ...(Array.isArray(d.tags_ar) && d.tags_ar.length
+          ? { tags_ar: d.tags_ar.map(String) }
+          : {}),
         certainty: (['low', 'medium', 'high'].includes(d.certainty as any)
           ? (d.certainty as 'low' | 'medium' | 'high')
           : 'medium'),
@@ -102,18 +117,36 @@ export function loadTimelineEvents(): TimelineEvent[] {
   return events;
 }
 
-export function filterTimeline(params: {
+type FilterParams = {
   q?: string;
   eras?: string[];
   tags?: string[];
   places?: string[];
-}): TimelineEvent[] {
+  locale?: 'en' | 'ar';
+};
+
+function localiseEvent(event: TimelineEvent, locale: 'en' | 'ar'): TimelineEvent {
+  if (locale !== 'ar') {
+    return { ...event, tags: [...(event.tags ?? [])] };
+  }
+
+  const tagsAr = event.tags_ar && event.tags_ar.length ? event.tags_ar : event.tags;
+  return {
+    ...event,
+    title: event.title_ar?.trim() || event.title,
+    summary: event.summary_ar?.trim() || event.summary,
+    tags: [...(tagsAr ?? [])],
+  };
+}
+
+export function filterTimeline(params: FilterParams): TimelineEvent[] {
+  const locale = params.locale ?? 'en';
   const q = (params.q ?? '').toLowerCase();
   const wantEras = new Set((params.eras ?? []).map(String));
   const wantTags = new Set((params.tags ?? []).map(String));
   const wantPlaces = new Set((params.places ?? []).map(String));
 
-  return loadTimelineEvents().filter((e) => {
+  return loadTimelineEvents().map((event) => localiseEvent(event, locale)).filter((e) => {
     if (q) {
       const hay = [e.title, e.summary, ...(e.tags ?? []), ...(e.places ?? [])]
         .filter(Boolean)

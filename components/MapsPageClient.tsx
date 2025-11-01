@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MapClient from './MapClient';
 
 type Place = {
   id: string;
   name: string;
+  name_ar?: string;
   lat: number;
   lon: number;
   kind?: string;
@@ -35,6 +36,8 @@ export default function MapsPageClient({
 }) {
   const [focusId, setFocusId] = useState<string | null>(initialFocusId ?? null);
   const [fitTrigger, setFitTrigger] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
 
   // Apply deep link on first render if present
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function MapsPageClient({
   // Keep URL in sync when focus changes (no reload)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    setCopied(false);
     const url = new URL(window.location.href);
     if (focusId) url.searchParams.set('place', focusId);
     else url.searchParams.delete('place');
@@ -56,12 +60,24 @@ export default function MapsPageClient({
     return p ? { lat: p.lat, lon: p.lon } : null;
   }, [focusId, places]);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) {
+        window.clearTimeout(copyTimer.current);
+      }
+    };
+  }, []);
+
   async function copyLink() {
     if (typeof window === 'undefined') return;
     try {
       await navigator.clipboard.writeText(window.location.href);
-      // noop toast-free; stays quiet
-    } catch {}
+      setCopied(true);
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
   }
 
   return (
@@ -96,6 +112,10 @@ export default function MapsPageClient({
         >
           Copy link
         </button>
+
+        {copied ? (
+          <span className="text-xs text-green-600">Link copied</span>
+        ) : null}
 
         {focusId ? (
           <span className="text-sm text-gray-600">
