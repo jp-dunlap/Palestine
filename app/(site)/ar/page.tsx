@@ -1,4 +1,3 @@
-// app/(site)/ar/page.tsx
 import SearchIsland from '@/components/SearchIsland';
 import { loadSearchDocs } from '@/lib/loaders.search';
 
@@ -7,6 +6,12 @@ export const metadata = {
   description:
     'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
   alternates: { languages: { en: '/' } },
+  openGraph: {
+    title: 'فلسطين',
+    description:
+      'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
+    type: 'website',
+  },
 } as const;
 
 export default async function Page() {
@@ -22,7 +27,6 @@ export default async function Page() {
       </header>
 
       <div className="mb-6" dir="ltr">
-        {/* Keep input LTR so URLs remain readable; results are Arabic-only */}
         <SearchIsland docs={docs} locale="ar" />
       </div>
 
