@@ -5,7 +5,14 @@ declare module 'leaflet' {
     lng: number;
   }
   export type LatLngExpression = LatLngTuple | LatLngLiteral;
-  export type LatLngBoundsExpression = [LatLngExpression, LatLngExpression] | LatLngExpression[];
+  export interface LatLngBounds {
+    isValid(): boolean;
+  }
+
+  export type LatLngBoundsExpression =
+    | [LatLngExpression, LatLngExpression]
+    | LatLngExpression[]
+    | LatLngBounds;
 
   export interface MapOptions {
     center?: LatLngExpression;
@@ -71,10 +78,6 @@ declare module 'leaflet' {
     createPane(name: string): HTMLElement;
     invalidateSize(options?: boolean | ViewOptions): this;
     options: MapOptions & { maxBoundsViscosity?: number };
-  }
-
-  export interface LatLngBounds {
-    isValid(): boolean;
   }
 
   export function map(element: HTMLElement | string, options?: MapOptions): Map;
