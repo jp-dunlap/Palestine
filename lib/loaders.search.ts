@@ -1,12 +1,8 @@
-// lib/loaders.search.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import { loadTimelineEvents } from '@/lib/loaders.timeline';
 import { translateText } from '@/lib/translate';
-
-// NOTE: We don't pull places here yet. If/when we have Arabic place titles or bilingual data,
-// we can add them similarly to timeline (push both 'en' and 'ar' entries).
 
 const ROOT = process.cwd();
 const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
@@ -33,6 +29,10 @@ function normaliseTags(value: unknown): string[] {
   return value.map((tag) => String(tag));
 }
 
+function hasArabic(s?: string): boolean {
+  return typeof s === 'string' && /[\u0600-\u06FF]/.test(s);
+}
+
 async function loadChapterDocs(): Promise<SearchDoc[]> {
   if (!fs.existsSync(CHAPTERS_DIR)) return [];
   const files = fs.readdirSync(CHAPTERS_DIR).filter((f) => f.endsWith('.mdx'));
@@ -40,7 +40,7 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
   const docs: SearchDoc[] = [];
 
   for (const file of files) {
-    if (file.endsWith('.ar.mdx')) continue; // handled when iterating English base files
+    if (file.endsWith('.ar.mdx')) continue;
     const full = path.join(CHAPTERS_DIR, file);
     const raw = fs.readFileSync(full, 'utf8');
     const { data } = matter(raw);
@@ -64,38 +64,39 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
       arFm = parsed.data as ChapterFrontmatter;
     }
 
-    const titleAr = arFm?.title ?? fm.title_ar;
-    const summaryAr = arFm?.summary ?? fm.summary_ar;
-    const tagsAr = arFm?.tags ?? fm.tags_ar;
+    const nativeTitle = arFm?.title ?? fm.title_ar;
+    const nativeSummary = arFm?.summary ?? fm.summary_ar;
+    const nativeTags = arFm?.tags ?? fm.tags_ar;
 
-    const translatedTitle = titleAr
-      ? String(titleAr)
-      : await translateText(englishDoc.title, { source: 'en', target: 'ar', fallback: englishDoc.title });
-    const translatedSummary = summaryAr
-      ? String(summaryAr)
-      : englishDoc.summary
-      ? await translateText(englishDoc.summary, {
-          source: 'en',
-          target: 'ar',
-          fallback: englishDoc.summary,
-        })
-      : '';
+    let titleAr = nativeTitle ? String(nativeTitle) : '';
+    if (!titleAr) {
+      const t = await translateText(englishDoc.title, { source: 'en', target: 'ar', fallback: '' });
+      titleAr = t;
+    }
+    if (!hasArabic(titleAr)) {
+      continue;
+    }
 
-    const translatedTags = normaliseTags(tagsAr);
-    let tags: string[];
-    if (translatedTags.length > 0) {
-      tags = translatedTags;
-    } else if (englishDoc.tags.length > 0) {
-      tags = await Promise.all(
-        englishDoc.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: tag }))
+    let summaryAr = nativeSummary ? String(nativeSummary) : '';
+    if (!summaryAr && englishDoc.summary) {
+      const s = await translateText(englishDoc.summary, { source: 'en', target: 'ar', fallback: '' });
+      summaryAr = hasArabic(s) ? s : '';
+    }
+
+    const tagCandidates = normaliseTags(nativeTags);
+    let tags: string[] = [];
+    if (tagCandidates.length) {
+      tags = tagCandidates;
+    } else if (englishDoc.tags.length) {
+      const translated = await Promise.all(
+        englishDoc.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
       );
-    } else {
-      tags = [];
+      tags = translated.filter((t) => t && typeof t === 'string');
     }
 
     docs.push({
-      title: translatedTitle,
-      summary: translatedSummary,
+      title: titleAr,
+      summary: summaryAr,
       tags,
       href: `/ar/chapters/${baseSlug}`,
       lang: 'ar',
@@ -122,26 +123,41 @@ async function loadTimelineDocs(): Promise<SearchDoc[]> {
       lang: 'en',
     });
 
-    const arTitle = event.title_ar
-      ? String(event.title_ar)
-      : await translateText(english.title, { source: 'en', target: 'ar', fallback: english.title });
-    const arSummary = event.summary_ar
-      ? String(event.summary_ar)
-      : english.summary
-      ? await translateText(english.summary, { source: 'en', target: 'ar', fallback: english.summary })
-      : '';
+    const arTitleNative = event.title_ar ? String(event.title_ar) : '';
+    let arTitle = arTitleNative;
+    if (!arTitle) {
+      const t = await translateText(english.title, { source: 'en', target: 'ar', fallback: '' });
+      arTitle = t;
+    }
+
+    const arSummaryNative = event.summary_ar ? String(event.summary_ar) : '';
+    let arSummary = arSummaryNative;
+    if (!arSummary && english.summary) {
+      const s = await translateText(english.summary, { source: 'en', target: 'ar', fallback: '' });
+      arSummary = hasArabic(s) ? s : '';
+    }
 
     let arTags: string[] = [];
     if (Array.isArray(event.tags_ar) && event.tags_ar.length > 0) {
       arTags = event.tags_ar.map(String);
     } else if (english.tags.length > 0) {
-      arTags = await Promise.all(
-        english.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: tag }))
+      const translated = await Promise.all(
+        english.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
       );
+      arTags = translated.filter((t) => t && typeof t === 'string');
+    }
+
+    const hasArSignal =
+      hasArabic(arTitle) ||
+      hasArabic(arSummary) ||
+      (Array.isArray(arTags) && arTags.some((t) => hasArabic(t)));
+
+    if (!hasArSignal) {
+      continue;
     }
 
     docs.push({
-      title: arTitle,
+      title: arTitle || english.title,
       summary: arSummary,
       tags: arTags,
       href: `/ar/timeline#${event.id}`,
