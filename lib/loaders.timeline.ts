@@ -50,7 +50,7 @@ export function loadEras(): Era[] {
         id: String(e.id),
         title,
         start,
-        ...(endMaybe !== null ? { end: endMaybe } : {}),
+        end: endMaybe ?? null,
         ...(typeof e.color === 'string' ? { color: e.color } : {}),
       };
       if (typeof titleArRaw === 'string' && titleArRaw.trim()) {
