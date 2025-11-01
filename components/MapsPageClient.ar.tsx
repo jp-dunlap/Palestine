@@ -30,7 +30,6 @@ function displayName(p: Place) {
 }
 function formatKindAr(kind?: string) {
   if (!kind) return '';
-  // quick labels; adjust as you expand taxonomy
   const m: Record<string, string> = {
     city: 'مدينة',
     port_city: 'مدينة ساحلية'
@@ -121,6 +120,7 @@ export default function MapsPageClientAr({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="إعادة الضبط لعرض كل الأماكن"
+          aria-label="إعادة الضبط لعرض كل الأماكن"
         >
           إعادة الضبط
         </button>
@@ -129,12 +129,13 @@ export default function MapsPageClientAr({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={copyLink}
           title="نسخ رابط قابل للمشاركة"
+          aria-label="نسخ رابط قابل للمشاركة"
         >
           نسخ الرابط
         </button>
 
         {copied ? (
-          <span className="text-xs text-green-600">تم نسخ الرابط</span>
+          <span className="text-xs text-green-600" aria-live="polite">تم نسخ الرابط</span>
         ) : null}
 
         {focusId ? (
@@ -150,10 +151,15 @@ export default function MapsPageClientAr({
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 cursor-pointer ${
-                focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
-              }`}
+              className={`rounded border p-3 cursor-pointer ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
               onClick={() => setFocusId(p.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setFocusId(p.id);
+              }}
+              aria-pressed={focused}
+              aria-label={`التركيز على ${displayName(p)} في الخريطة`}
               title="انقر للتركيز على الخريطة"
             >
               <div className="font-medium">{displayName(p)}</div>
