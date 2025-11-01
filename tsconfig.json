@@ -21,12 +21,27 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "supercluster": [
+        "types/supercluster-stub.d.ts"
+      ],
+      "leaflet.markercluster": [
+        "types/leaflet.markercluster-stub.d.ts"
+      ],
+      "gray-matter": [
+        "types/gray-matter-stub.d.ts"
       ]
     },
     "plugins": [
       {
         "name": "next"
       }
+    ],
+    "types": [
+      "node",
+      "react",
+      "react-dom",
+      "leaflet"
     ]
   },
   "include": [

@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import { loadTimelineEvents } from '@/lib/loaders.timeline';
-import { hasArabic, translateToArabic, translateListToArabic } from '@/lib/i18n.translate';
+import { translateText } from '@/lib/translate';
+
+const ROOT = process.cwd();
+const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
 
 export type SearchDoc = {
   title: string;
@@ -12,174 +15,166 @@ export type SearchDoc = {
   lang: 'en' | 'ar';
 };
 
-const ROOT = process.cwd();
-const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
+type ChapterFrontmatter = {
+  title?: string;
+  summary?: string;
+  tags?: unknown;
+  title_ar?: string;
+  summary_ar?: string;
+  tags_ar?: unknown;
+};
 
-function arr(v: any): string[] {
-  return Array.isArray(v) ? v.map(String) : [];
+function normaliseTags(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((tag) => String(tag));
 }
 
-function nonEmpty(s: unknown): s is string {
-  return typeof s === 'string' && s.trim().length > 0;
+function hasArabic(s?: string): boolean {
+  return typeof s === 'string' && /[\u0600-\u06FF]/.test(s);
 }
 
-function chapterHref(baseSlug: string, lang: 'en' | 'ar') {
-  return lang === 'ar' ? `/ar/chapters/${baseSlug}` : `/chapters/${baseSlug}`;
-}
+async function loadChapterDocs(): Promise<SearchDoc[]> {
+  if (!fs.existsSync(CHAPTERS_DIR)) return [];
+  const files = fs.readdirSync(CHAPTERS_DIR).filter((f) => f.endsWith('.mdx'));
 
-function pickArabicFromRecord(r: Record<string, any>) {
-  const fm = r ?? {};
-  const title =
-    fm.title_ar ??
-    fm['title-ar'] ??
-    fm.ar?.title ??
-    fm.translations?.ar?.title ??
-    fm.i18n?.ar?.title;
-  const summary =
-    fm.summary_ar ??
-    fm['summary-ar'] ??
-    fm.ar?.summary ??
-    fm.translations?.ar?.summary ??
-    fm.i18n?.ar?.summary;
-  const tags =
-    fm.tags_ar ??
-    fm['tags-ar'] ??
-    fm.ar?.tags ??
-    fm.translations?.ar?.tags ??
-    fm.i18n?.ar?.tags ??
-    [];
-  return { title, summary, tags: arr(tags) };
-}
+  const docs: SearchDoc[] = [];
 
-async function loadChapterDocs(): Promise<{ en: SearchDoc[]; ar: SearchDoc[] }> {
-  if (!fs.existsSync(CHAPTERS_DIR)) return { en: [], ar: [] };
-  const files = fs.readdirSync(CHAPTERS_DIR).filter((f) => f.endsWith('.mdx')).sort();
-  const groups = new Map<string, { base: string; enPath?: string; arPath?: string }>();
+  for (const file of files) {
+    if (file.endsWith('.ar.mdx')) continue;
+    const full = path.join(CHAPTERS_DIR, file);
+    const raw = fs.readFileSync(full, 'utf8');
+    const { data } = matter(raw);
+    const fm = data as ChapterFrontmatter;
+    const baseSlug = file.replace(/\.mdx$/, '');
 
-  for (const f of files) {
-    const slug = f.replace(/\.mdx$/, '');
-    const base = slug.replace(/\.ar$/, '');
-    const isAr = slug.endsWith('.ar');
-    const prev = groups.get(base) || { base };
-    if (isAr) prev.arPath = path.join(CHAPTERS_DIR, f);
-    else prev.enPath = path.join(CHAPTERS_DIR, f);
-    groups.set(base, prev);
+    const englishDoc: SearchDoc = {
+      title: String(fm.title ?? ''),
+      summary: String(fm.summary ?? ''),
+      tags: normaliseTags(fm.tags),
+      href: `/chapters/${baseSlug}`,
+      lang: 'en',
+    };
+    docs.push(englishDoc);
+
+    const arFile = path.join(CHAPTERS_DIR, `${baseSlug}.ar.mdx`);
+    let arFm: ChapterFrontmatter | null = null;
+    if (fs.existsSync(arFile)) {
+      const rawAr = fs.readFileSync(arFile, 'utf8');
+      const parsed = matter(rawAr);
+      arFm = parsed.data as ChapterFrontmatter;
+    }
+
+    const nativeTitle = arFm?.title ?? fm.title_ar;
+    const nativeSummary = arFm?.summary ?? fm.summary_ar;
+    const nativeTags = arFm?.tags ?? fm.tags_ar;
+
+    let titleAr = nativeTitle ? String(nativeTitle) : '';
+    if (!titleAr) {
+      const t = await translateText(englishDoc.title, { source: 'en', target: 'ar', fallback: '' });
+      titleAr = t;
+    }
+    if (!hasArabic(titleAr)) {
+      continue;
+    }
+
+    let summaryAr = nativeSummary ? String(nativeSummary) : '';
+    if (!summaryAr && englishDoc.summary) {
+      const s = await translateText(englishDoc.summary, { source: 'en', target: 'ar', fallback: '' });
+      summaryAr = hasArabic(s) ? s : '';
+    }
+
+    const tagCandidates = normaliseTags(nativeTags);
+    let tags: string[] = [];
+    if (tagCandidates.length) {
+      tags = tagCandidates;
+    } else if (englishDoc.tags.length) {
+      const translated = await Promise.all(
+        englishDoc.tags.map((tag: string) =>
+          translateText(tag, { source: 'en', target: 'ar', fallback: '' })
+        )
+      );
+      tags = translated.filter((t: string) => t && typeof t === 'string');
+    }
+
+    docs.push({
+      title: titleAr,
+      summary: summaryAr,
+      tags,
+      href: `/ar/chapters/${baseSlug}`,
+      lang: 'ar',
+    });
   }
 
-  const enOut: SearchDoc[] = [];
-  const arOut: SearchDoc[] = [];
-
-  for (const { base, enPath, arPath } of groups.values()) {
-    let fmEn: Record<string, any> = {};
-    let fmAr: Record<string, any> = {};
-
-    if (enPath && fs.existsSync(enPath)) {
-      const raw = fs.readFileSync(enPath, 'utf8');
-      fmEn = matter(raw).data || {};
-    }
-    if (arPath && fs.existsSync(arPath)) {
-      const raw = fs.readFileSync(arPath, 'utf8');
-      fmAr = matter(raw).data || {};
-    }
-
-    const enTitle = String(fmEn.title ?? '');
-    const enSummary = String(fmEn.summary ?? '');
-    const enTags = arr(fmEn.tags);
-
-    if (nonEmpty(enTitle)) {
-      enOut.push({
-        title: enTitle,
-        summary: enSummary,
-        tags: enTags,
-        href: chapterHref(base, 'en'),
-        lang: 'en',
-      });
-    }
-
-    const pref = pickArabicFromRecord(fmEn);
-    const fromArFile = pickArabicFromRecord(fmAr);
-
-    const rawArTitle = fromArFile.title ?? pref.title ?? fmAr.title ?? fmEn.title ?? '';
-    const rawArSummary = fromArFile.summary ?? pref.summary ?? fmAr.summary ?? fmEn.summary ?? '';
-    const rawArTags = fromArFile.tags?.length ? fromArFile.tags : pref.tags?.length ? pref.tags : arr(fmAr.tags);
-
-    let arTitle = nonEmpty(rawArTitle) && hasArabic(rawArTitle) ? String(rawArTitle) : '';
-    let arSummary = nonEmpty(rawArSummary) && hasArabic(rawArSummary) ? String(rawArSummary) : '';
-    let arTags = (rawArTags || []).filter((t) => hasArabic(t));
-
-    if (!arTitle && nonEmpty(enTitle)) arTitle = await translateToArabic(enTitle);
-    if (!arSummary && nonEmpty(enSummary)) arSummary = await translateToArabic(enSummary);
-    if (arTags.length === 0 && enTags.length) arTags = await translateListToArabic(enTags);
-
-    if (nonEmpty(arTitle)) {
-      arOut.push({
-        title: arTitle,
-        summary: arSummary || '',
-        tags: arTags,
-        href: chapterHref(base, 'ar'),
-        lang: 'ar',
-      });
-    }
-  }
-
-  return { en: enOut, ar: arOut };
+  return docs;
 }
 
-async function loadTimelineDocs(): Promise<{ en: SearchDoc[]; ar: SearchDoc[] }> {
-  const events: any[] = loadTimelineEvents() as any[];
-  const enOut: SearchDoc[] = [];
-  const arOut: SearchDoc[] = [];
+async function loadTimelineDocs(): Promise<SearchDoc[]> {
+  const events = loadTimelineEvents();
+  const docs: SearchDoc[] = [];
 
-  for (const e of events) {
-    const enTitle = String(
-      e.title ?? e.en?.title ?? e.translations?.en?.title ?? e.i18n?.en?.title ?? ''
-    );
-    const enSummary = String(
-      e.summary ?? e.en?.summary ?? e.translations?.en?.summary ?? e.i18n?.en?.summary ?? ''
-    );
-    const enTags = arr(e.tags ?? e.en?.tags ?? e.translations?.en?.tags ?? e.i18n?.en?.tags ?? []);
+  for (const event of events) {
+    const english = {
+      title: String((event as any).title ?? ''),
+      summary: String((event as any).summary ?? ''),
+      tags: Array.isArray((event as any).tags) ? (event as any).tags.map(String) : [],
+    };
 
-    if (nonEmpty(enTitle)) {
-      enOut.push({
-        title: enTitle,
-        summary: enSummary,
-        tags: enTags,
-        href: `/timeline#${e.id}`,
-        lang: 'en',
-      });
+    docs.push({
+      ...english,
+      href: `/timeline#${(event as any).id}`,
+      lang: 'en',
+    });
+
+    const ev: any = event;
+
+    const arTitleNative = ev.title_ar ? String(ev.title_ar) : '';
+    let arTitle = arTitleNative;
+    if (!arTitle) {
+      const t = await translateText(english.title, { source: 'en', target: 'ar', fallback: '' });
+      arTitle = t;
     }
 
-    const rawArTitle =
-      e.title_ar ?? e.ar?.title ?? e.translations?.ar?.title ?? e.i18n?.ar?.title ?? '';
-    const rawArSummary =
-      e.summary_ar ?? e.ar?.summary ?? e.translations?.ar?.summary ?? e.i18n?.ar?.summary ?? '';
-    const rawArTags =
-      e.tags_ar ?? e.ar?.tags ?? e.translations?.ar?.tags ?? e.i18n?.ar?.tags ?? [];
-
-    let arTitle = nonEmpty(rawArTitle) && hasArabic(rawArTitle) ? String(rawArTitle) : '';
-    let arSummary = nonEmpty(rawArSummary) && hasArabic(rawArSummary) ? String(rawArSummary) : '';
-    let arTags = arr(rawArTags).filter((t) => hasArabic(t));
-
-    if (!arTitle && nonEmpty(enTitle)) arTitle = await translateToArabic(enTitle);
-    if (!arSummary && nonEmpty(enSummary)) arSummary = await translateToArabic(enSummary);
-    if (arTags.length === 0 && enTags.length) arTags = await translateListToArabic(enTags);
-
-    if (nonEmpty(arTitle)) {
-      arOut.push({
-        title: arTitle,
-        summary: arSummary || '',
-        tags: arTags,
-        href: `/ar/timeline#${e.id}`,
-        lang: 'ar',
-      });
+    const arSummaryNative = ev.summary_ar ? String(ev.summary_ar) : '';
+    let arSummary = arSummaryNative;
+    if (!arSummary && english.summary) {
+      const s = await translateText(english.summary, { source: 'en', target: 'ar', fallback: '' });
+      arSummary = hasArabic(s) ? s : '';
     }
+
+    let arTags: string[] = [];
+    if (Array.isArray(ev.tags_ar) && ev.tags_ar.length > 0) {
+      arTags = ev.tags_ar.map(String);
+    } else if (english.tags.length > 0) {
+      const translated = await Promise.all(
+        english.tags.map((tag: string) =>
+          translateText(tag, { source: 'en', target: 'ar', fallback: '' })
+        )
+      );
+      arTags = translated.filter((t: string) => t && typeof t === 'string');
+    }
+
+    const hasArSignal =
+      hasArabic(arTitle) ||
+      hasArabic(arSummary) ||
+      (Array.isArray(arTags) && arTags.some((t: string) => hasArabic(t)));
+
+    if (!hasArSignal) {
+      continue;
+    }
+
+    docs.push({
+      title: arTitle || english.title,
+      summary: arSummary,
+      tags: arTags,
+      href: `/ar/timeline#${(event as any).id}`,
+      lang: 'ar',
+    });
   }
 
-  return { en: enOut, ar: arOut };
+  return docs;
 }
 
 export async function loadSearchDocs(): Promise<SearchDoc[]> {
-  const chapters = await loadChapterDocs();
-  const timeline = await loadTimelineDocs();
-  return [...chapters.en, ...timeline.en, ...chapters.ar, ...timeline.ar];
+  const [chapters, timeline] = await Promise.all([loadChapterDocs(), loadTimelineDocs()]);
+  return [...chapters, ...timeline];
 }

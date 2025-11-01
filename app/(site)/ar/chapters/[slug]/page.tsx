@@ -7,9 +7,13 @@ import {
   loadChapterFrontmatterAr,
 } from '@/lib/loaders.chapters';
 import { mdxComponents } from '@/mdx-components';
+import { loadEras } from '@/lib/loaders.timeline';
+import { loadGazetteer } from '@/lib/loaders.places';
+
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
 }
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const { frontmatter: arFm, isFallback } = loadChapterFrontmatterAr(params.slug);
   const enFm = loadChapterFrontmatter(params.slug);
@@ -30,6 +34,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     },
   };
 }
+
 type Props = { params: { slug: string } };
 
 export default async function Page({ params }: Props) {
@@ -39,24 +44,49 @@ export default async function Page({ params }: Props) {
     components: mdxComponents,
     options: { parseFrontmatter: true }
   });
-  const meta = frontmatter as {
-    title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[];
-  };
-  const enAvailable = hasEnChapter(params.slug);
 
+  const meta = frontmatter as {
+    title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[]; era?: string;
+  };
+
+  const enAvailable = hasEnChapter(params.slug);
   const enMeta = loadChapterFrontmatter(params.slug);
 
   const title = meta.title ?? enMeta.title;
-
   const summary = meta.summary ?? enMeta.summary;
-
   const authors = meta.authors?.length ? meta.authors : enMeta.authors;
-
   const places = meta.places?.length ? meta.places : enMeta.places;
-
   const tags = meta.tags?.length ? meta.tags : enMeta.tags;
-
   const era = (meta as any).era ?? enMeta.era;
+
+  const eras = loadEras();
+  const eraDisplay = (() => {
+    if (!era) return undefined;
+    const needle = String(era).toLowerCase();
+    const match = (eras as any[]).find((e: any) => {
+      const id = (e?.id ?? '').toString().toLowerCase();
+      const t = (e?.title ?? '').toString().toLowerCase();
+      const ta = (e?.title_ar ?? '').toString().toLowerCase();
+      return id === needle || t === needle || ta === needle;
+    });
+    if (!match) return era;
+    return (match as any).title_ar ?? (match as any).title ?? era;
+  })();
+
+  const gaz = loadGazetteer();
+  const placeMap = new Map<string, string>();
+  for (const p of gaz as any[]) {
+    const name = (p as any).name;
+    const ar = (p as any).name_ar ?? name;
+    placeMap.set(String(name).toLowerCase(), ar);
+    for (const alt of ((p as any).alt_names ?? [])) {
+      placeMap.set(String(alt).toLowerCase(), ar);
+    }
+  }
+  const placesAr = (places ?? []).map((p) => {
+    const k = String(p).toLowerCase();
+    return placeMap.get(k) ?? p;
+  });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -79,10 +109,10 @@ export default async function Page({ params }: Props) {
       </div>
 
       <dl className="mt-4 space-y-1 text-sm text-gray-600 font-arabic">
-        {era ? (
+        {eraDisplay ? (
           <div>
             <dt className="inline font-semibold">العصر:</dt>{' '}
-            <dd className="inline">{era}</dd>
+            <dd className="inline">{eraDisplay}</dd>
           </div>
         ) : null}
         {authors?.length ? (
@@ -91,10 +121,10 @@ export default async function Page({ params }: Props) {
             <dd className="inline">{authors.join('، ')}</dd>
           </div>
         ) : null}
-        {places?.length ? (
+        {placesAr?.length ? (
           <div>
             <dt className="inline font-semibold">الأماكن:</dt>{' '}
-            <dd className="inline">{places.join('، ')}</dd>
+            <dd className="inline">{placesAr.join('، ')}</dd>
           </div>
         ) : null}
         {tags?.length ? (

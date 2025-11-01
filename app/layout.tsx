@@ -1,6 +1,7 @@
 // app/layout.tsx
 import './globals.css';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Noto_Naskh_Arabic } from 'next/font/google';
 
@@ -11,7 +12,8 @@ const naskh = Noto_Naskh_Arabic({
   weight: ['400', '700'],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app'),
   title: 'Palestine — 4,000 Years of Memory',
   description:
     'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
@@ -22,7 +24,7 @@ export const metadata = {
     type: 'website',
   },
   alternates: {
-    languages: { ar: '/ar' },
+    languages: { en: '/', ar: '/ar' },
   },
 };
 

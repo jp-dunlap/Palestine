@@ -1,0 +1,24 @@
+id: 0002-balfour-declaration
+title: Balfour Declaration
+title_ar: تصريح بلفور
+start: 1917
+end: 1917
+era: british-mandate
+summary: The British government issued the Balfour Declaration expressing support for a "national home for the Jewish people" in Palestine.
+summary_ar: أصدرت الحكومة البريطانية تصريح بلفور معلنة دعمها لإقامة "وطن قومي للشعب اليهودي" في فلسطين.
+tags:
+  - british-mandate
+  - diplomacy
+  - declaration
+  - zionism
+tags_ar:
+  - الانتداب-البريطاني
+  - دبلوماسية
+  - تصريح
+  - صهيونية
+places:
+  - Jerusalem
+  - London
+sources:
+  - id: sayigh1997
+  - id: un-ga-181-1947
