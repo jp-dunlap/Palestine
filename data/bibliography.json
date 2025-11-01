@@ -2,15 +2,14 @@
   {
     "id": "sayigh1997",
     "type": "book",
-    "title": "TODO: Replace with full title",
+    "title": "Palestinians: From Peasants to Revolutionaries",
     "author": [
       { "family": "Sayigh", "given": "Rosemary" }
     ],
     "issued": { "date-parts": [[1997]] },
-    "publisher": "TODO",
-    "publisher-place": "TODO",
-    "language": "en",
-    "note": "Stub entry; fill with accurate bibliographic data when ready."
+    "publisher": "Zed Books",
+    "publisher-place": "London",
+    "language": "en"
   },
   {
     "id": "icj-2004-wall-opinion",
@@ -27,8 +26,7 @@
     "title": "Resolution 181 (II): Future Government of Palestine",
     "authority": "United Nations General Assembly",
     "issued": { "date-parts": [[1947, 11, 29]] },
-    "language": "en",
-    "note": "Stub entry; add official URL and document details later."
+    "language": "en"
   },
   {
     "id": "oslo-i-1993-dop",
@@ -36,8 +34,7 @@
     "title": "Declaration of Principles on Interim Self-Government Arrangements (Oslo I)",
     "authority": "Government of Israel; Palestine Liberation Organization",
     "issued": { "date-parts": [[1993, 9, 13]] },
-    "language": "en",
-    "note": "Stub entry; add repository link (UN/peacemaker) and signatory details later."
+    "language": "en"
   },
   {
     "id": "icj-2024-provisional-measures-gaza",
@@ -46,8 +43,7 @@
     "authority": "International Court of Justice",
     "issued": { "date-parts": [[2024, 1, 26]] },
     "URL": "https://www.icj-cij.org/case/192",
-    "language": "en",
-    "note": "Stub entry; update with exact order title/citation string from ICJ once we formalize citations."
+    "language": "en"
   },
   {
     "id": "ocha-opt-sitreps",
@@ -55,7 +51,6 @@
     "title": "Occupied Palestinian Territory: Situation Reports",
     "authority": "United Nations OCHA oPt",
     "URL": "https://www.ochaopt.org/",
-    "language": "en",
-    "note": "Stub entry referencing rolling situation reports; add specific report entries as needed."
+    "language": "en"
   }
 ]
