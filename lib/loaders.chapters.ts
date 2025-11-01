@@ -24,8 +24,6 @@ export function loadChapterSource(slug: string): string {
   const file = path.join(process.cwd(), 'content', 'chapters', `${slug}.mdx`);
   return fs.readFileSync(file, 'utf8');
 }
-// --- Arabic variants ---
-// Files are named like 001-prologue.ar.mdx
 
 export function loadChapterSlugsAr(): string[] {
   const dir = fs.readdirSync(CH_DIR);
@@ -36,19 +34,19 @@ export function loadChapterSlugsAr(): string[] {
   for (const slug of arSlugs) all.add(slug);
   return Array.from(all);
 }
+
 export function loadChapterSourceAr(slug: string): { source: string; isFallback: boolean } {
   const arFile = path.join(CH_DIR, `${slug}.ar.mdx`);
   if (fs.existsSync(arFile)) {
     return { source: fs.readFileSync(arFile, 'utf8'), isFallback: false };
   }
-
   const enFile = path.join(CH_DIR, `${slug}.mdx`);
   if (fs.existsSync(enFile)) {
     return { source: fs.readFileSync(enFile, 'utf8'), isFallback: true };
   }
-
   throw new Error(`Missing chapter for slug "${slug}"`);
 }
+
 export function loadChapterFrontmatterAr(slug: string): { frontmatter: ChapterFrontmatter; isFallback: boolean } {
   const arFile = path.join(CH_DIR, `${slug}.ar.mdx`);
   if (fs.existsSync(arFile)) {
@@ -56,13 +54,12 @@ export function loadChapterFrontmatterAr(slug: string): { frontmatter: ChapterFr
     const { data } = matter(raw);
     return { frontmatter: data as ChapterFrontmatter, isFallback: false };
   }
-
   const enFile = path.join(CH_DIR, `${slug}.mdx`);
   const raw = fs.readFileSync(enFile, 'utf8');
   const { data } = matter(raw);
   return { frontmatter: data as ChapterFrontmatter, isFallback: true };
 }
-// --- language helpers ---
+
 export function hasArChapter(slug: string): boolean {
   return fs.existsSync(path.join(CH_DIR, `${slug}.ar.mdx`));
 }
