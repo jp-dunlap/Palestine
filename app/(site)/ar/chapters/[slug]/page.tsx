@@ -7,6 +7,8 @@ import {
   loadChapterFrontmatterAr,
 } from '@/lib/loaders.chapters';
 import { mdxComponents } from '@/mdx-components';
+import { loadEras } from '@/lib/loaders.timeline';
+import { loadGazetteer } from '@/lib/loaders.places';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
@@ -44,7 +46,7 @@ export default async function Page({ params }: Props) {
   });
 
   const meta = frontmatter as {
-    title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[];
+    title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[]; era?: string;
   };
 
   const enAvailable = hasEnChapter(params.slug);
@@ -56,6 +58,33 @@ export default async function Page({ params }: Props) {
   const places = meta.places?.length ? meta.places : enMeta.places;
   const tags = meta.tags?.length ? meta.tags : enMeta.tags;
   const era = (meta as any).era ?? enMeta.era;
+
+  const eras = loadEras();
+  const eraDisplay = (() => {
+    if (!era) return undefined;
+    const needle = String(era).toLowerCase();
+    const match = eras.find(e =>
+      e.id.toLowerCase() === needle ||
+      (e.title || '').toLowerCase() === needle ||
+      (e.title_ar || '').toLowerCase() === needle
+    );
+    if (!match) return era;
+    return match.title_ar ?? match.title;
+  })();
+
+  const gaz = loadGazetteer();
+  const placeMap = new Map<string, string>();
+  for (const p of gaz) {
+    const ar = p.name_ar ?? p.name;
+    placeMap.set(String(p.name).toLowerCase(), ar);
+    for (const alt of p.alt_names ?? []) {
+      placeMap.set(String(alt).toLowerCase(), ar);
+    }
+  }
+  const placesAr = (places ?? []).map((p) => {
+    const k = String(p).toLowerCase();
+    return placeMap.get(k) ?? p;
+  });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
@@ -78,10 +107,10 @@ export default async function Page({ params }: Props) {
       </div>
 
       <dl className="mt-4 space-y-1 text-sm text-gray-600 font-arabic">
-        {era ? (
+        {eraDisplay ? (
           <div>
             <dt className="inline font-semibold">العصر:</dt>{' '}
-            <dd className="inline">{era}</dd>
+            <dd className="inline">{eraDisplay}</dd>
           </div>
         ) : null}
         {authors?.length ? (
@@ -90,10 +119,10 @@ export default async function Page({ params }: Props) {
             <dd className="inline">{authors.join('، ')}</dd>
           </div>
         ) : null}
-        {places?.length ? (
+        {placesAr?.length ? (
           <div>
             <dt className="inline font-semibold">الأماكن:</dt>{' '}
-            <dd className="inline">{places.join('، ')}</dd>
+            <dd className="inline">{placesAr.join('، ')}</dd>
           </div>
         ) : null}
         {tags?.length ? (
