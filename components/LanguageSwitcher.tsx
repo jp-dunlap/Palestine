@@ -1,30 +1,14 @@
-'use client';
-
-import { usePathname, useSearchParams } from 'next/navigation';
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || '';
+import Link from 'next/link';
 
 export default function LanguageSwitcher({ locale }: { locale: 'en' | 'ar' }) {
-  const pathname = usePathname() || '/';
-  const search = useSearchParams();
-  const query = search?.toString() ? `?${search!.toString()}` : '';
-
-  const opposite = locale === 'ar' ? 'en' : 'ar';
-  const path =
-    opposite === 'ar'
-      ? (pathname.startsWith('/ar') ? pathname : `/ar${pathname}`) // ensure ar prefix
-      : (pathname.startsWith('/ar') ? pathname.replace(/^\/ar(\/|$)/, '/') : pathname);
-
-  // Build absolute URL to avoid relative edge cases on Vercel runtimes
-  const href = BASE ? new URL(`${path}${query}`, BASE).toString() : `${path}${query}`;
-
+  const isAr = locale === 'ar';
   return (
-    <a
-      href={href}
-      className="inline-flex items-center text-sm underline hover:no-underline"
-      aria-label={opposite === 'ar' ? 'العربية' : 'English'}
-    >
-      {opposite === 'ar' ? 'العربية' : 'English'}
-    </a>
+    <div className="flex items-center gap-3">
+      {isAr ? (
+        <Link href="/" className="underline">English</Link>
+      ) : (
+        <Link href="/ar" className="underline">العربية</Link>
+      )}
+    </div>
   );
 }

@@ -1,29 +1,18 @@
-import { loadEras, filterTimeline } from '@/lib/loaders.timeline';
-import Timeline from '@/components/Timeline';
-import TimelineFilters from '@/components/TimelineFilters';
+import { loadEras, loadTimelineEvents } from '@/lib/timeline.api';
+import TimelineClient from '@/components/TimelineClient';
 
 export const metadata = {
   title: 'Timeline',
-  description: 'A public, art-grade timeline of Palestine with eras, places, and sources.',
-  alternates: { languages: { ar: '/ar/timeline' } },
+  description: 'A chronological timeline of Palestinian history.',
 };
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
-  const q = (searchParams?.q as string) || '';
-  const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
-
-  const events = filterTimeline({ q, eras });
-  const allEras = loadEras();
-
+export default function Page() {
+  const eras = loadEras();
+  const events = loadTimelineEvents();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
-      <TimelineFilters eras={allEras} />
-      <Timeline events={events} eras={allEras} />
+    <main className="mx-auto max-w-5xl px-4 py-8">
+      <h1 className="mb-4 text-2xl font-semibold">Timeline</h1>
+      <TimelineClient events={events} eras={eras} locale="en" />
     </main>
   );
 }

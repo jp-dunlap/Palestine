@@ -1,27 +1,27 @@
-'use client';
-
+import Link from 'next/link';
 import LanguageSwitcher from './LanguageSwitcher';
-import { usePathname } from 'next/navigation';
 
-export default function Header({ locale = 'en' as 'en' | 'ar' }) {
-  const pathname = usePathname() || '/';
+export default function Header({ locale }: { locale: 'en' | 'ar' }) {
   const isAr = locale === 'ar';
+  const base = isAr ? '/ar' : '';
+  const t = {
+    title: isAr ? 'فلسطين' : 'Palestine',
+    home: isAr ? 'الرئيسية' : 'Home',
+    timeline: isAr ? 'الخط الزمني' : 'Timeline',
+    map: isAr ? 'الخريطة' : 'Map',
+    chapters: isAr ? 'الفصول' : 'Chapters',
+  };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b">
-      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-        <a href={isAr ? '/ar' : '/'} className="font-semibold">
-          {isAr ? 'فلسطين — ٤٠٠٠ سنة من الذاكرة' : 'Palestine — 4,000 Years of Memory'}
-        </a>
-        <nav className="flex items-center gap-4" dir={isAr ? 'rtl' : 'ltr'}>
-          <a href={isAr ? '/ar/timeline' : '/timeline'} className="text-sm underline hover:no-underline">
-            {isAr ? 'الخطّ الزمني' : 'Timeline'}
-          </a>
-          <a href={isAr ? '/ar/map' : '/map'} className="text-sm underline hover:no-underline">
-            {isAr ? 'الخريطة' : 'Map'}
-          </a>
-          <LanguageSwitcher locale={isAr ? 'ar' : 'en'} />
+    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <nav className="flex items-center gap-4" aria-label="Primary">
+          <Link href={isAr ? '/ar' : '/'} className="font-semibold">{t.title}</Link>
+          <Link href={`${base}/timeline`} className="hover:underline">{t.timeline}</Link>
+          <Link href={`${base}/map`} className="hover:underline">{t.map}</Link>
+          <Link href={`${base}/chapters`} className="hover:underline">{t.chapters}</Link>
         </nav>
+        <LanguageSwitcher locale={locale} />
       </div>
     </header>
   );

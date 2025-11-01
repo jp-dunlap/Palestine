@@ -1,10 +1,10 @@
-export default function SkipLink() {
+export default function SkipLink({ label = 'Skip to content' }: { label?: string }) {
   return (
     <a
       href="#main"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:bg-white focus:text-black focus:px-3 focus:py-2 focus:rounded focus:shadow"
+      className="sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-black focus:ring"
     >
-      Skip to content
+      {label}
     </a>
   );
 }
