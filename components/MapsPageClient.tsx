@@ -39,13 +39,11 @@ export default function MapsPageClient({
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
 
-  // Apply deep link on first render if present
   useEffect(() => {
     if (!initialFocusId) return;
     setFocusId(initialFocusId);
   }, [initialFocusId]);
 
-  // Keep URL in sync when focus changes (no reload)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setCopied(false);
@@ -101,6 +99,7 @@ export default function MapsPageClient({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="Reset view to show all places"
+          aria-label="Reset view to show all places"
         >
           Reset view
         </button>
@@ -109,12 +108,13 @@ export default function MapsPageClient({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={copyLink}
           title="Copy a shareable link to this view"
+          aria-label="Copy a shareable link to this view"
         >
           Copy link
         </button>
 
         {copied ? (
-          <span className="text-xs text-green-600">Link copied</span>
+          <span className="text-xs text-green-600" aria-live="polite">Link copied</span>
         ) : null}
 
         {focusId ? (
@@ -130,10 +130,15 @@ export default function MapsPageClient({
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 cursor-pointer ${
-                focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
-              }`}
+              className={`rounded border p-3 cursor-pointer ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
               onClick={() => setFocusId(p.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setFocusId(p.id);
+              }}
+              aria-pressed={focused}
+              aria-label={`Focus map on ${p.name}`}
               title="Click to focus on the map"
             >
               <div className="font-medium">{p.name}</div>
