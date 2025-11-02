@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
 import type { Era, TimelineEvent } from '@/lib/types';
+import { applyEraFilter } from '@/lib/timeline/filters';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TIMELINE_DIR = path.join(DATA_DIR, 'timeline');
@@ -136,6 +137,7 @@ type FilterParams = {
   tags?: string[];
   places?: string[];
   locale?: 'en' | 'ar';
+  logic?: 'and' | 'or';
 };
 
 function localiseEvent(event: TimelineEvent, locale: 'en' | 'ar'): TimelineEvent {
@@ -155,23 +157,32 @@ function localiseEvent(event: TimelineEvent, locale: 'en' | 'ar'): TimelineEvent
 export function filterTimeline(params: FilterParams): TimelineEvent[] {
   const locale = params.locale ?? 'en';
   const q = (params.q ?? '').toLowerCase();
-  const wantEras = new Set((params.eras ?? []).map(String));
   const wantTags = new Set((params.tags ?? []).map(String));
   const wantPlaces = new Set((params.places ?? []).map(String));
+  const wantEraIds = (params.eras ?? []).map(String);
+  const eraLogic = params.logic === 'and' ? 'and' : 'or';
 
-  return loadTimelineEvents().map((event) => localiseEvent(event, locale)).filter((e) => {
-    if (q) {
-      const hay = [e.title, e.summary, ...(e.tags ?? []), ...(e.places ?? [])]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    if (wantEras.size && (!e.era || !wantEras.has(e.era))) return false;
-    if (wantTags.size && !(e.tags ?? []).some((t) => wantTags.has(t))) return false;
-    if (wantPlaces.size && !(e.places ?? []).some((p) => wantPlaces.has(p))) return false;
-    return true;
-  });
+  const baseEvents = loadTimelineEvents()
+    .map((event) => localiseEvent(event, locale))
+    .filter((e) => {
+      if (q) {
+        const hay = [e.title, e.summary, ...(e.tags ?? []), ...(e.places ?? [])]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (wantTags.size && !(e.tags ?? []).some((t) => wantTags.has(t))) return false;
+      if (wantPlaces.size && !(e.places ?? []).some((p) => wantPlaces.has(p))) return false;
+      return true;
+    });
+
+  if (!wantEraIds.length) {
+    return baseEvents;
+  }
+
+  const eras = loadEras();
+  return applyEraFilter(baseEvents, { eraIds: wantEraIds, logic: eraLogic, eras });
 }
 
 export function getTimelineEventById(

@@ -68,9 +68,15 @@ describe('filterTimeline', () => {
   });
 
   it('filters by era', () => {
-    const events = filterTimeline({ eras: ['modern'] });
+    const events = filterTimeline({ eras: ['nakba'] });
     expect(events.length).toBeGreaterThan(0);
-    expect(events.every((event) => event.era === 'modern')).toBe(true);
+    expect(events.some((event) => event.id === 'nakba-1948')).toBe(true);
+  });
+
+  it('supports AND semantics across eras', () => {
+    const events = filterTimeline({ eras: ['modern', 'nakba'], logic: 'and' });
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((event) => event.start <= 1949 && (event.end ?? event.start) >= 1947)).toBe(true);
   });
 
   it('filters by tags', () => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import MiniSearch from 'minisearch';
+import { buildSearchIndex, searchIndex, type QueryOptions, type SearchIndex } from '@/lib/search';
 import { normalizeSearchDocs } from '@/lib/search-normalize';
 import type { SearchDoc } from '@/lib/search.types';
 
@@ -10,14 +10,18 @@ type Props = {
   locale?: 'en' | 'ar';
 };
 
+type TypeFilter = 'chapter' | 'event' | 'place';
+
 const DEFAULT_LIMIT = 8;
 
 export default function SearchClient({ locale = 'en' }: Props) {
   const isArabic = locale === 'ar';
   const [docs, setDocs] = useState<SearchDoc[]>([]);
+  const [index, setIndex] = useState<SearchIndex | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [query, setQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<Set<TypeFilter>>(new Set());
 
   const t = useMemo(() => {
     if (isArabic) {
@@ -38,6 +42,9 @@ export default function SearchClient({ locale = 'en' }: Props) {
           event: '🗓️',
           place: '📍',
         } as const,
+        typeFilterLegend: 'تصفية حسب النوع',
+        typeFilterAll: 'كل الأنواع',
+        typeFilterAria: (label: string) => `تصفية النتائج حسب ${label}`,
       } as const;
     }
     return {
@@ -57,6 +64,9 @@ export default function SearchClient({ locale = 'en' }: Props) {
         event: '🗓️',
         place: '📍',
       } as const,
+      typeFilterLegend: 'Filter by type',
+      typeFilterAll: 'All types',
+      typeFilterAria: (label: string) => `Filter results to ${label}`,
     } as const;
   }, [isArabic]);
 
@@ -76,6 +86,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
         if (!cancelled) {
           const normalised = normalizeSearchDocs(data, locale);
           setDocs(normalised);
+          setIndex(buildSearchIndex(normalised));
           setStatus('ready');
         }
       } catch (err) {
@@ -91,58 +102,24 @@ export default function SearchClient({ locale = 'en' }: Props) {
     };
   }, [locale]);
 
-  const index = useMemo(() => {
-    if (docs.length === 0) return null;
-    const mini = new MiniSearch<SearchDoc>({
-      idField: 'id',
-      fields: ['title', 'summary', 'tags'],
-      storeFields: ['id', 'title', 'summary', 'tags', 'href', 'type', 'lang'],
-      searchOptions: {
-        combineWith: 'AND',
-        prefix: true,
-      },
-    });
+  const typeSelections = useMemo(() => Array.from(selectedTypes), [selectedTypes]);
 
-    try {
-      mini.addAll(docs);
-    } catch (err) {
-      console.error('[search] indexing failed:', err);
-      return null;
+  const searchResults = useMemo(() => {
+    if (!docs.length) return [];
+    const options: QueryOptions = {
+      limit: DEFAULT_LIMIT,
+      types: typeSelections.length ? typeSelections : undefined,
+    };
+    if (index) {
+      return searchIndex(index, query, options);
     }
+    const filtered = typeSelections.length
+      ? docs.filter((doc) => doc.type && typeSelections.includes(doc.type as TypeFilter))
+      : docs;
+    return filtered.slice(0, DEFAULT_LIMIT).map((doc) => ({ doc, score: 0 }));
+  }, [docs, index, query, typeSelections]);
 
-    return mini;
-  }, [docs]);
-
-  const results = useMemo(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      return docs.slice(0, DEFAULT_LIMIT);
-    }
-    if (!index) return [];
-    const seen = new Set<string>();
-    const hits = index.search(trimmed);
-    const mapped: SearchDoc[] = [];
-    for (const hit of hits) {
-      const href = typeof hit.href === 'string' ? hit.href : '';
-      if (!href || seen.has(href)) continue;
-      seen.add(href);
-
-      mapped.push({
-        id: typeof hit.id === 'string' ? hit.id : href,
-        title: typeof hit.title === 'string' ? hit.title : '',
-        summary: typeof hit.summary === 'string' ? hit.summary : undefined,
-        tags: Array.isArray(hit.tags) ? hit.tags.map(String) : [],
-        href,
-        type:
-          hit.type === 'chapter' || hit.type === 'event' || hit.type === 'place'
-            ? hit.type
-            : undefined,
-        lang: hit.lang === 'ar' || hit.lang === 'en' ? hit.lang : locale,
-      });
-      if (mapped.length >= DEFAULT_LIMIT) break;
-    }
-    return mapped;
-  }, [docs, index, locale, query]);
+  const results = useMemo(() => searchResults.map((entry) => entry.doc), [searchResults]);
 
   const statusMessage = useMemo(() => {
     if (status === 'loading') return t.loading;
@@ -150,6 +127,19 @@ export default function SearchClient({ locale = 'en' }: Props) {
     if (status === 'ready') return t.count(results.length);
     return '';
   }, [status, t, results.length, errorMessage]);
+
+  function toggleType(type: TypeFilter) {
+    setSelectedTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return new Set(next);
+    });
+  }
+
+  function clearTypes() {
+    setSelectedTypes(new Set());
+  }
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'}>
@@ -162,6 +152,44 @@ export default function SearchClient({ locale = 'en' }: Props) {
         dir={isArabic ? 'rtl' : 'ltr'}
         aria-label={t.label}
       />
+
+      <fieldset className={`mt-3 border-0 p-0 text-sm ${isArabic ? 'text-right' : ''}`}>
+        <legend className="mb-2 text-xs font-semibold text-gray-600">{t.typeFilterLegend}</legend>
+        <div className={`flex flex-wrap gap-2 ${isArabic ? 'justify-end' : ''}`}>
+          <button
+            type="button"
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+              selectedTypes.size === 0
+                ? 'border-gray-900 bg-gray-900 text-white'
+                : 'border-gray-300 text-gray-900 hover:bg-gray-100'
+            }`}
+            onClick={clearTypes}
+            aria-pressed={selectedTypes.size === 0}
+          >
+            {t.typeFilterAll}
+          </button>
+          {(Object.keys(t.typeLabels) as TypeFilter[]).map((type) => {
+            const selected = selectedTypes.has(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                  selected
+                    ? 'border-gray-900 bg-gray-900 text-white'
+                    : 'border-gray-300 text-gray-900 hover:bg-gray-100'
+                }`}
+                onClick={() => toggleType(type)}
+                aria-pressed={selected}
+                aria-label={t.typeFilterAria(t.typeLabels[type])}
+              >
+                {t.typeLabels[type]}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       <div aria-live="polite" className="sr-only">
         {statusMessage}
       </div>
@@ -170,12 +198,12 @@ export default function SearchClient({ locale = 'en' }: Props) {
         {status === 'error' ? (
           <li className="rounded border p-3 text-sm text-red-600">{t.error}</li>
         ) : null}
-        {status !== 'error' && results.length === 0 && status !== 'loading' ? (
+        {status !== 'error' && results.length === 0 && status === 'ready' ? (
           <li className="rounded border p-3 text-sm text-gray-600">{t.empty}</li>
         ) : null}
         {results.map((doc) => {
-          const typeLabel = doc.type ? t.typeLabels[doc.type] : null;
-          const typeIcon = doc.type ? t.typeIcons[doc.type] : null;
+          const typeLabel = doc.type ? t.typeLabels[doc.type as TypeFilter] : null;
+          const typeIcon = doc.type ? t.typeIcons[doc.type as TypeFilter] : null;
           return (
             <li
               key={doc.id}
@@ -197,12 +225,12 @@ export default function SearchClient({ locale = 'en' }: Props) {
                     </span>
                   ) : null}
                 </div>
-              {doc.summary ? (
-                <div className="mt-1 text-sm text-gray-600">{doc.summary}</div>
-              ) : null}
-              {doc.tags && doc.tags.length ? (
-                <div className="mt-1 text-xs text-gray-500">#{doc.tags.join(' #')}</div>
-              ) : null}
+                {doc.summary ? (
+                  <p className="mt-1 text-sm text-gray-600">{doc.summary}</p>
+                ) : null}
+                {doc.tags?.length ? (
+                  <p className="mt-2 text-xs text-gray-500">#{doc.tags.join(' #')}</p>
+                ) : null}
               </Link>
             </li>
           );

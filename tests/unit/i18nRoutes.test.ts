@@ -22,6 +22,16 @@ describe('buildLanguageToggleHref', () => {
     expect(buildLanguageToggleHref('/timeline', '?q=ICJ&eras=modern', 'ar')).toBe('/ar/timeline?q=ICJ&eras=modern');
   });
 
+  it('normalises full URLs and preserves query parameters', () => {
+    expect(
+      buildLanguageToggleHref('https://example.com/ar/map?place=haifa', undefined, 'en')
+    ).toBe('/map?place=haifa');
+
+    expect(
+      buildLanguageToggleHref('https://example.com/map?place=haifa', undefined, 'ar')
+    ).toBe('/ar/map?place=haifa');
+  });
+
   it('handles array-based query input', () => {
     const tupleQuery: Array<[string, string]> = [
       ['place', 'ramla'],

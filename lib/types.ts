@@ -28,6 +28,14 @@ export type ChapterFrontmatter = {
   tags_ar?: string[];
 };
 
+export type LessonFrontmatter = {
+  title: string;
+  slug: string;
+  summary?: string;
+  tags?: string[];
+  updated?: string;
+};
+
 export type PlaceKind =
   | 'city'
   | 'port_city'
