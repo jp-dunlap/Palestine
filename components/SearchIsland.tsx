@@ -1,15 +1,15 @@
+// components/SearchIsland.tsx
 'use client';
-import Search from '@/components/Search';
+
+import Search from './Search';
 import type { SearchDoc } from '@/lib/loaders.search';
 
-export default function SearchIsland({ docs, locale }: { docs: SearchDoc[]; locale?: 'en' | 'ar' }) {
-  const isAr = locale === 'ar';
-  return (
-    <Search
-      docs={docs}
-      placeholder={isAr ? 'ابحث' : 'Search'}
-      clearLabel={isAr ? 'مسح البحث' : 'Clear search'}
-      tagPrefix={isAr ? '/ar/timeline?tags=' : '/timeline?tags='}
-    />
-  );
+type Props = {
+  docs?: SearchDoc[];
+  locale?: 'en' | 'ar';
+};
+
+export default function SearchIsland({ docs = [], locale = 'en' }: Props) {
+  // docs is always SearchDoc[] and locale is always 'en' | 'ar'
+  return <Search docs={docs} locale={locale} />;
 }
