@@ -28,7 +28,7 @@ export default function Page({
           <div className="mb-6 h-24 animate-pulse rounded border" aria-hidden="true" dir="rtl" />
         }
       >
-        <TimelineFilters eras={allEras} locale="ar" />
+        <TimelineFilters eras={allEras} locale="ar" resultCount={events.length} />
       </Suspense>
       <Timeline events={events} eras={allEras} locale="ar" />
     </main>

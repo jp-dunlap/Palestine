@@ -1,0 +1,161 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import MiniSearch from 'minisearch';
+
+type SearchDoc = {
+  title: string;
+  summary: string;
+  tags: string[];
+  href: string;
+};
+
+type Props = {
+  locale?: 'en' | 'ar';
+};
+
+const DEFAULT_LIMIT = 8;
+
+export default function SearchClient({ locale = 'en' }: Props) {
+  const isArabic = locale === 'ar';
+  const [docs, setDocs] = useState<SearchDoc[]>([]);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [query, setQuery] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const t = useMemo(() => {
+    if (isArabic) {
+      return {
+        label: 'ابحث',
+        placeholder: 'ابحث في الفصول والأماكن والخط الزمني…',
+        loading: 'جاري تحميل الفهرس…',
+        error: 'تعذّر تحميل الفهرس. حاول مجددًا.',
+        empty: 'لا توجد نتائج مطابقة.',
+        count: (n: number) => (n === 1 ? 'نتيجة واحدة' : `${n} من النتائج`),
+      } as const;
+    }
+    return {
+      label: 'Search',
+      placeholder: 'Search chapters, places, timeline…',
+      loading: 'Loading search index…',
+      error: 'Unable to load the search index. Please try again.',
+      empty: 'No matching results yet.',
+      count: (n: number) => (n === 1 ? '1 result' : `${n} results`),
+    } as const;
+  }, [isArabic]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setStatus('loading');
+      setErrorMessage(null);
+      try {
+        const res = await fetch(`/search.${locale}.json`, {
+          cache: 'force-cache',
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = (await res.json()) as SearchDoc[];
+        if (!cancelled) {
+          setDocs(data);
+          setStatus('ready');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setStatus('error');
+          setErrorMessage(err instanceof Error ? err.message : 'error');
+        }
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  const index = useMemo(() => {
+    if (docs.length === 0) return null;
+    const mini = new MiniSearch({
+      fields: ['title', 'summary', 'tags'],
+      storeFields: ['title', 'summary', 'tags', 'href'],
+      searchOptions: {
+        combineWith: 'AND',
+        prefix: true,
+      },
+    });
+    mini.addAll(docs);
+    return mini;
+  }, [docs]);
+
+  const results = useMemo(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return docs.slice(0, DEFAULT_LIMIT);
+    }
+    if (!index) return [];
+    const seen = new Set<string>();
+    const hits = index.search(trimmed);
+    const mapped: SearchDoc[] = [];
+    for (const hit of hits) {
+      const href = String(hit.href ?? '');
+      if (!href || seen.has(href)) continue;
+      seen.add(href);
+      mapped.push({
+        title: String(hit.title ?? ''),
+        summary: typeof hit.summary === 'string' ? hit.summary : '',
+        tags: Array.isArray(hit.tags) ? hit.tags.map(String) : [],
+        href,
+      });
+      if (mapped.length >= DEFAULT_LIMIT) break;
+    }
+    return mapped;
+  }, [docs, index, query]);
+
+  const statusMessage = useMemo(() => {
+    if (status === 'loading') return t.loading;
+    if (status === 'error') return `${t.error}${errorMessage ? ` (${errorMessage})` : ''}`;
+    if (status === 'ready') return t.count(results.length);
+    return '';
+  }, [status, t, results.length, errorMessage]);
+
+  return (
+    <div dir={isArabic ? 'rtl' : 'ltr'}>
+      <label className="mb-1 block text-sm font-medium">{t.label}</label>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full rounded border px-3 py-2 text-sm"
+        placeholder={t.placeholder}
+        dir={isArabic ? 'rtl' : 'ltr'}
+        aria-label={t.label}
+      />
+      <div aria-live="polite" className="sr-only">
+        {statusMessage}
+      </div>
+
+      <ul className="mt-4 space-y-3" dir={isArabic ? 'rtl' : 'ltr'}>
+        {status === 'error' ? (
+          <li className="rounded border p-3 text-sm text-red-600">{t.error}</li>
+        ) : null}
+        {status !== 'error' && results.length === 0 && status !== 'loading' ? (
+          <li className="rounded border p-3 text-sm text-gray-600">{t.empty}</li>
+        ) : null}
+        {results.map((doc, i) => (
+          <li key={`${doc.href}-${i}`} className="rounded border p-3 hover:bg-gray-50">
+            <Link href={doc.href} className="block">
+              <div className="font-semibold">{doc.title}</div>
+              {doc.summary ? (
+                <div className="mt-1 text-sm text-gray-600">{doc.summary}</div>
+              ) : null}
+              {doc.tags.length ? (
+                <div className="mt-1 text-xs text-gray-500">#{doc.tags.join(' #')}</div>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

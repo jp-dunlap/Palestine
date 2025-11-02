@@ -26,7 +26,7 @@ export default function Page({
       <Suspense
         fallback={<div className="mb-6 h-24 animate-pulse rounded border" aria-hidden="true" />}
       >
-        <TimelineFilters eras={allEras} locale="en" />
+        <TimelineFilters eras={allEras} locale="en" resultCount={events.length} />
       </Suspense>
       <Timeline events={events} eras={allEras} locale="en" />
     </main>

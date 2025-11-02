@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { TimelineEvent, Era } from '@/lib/types';
 
 function yearOf(d: string | number | undefined): string {
@@ -20,11 +21,23 @@ export default function Timeline({
   const eraById = new Map(
     eras.map((e) => [e.id, isArabic ? e.title_ar ?? e.title : e.title])
   );
+  const t = isArabic
+    ? {
+        details: 'التفاصيل',
+        aria: (title: string) => `عرض التفاصيل للحدث ${title}`,
+        href: (id: string) => `/ar/timeline/${id}`,
+      }
+    : {
+        details: 'Details',
+        aria: (title: string) => `View details for ${title}`,
+        href: (id: string) => `/timeline/${id}`,
+      };
   return (
     <div className="space-y-8" dir={isArabic ? 'rtl' : 'ltr'}>
       {events.map((e) => (
         <div
           key={e.id}
+          id={e.id}
           className={
             isArabic
               ? 'border-r pr-4 text-right'
@@ -43,6 +56,15 @@ export default function Timeline({
               {e.places?.length ? `· ${e.places.join(', ')}` : ''}
             </p>
           )}
+          <div className="mt-3 text-xs font-medium">
+            <Link
+              href={t.href(e.id)}
+              className="underline hover:no-underline"
+              aria-label={t.aria(e.title)}
+            >
+              {t.details} →
+            </Link>
+          </div>
         </div>
       ))}
     </div>
