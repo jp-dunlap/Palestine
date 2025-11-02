@@ -1,6 +1,7 @@
 // app/(site)/ar/places/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import JsonLd from '@/components/JsonLd';
 import { loadGazetteer } from '@/lib/loaders.places';
 
 export const dynamic = 'force-static';
@@ -40,6 +41,23 @@ export default function PlacePageAr({ params }: { params: { id: string } }) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+      <JsonLd
+        id={`ld-place-${p.id}`}
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Place',
+          name: p.name,
+          alternateName: p.alt_names?.length ? p.alt_names : undefined,
+          identifier: p.id,
+          url: `/ar/places/${p.id}`,
+          inLanguage: 'ar',
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: p.lat,
+            longitude: p.lon,
+          },
+        }}
+      />
       <h1 className="text-2xl font-semibold tracking-tight">{p.name}</h1>
       <p className="mt-2 text-sm text-gray-600">
         {(p.kind as string) ?? 'مكان'} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
