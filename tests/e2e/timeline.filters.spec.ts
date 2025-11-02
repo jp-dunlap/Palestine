@@ -23,6 +23,6 @@ test('timeline AND logic narrows combined eras', async ({ page }) => {
   await page.getByRole('button', { name: 'Filter by era Nakba (Catastrophe)' }).click();
   await page.getByRole('button', { name: 'Match all eras (AND)' }).click();
 
-  await expect(page.getByRole('heading', { level: 3, name: /The Nakba/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'The Nakba (Catastrophe)' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 3, name: 'The 1936–39 Arab Revolt' })).not.toBeVisible();
 });

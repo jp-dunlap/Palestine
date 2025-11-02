@@ -15,7 +15,7 @@ test('map focuses on requested place and copies link', async ({ page }) => {
   await expect(page.getByText('Focused: Gaza')).toBeVisible();
 
   await page.getByRole('button', { name: 'Copy a shareable link to this view' }).click();
-  await expect(page.getByText('Link copied')).toBeVisible();
+  await expect(page.locator('span.text-green-600', { hasText: 'Link copied' })).toBeVisible();
 });
 
 test('open on map button focuses immediately', async ({ page }) => {

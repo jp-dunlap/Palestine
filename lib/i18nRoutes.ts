@@ -68,24 +68,40 @@ function applyQueryInput(params: URLSearchParams, query?: QueryInput) {
     const trimmed = query.trim().replace(/^\?/, '');
     if (!trimmed) return;
     const extra = new URLSearchParams(trimmed);
-    extra.forEach((value, key) => {
-      params.set(key, value);
+    const entries = Array.from(extra.entries());
+    if (entries.length === 0) return;
+    const keys = new Set(entries.map(([key]) => key));
+    keys.forEach((key) => {
+      params.delete(key);
+    });
+    entries.forEach(([key, value]) => {
+      params.append(key, value);
     });
     return;
   }
   if (query instanceof URLSearchParams) {
-    query.forEach((value, key) => {
-      if (value !== undefined && value !== null) {
-        params.set(key, value);
-      }
+    const entries = Array.from(query.entries());
+    if (entries.length === 0) return;
+    const keys = new Set(entries.map(([key]) => key));
+    keys.forEach((key) => {
+      params.delete(key);
+    });
+    entries.forEach(([key, value]) => {
+      params.append(key, value);
     });
     return;
   }
   if (Array.isArray(query)) {
-    for (const [key, value] of query) {
-      if (value !== undefined && value !== null) {
-        params.append(key, value);
-      }
+    const entries = query.filter(([key, value]) => {
+      return Boolean(key) && value !== undefined && value !== null;
+    });
+    if (entries.length === 0) return;
+    const keys = new Set(entries.map(([key]) => key));
+    keys.forEach((key) => {
+      params.delete(key);
+    });
+    for (const [key, value] of entries) {
+      params.append(key, value);
     }
     return;
   }
