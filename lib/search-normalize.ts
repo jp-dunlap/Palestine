@@ -69,7 +69,7 @@ export function normalizeSearchDocs(raw: unknown, locale?: 'en' | 'ar'): SearchD
     const titleCandidate = entry.title ?? entry.name ?? entry.slug ?? id;
     const title = titleCandidate != null && titleCandidate !== '' ? String(titleCandidate) : 'Untitled';
 
-    const summary = coerceSummary(entry.summary ?? entry.excerpt ?? entry.description ?? '');
+    const summary = coerceSummary(entry.summary ?? entry.excerpt ?? entry.description);
     const tags = normaliseTags(entry.tags ?? entry.keywords);
     const lang = pickLang(entry.lang, locale);
     const type = pickType(entry.type ?? entry.kind);
