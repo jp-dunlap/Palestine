@@ -83,7 +83,12 @@ export default function MapsPage({
       <MapsPageClient places={places} cfg={cfg} initialFocusId={initialFocusId} />
 
       <p className="mt-8 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href={arHref}>
+        <a
+          className="underline hover:no-underline"
+          href={arHref}
+          data-testid="language-toggle-ar"
+          dir="rtl"
+        >
           View this map in Arabic →
         </a>
       </p>
