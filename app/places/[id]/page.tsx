@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import JsonLd from '@/components/JsonLd';
 import { loadGazetteer } from '@/lib/loaders.places';
 
 export const dynamic = 'force-static';
@@ -42,6 +43,23 @@ export default function PlacePage({ params }: { params: { id: string } }) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
+      <JsonLd
+        id={`ld-place-${p.id}`}
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Place',
+          name: p.name,
+          alternateName: p.alt_names?.length ? p.alt_names : undefined,
+          identifier: p.id,
+          url: `/places/${p.id}`,
+          inLanguage: 'en',
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: p.lat,
+            longitude: p.lon,
+          },
+        }}
+      />
       <h1 className="text-2xl font-semibold tracking-tight">{p.name}</h1>
       <p className="mt-2 text-sm text-gray-600">
         {p.kind ?? 'place'} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
