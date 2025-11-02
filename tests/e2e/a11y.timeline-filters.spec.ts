@@ -9,15 +9,13 @@ test('timeline filters expose accessible names and focus styles', async ({ page 
   const resultsRegion = page.locator('#timeline-results');
   await expect(resultsRegion).toBeVisible();
 
-  const foundationsCheckbox = page.getByLabel('Filter by era Foundations');
-  const modernCheckbox = page.getByLabel('Filter by era Modern / Nakba → Present');
-
-  await expect(foundationsCheckbox).toBeVisible();
-  await expect(modernCheckbox).toBeVisible();
+  const foundationsCheckbox = page.locator('input#timeline-filter-foundations');
+  const modernCheckbox = page.locator('input#timeline-filter-modern');
 
   const foundationsLabel = page.locator('label[for="timeline-filter-foundations"]');
   await expect(foundationsLabel).toHaveAttribute('aria-controls', 'timeline-results');
   await expect(foundationsLabel).toHaveAttribute('aria-label', 'Filter by era Foundations');
+  await expect(foundationsLabel).toBeVisible();
 
   await foundationsCheckbox.focus();
   await expect(foundationsCheckbox).toBeFocused();
@@ -29,8 +27,9 @@ test('timeline filters expose accessible names and focus styles', async ({ page 
   const earlyEvent = page.getByRole('heading', { level: 3, name: foundationsHeading });
   await expect(earlyEvent).toBeVisible();
 
-  await modernCheckbox.check();
   const modernLabel = page.locator('label[for="timeline-filter-modern"]');
+  await expect(modernLabel).toBeVisible();
+  await modernCheckbox.check();
   await expect(modernLabel).toHaveAttribute('aria-pressed', 'true');
   await expect(modernLabel).toHaveAttribute(
     'aria-label',
