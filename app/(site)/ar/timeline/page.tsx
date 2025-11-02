@@ -1,24 +1,37 @@
 // app/(site)/ar/timeline/page.tsx
 import { Suspense } from 'react';
-import TimelinePageClient from '@/components/TimelinePageClient'; // ✅ default import
-import { loadTimelineEvents, loadEras } from '@/lib/loaders.timeline';
+import { loadEras, filterTimeline } from '@/lib/loaders.timeline';
+import Timeline from '@/components/Timeline';
+import TimelineFilters from '@/components/TimelineFilters';
 
 export const metadata = {
   title: 'الخط الزمني',
-  description: 'عرض زمني للأحداث مع فلاتر وبحث.',
+  description: 'خط زمني عام وذي جودة فنية لفلسطين يضم العصور والأماكن والمصادر.',
   alternates: { languages: { en: '/timeline' } },
 };
 
-export default async function Page() {
-  const events = await loadTimelineEvents();
-  const eras = loadEras();
+export default function Page({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const q = (searchParams?.q as string) || '';
+  const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
+
+  const allEras = loadEras();
+  const events = filterTimeline({ q, eras, locale: 'ar' });
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8" dir="rtl" lang="ar">
-      <h1 className="sr-only">الخط الزمني</h1>
-      <Suspense fallback={null}>
-        <TimelinePageClient events={events} eras={eras} />
+    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" lang="ar" dir="rtl">
+      <h1 className="text-2xl font-semibold tracking-tight">الخط الزمني</h1>
+
+      <Suspense
+        fallback={<div className="mb-6 h-24 animate-pulse rounded border" aria-hidden="true" />}
+      >
+        <TimelineFilters eras={allEras} locale="ar" />
       </Suspense>
+
+      <Timeline events={events} eras={allEras} locale="ar" />
     </main>
   );
 }
