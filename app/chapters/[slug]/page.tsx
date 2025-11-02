@@ -20,7 +20,6 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     notFound();
   }
   const fm = loadChapterFrontmatter(params.slug);
-  const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const ar = hasArChapter(params.slug);
   const canonical = `/chapters/${params.slug}`;
   const languages: Record<string, string> = {
@@ -40,7 +39,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     openGraph: {
       title: fm.title,
       description: fm.summary,
-      images: url ? [`${url}/opengraph-image`] : undefined,
+      images: [`/chapters/${params.slug}/opengraph-image`],
       url: canonical,
     },
   };

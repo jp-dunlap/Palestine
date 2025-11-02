@@ -25,7 +25,6 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   }
   const { frontmatter: arFm, isFallback } = loadChapterFrontmatterAr(params.slug);
   const enFm = hasEn ? loadChapterFrontmatter(params.slug) : null;
-  const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const title = arFm.title ?? enFm?.title ?? params.slug;
   const summary = arFm.summary ?? enFm?.summary;
   const canonical = `/ar/chapters/${params.slug}`;
@@ -44,7 +43,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
     openGraph: {
       title: isFallback ? `${title} (English)` : title,
       description: summary,
-      images: url ? [`${url}/opengraph-image`] : undefined,
+      images: [`/ar/chapters/${params.slug}/opengraph-image`],
       url: canonical,
     },
   };
