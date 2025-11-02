@@ -7,6 +7,7 @@
     "prebuild": "node scripts/build-search.js",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest",
     "test:unit": "vitest",
     "test:e2e": "playwright test"

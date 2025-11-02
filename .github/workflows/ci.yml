@@ -15,4 +15,8 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps
+      - run: npm run test:unit
+      - run: npm run test:e2e
