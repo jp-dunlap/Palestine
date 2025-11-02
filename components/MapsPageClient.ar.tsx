@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import MapClient from './MapClient';
+import dynamic from 'next/dynamic';
+
+// Load MapClient only on the client so SSR never touches Leaflet/window.
+const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 
 type Place = {
   id: string;
