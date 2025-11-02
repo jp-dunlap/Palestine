@@ -1,21 +1,29 @@
+// app/layout.tsx
 import './globals.css';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import { Inter, Noto_Naskh_Arabic } from 'next/font/google';
-import Header from '@/components/Header';
-import SkipLink from '@/components/SkipLink';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const naskh = Noto_Naskh_Arabic({ subsets: ['arabic'], variable: '--font-naskh', weight: ['400', '700'] });
+const naskh = Noto_Naskh_Arabic({
+  subsets: ['arabic'],
+  variable: '--font-naskh',
+  weight: ['400', '700'],
+});
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
-
-export const metadata = {
-  metadataBase: new URL(siteUrl),
+export const metadata: Metadata = {
+  // Use NEXT_PUBLIC_SITE_URL if provided, otherwise fall back to VERCEL_URL, then localhost.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL
+      ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  ),
   title: 'Palestine — 4,000 Years of Memory',
-  description: 'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
+  description:
+    'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
   openGraph: {
     title: 'Palestine — 4,000 Years of Memory',
-    description: 'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
+    description:
+      'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
     type: 'website',
   },
   alternates: {
@@ -27,9 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${naskh.variable} font-sans`}>
-        <SkipLink />
-        <Header locale="en" />
-        <main id="main">{children}</main>
+        {children}
       </body>
     </html>
   );
