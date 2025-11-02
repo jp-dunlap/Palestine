@@ -18,8 +18,8 @@ bun dev
 ## Maps
 
 Routes
-- `/maps` — English
-- `/ar/maps` — Arabic (RTL)
+- `/map` — English
+- `/ar/map` — Arabic (RTL)
 
 Features
 - Marker clustering, deep links (`?place=<id>`), click any list item to focus the map, “Reset view”, “Copy link”.
