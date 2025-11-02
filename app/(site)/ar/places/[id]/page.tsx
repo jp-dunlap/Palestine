@@ -27,7 +27,7 @@ export async function generateMetadata({
     openGraph: {
       title: p.name,
       description: `${p.kind ?? 'مكان'} · ${p.lat}, ${p.lon}`,
-      images: ['/opengraph-image'],
+      images: [`/ar/places/${p.id}/opengraph-image`],
       url: `/ar/places/${p.id}`,
     },
   };

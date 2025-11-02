@@ -29,7 +29,7 @@ export async function generateMetadata({
     openGraph: {
       title: p.name,
       description: `${p.kind ?? 'place'} · ${p.lat}, ${p.lon}`,
-      images: ['/opengraph-image'],
+      images: [`/places/${p.id}/opengraph-image`],
       url: `/places/${p.id}`,
     },
   };

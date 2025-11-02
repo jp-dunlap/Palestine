@@ -38,6 +38,7 @@ export function generateMetadata({
     openGraph: {
       title: event.title,
       description: event.summary ?? undefined,
+      images: [`/timeline/${event.id}/opengraph-image`],
       url: `/timeline/${event.id}`,
       type: 'article',
     },
