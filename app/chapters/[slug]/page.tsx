@@ -9,6 +9,7 @@ import {
 import { compileMDX } from 'next-mdx-remote/rsc';
 import { formatSources } from '@/lib/bibliography';
 import { mdxComponents } from '@/mdx-components';
+import JsonLd from '@/components/JsonLd';
 
 export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
@@ -67,41 +68,65 @@ export default async function Page({ params }: Props) {
     places?: string[];
     tags?: string[];
     sources?: Array<{ id?: string; url?: string }>;
+    date?: string;
   };
 
   const renderedSources = meta.sources ? formatSources(meta.sources) : [];
 
+  const articleUrl = `/chapters/${params.slug}`;
+
+  const articleLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: meta.title,
+    description: meta.summary,
+    inLanguage: 'en',
+    url: articleUrl,
+    datePublished: meta.date ? new Date(meta.date).toISOString() : undefined,
+    author: Array.isArray(meta.authors)
+      ? meta.authors.map(name => ({ '@type': 'Person', name }))
+      : meta.authors
+        ? [{ '@type': 'Person', name: String(meta.authors) }]
+        : undefined,
+    articleSection: meta.era,
+    keywords: meta.tags,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+  };
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">{meta.title}</h1>
+    <>
+      <JsonLd id={`ld-article-${params.slug}`} data={articleLd} />
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <h1 className="text-2xl font-semibold tracking-tight">{meta.title}</h1>
 
-      <div className="mt-2 text-sm text-gray-600">
-        {meta.era ? (<><span>Era:</span> <code>{meta.era}</code></>) : null}
-        {meta.authors?.length ? <> · <span>Authors:</span> {meta.authors.join(', ')}</> : null}
-      </div>
+        <div className="mt-2 text-sm text-gray-600">
+          {meta.era ? (<><span>Era:</span> <code>{meta.era}</code></>) : null}
+          {meta.authors?.length ? <> · <span>Authors:</span> {meta.authors.join(', ')}</> : null}
+        </div>
 
-      {meta.summary && <p className="mt-4">{meta.summary}</p>}
-      {meta.places?.length ? (
-        <p className="mt-2 text-sm text-gray-600">Places: {meta.places.join(', ')}</p>
-      ) : null}
-      {meta.tags?.length ? (
-        <p className="mt-1 text-xs text-gray-500">Tags: {meta.tags.join(', ')}</p>
-      ) : null}
+        {meta.summary && <p className="mt-4">{meta.summary}</p>}
+        {meta.places?.length ? (
+          <p className="mt-2 text-sm text-gray-600">Places: {meta.places.join(', ')}</p>
+        ) : null}
+        {meta.tags?.length ? (
+          <p className="mt-1 text-xs text-gray-500">Tags: {meta.tags.join(', ')}</p>
+        ) : null}
 
-      <article className="mt-8 space-y-4">
-        {content}
-      </article>
+        <article className="mt-8 space-y-4">
+          {content}
+        </article>
 
-      {renderedSources.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-sm font-semibold text-gray-700">Sources</h2>
-          <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
-            {renderedSources.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ol>
-        </section>
-      )}
-    </main>
+        {renderedSources.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-sm font-semibold text-gray-700">Sources</h2>
+            <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
+              {renderedSources.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </main>
+    </>
   );
 }
