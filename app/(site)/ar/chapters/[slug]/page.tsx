@@ -11,6 +11,7 @@ import {
 import { mdxComponents } from '@/mdx-components';
 import { loadEras } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
+import JsonLd from '@/components/JsonLd';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
@@ -65,7 +66,13 @@ export default async function Page({ params }: Props) {
   });
 
   const meta = frontmatter as {
-    title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[]; era?: string;
+    title?: string;
+    summary?: string;
+    authors?: string[];
+    places?: string[];
+    tags?: string[];
+    era?: string;
+    date?: string;
   };
 
   const enAvailable = hasEn;
@@ -77,6 +84,7 @@ export default async function Page({ params }: Props) {
   const places = meta.places?.length ? meta.places : enMeta?.places;
   const tags = meta.tags?.length ? meta.tags : enMeta?.tags;
   const era = (meta as any).era ?? enMeta?.era;
+  const date = meta.date ?? (enMeta as { date?: string } | null)?.date;
 
   const eras = loadEras();
   const eraDisplay = (() => {
@@ -105,56 +113,79 @@ export default async function Page({ params }: Props) {
     return placeMap.get(k) ?? p;
   });
 
+  const articleUrl = `/ar/chapters/${params.slug}`;
+
+  const articleLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description: summary,
+    inLanguage: 'ar',
+    url: articleUrl,
+    datePublished: date ? new Date(date).toISOString() : undefined,
+    author: Array.isArray(authors)
+      ? authors.map(name => ({ '@type': 'Person', name }))
+      : authors
+        ? [{ '@type': 'Person', name: String(authors) }]
+        : undefined,
+    articleSection: era,
+    keywords: tags,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
+  };
+
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight font-arabic">{title}</h1>
+    <>
+      <JsonLd id={`ld-article-${params.slug}`} data={articleLd} />
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <h1 className="text-2xl font-semibold tracking-tight font-arabic">{title}</h1>
 
-      {summary && (
-        <p className="mt-3 text-base text-gray-700 font-arabic">{summary}</p>
-      )}
+        {summary && (
+          <p className="mt-3 text-base text-gray-700 font-arabic">{summary}</p>
+        )}
 
-      {isFallback ? (
-        <div className="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic">
-          هذه النسخة تُعرض بالإنجليزية لعدم توفر ترجمة بعد.
+        {isFallback ? (
+          <div className="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic">
+            هذه النسخة تُعرض بالإنجليزية لعدم توفر ترجمة بعد.
+          </div>
+        ) : null}
+
+        <div className="mt-2 text-sm text-gray-600">
+          {enAvailable ? (
+            <a className="underline" href={`/chapters/${params.slug}`}>English</a>
+          ) : null}
         </div>
-      ) : null}
 
-      <div className="mt-2 text-sm text-gray-600">
-        {enAvailable ? (
-          <a className="underline" href={`/chapters/${params.slug}`}>English</a>
-        ) : null}
-      </div>
+        <dl className="mt-4 space-y-1 text-sm text-gray-600 font-arabic">
+          {eraDisplay ? (
+            <div>
+              <dt className="inline font-semibold">العصر:</dt>{' '}
+              <dd className="inline">{eraDisplay}</dd>
+            </div>
+          ) : null}
+          {authors?.length ? (
+            <div>
+              <dt className="inline font-semibold">المؤلفون:</dt>{' '}
+              <dd className="inline">{authors.join('، ')}</dd>
+            </div>
+          ) : null}
+          {placesAr?.length ? (
+            <div>
+              <dt className="inline font-semibold">الأماكن:</dt>{' '}
+              <dd className="inline">{placesAr.join('، ')}</dd>
+            </div>
+          ) : null}
+          {tags?.length ? (
+            <div>
+              <dt className="inline font-semibold">الوسوم:</dt>{' '}
+              <dd className="inline">#{tags.join(' #')}</dd>
+            </div>
+          ) : null}
+        </dl>
 
-      <dl className="mt-4 space-y-1 text-sm text-gray-600 font-arabic">
-        {eraDisplay ? (
-          <div>
-            <dt className="inline font-semibold">العصر:</dt>{' '}
-            <dd className="inline">{eraDisplay}</dd>
-          </div>
-        ) : null}
-        {authors?.length ? (
-          <div>
-            <dt className="inline font-semibold">المؤلفون:</dt>{' '}
-            <dd className="inline">{authors.join('، ')}</dd>
-          </div>
-        ) : null}
-        {placesAr?.length ? (
-          <div>
-            <dt className="inline font-semibold">الأماكن:</dt>{' '}
-            <dd className="inline">{placesAr.join('، ')}</dd>
-          </div>
-        ) : null}
-        {tags?.length ? (
-          <div>
-            <dt className="inline font-semibold">الوسوم:</dt>{' '}
-            <dd className="inline">#{tags.join(' #')}</dd>
-          </div>
-        ) : null}
-      </dl>
-
-      <article className="mt-8 space-y-4 font-arabic">
-        {content}
-      </article>
-    </main>
+        <article className="mt-8 space-y-4 font-arabic">
+          {content}
+        </article>
+      </main>
+    </>
   );
 }
