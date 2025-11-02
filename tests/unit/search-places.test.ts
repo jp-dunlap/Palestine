@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { loadPlaceDocs } from '../../scripts/build-search.js';
+const loadPlaceDocs = async () => {
+  const mod = await import('../../scripts/build-search.js');
+  const fn = (mod as Record<string, unknown>).loadPlaceDocs;
+  if (typeof fn !== 'function') {
+    throw new Error('loadPlaceDocs export is missing from build-search.js');
+  }
+  return fn();
+};
 
 function findDoc(docs: Array<Record<string, unknown>>, href: string) {
   return docs.find((doc) => doc && typeof doc === 'object' && doc.href === href);

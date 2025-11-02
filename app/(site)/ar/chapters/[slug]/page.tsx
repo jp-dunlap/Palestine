@@ -70,7 +70,7 @@ export default async function Page({ params }: Props) {
   const { content, frontmatter } = await compileMDX({
     source,
     components,
-    options: { parseFrontmatter: true }
+    options: { parseFrontmatter: true },
   });
 
   const meta = frontmatter as {
