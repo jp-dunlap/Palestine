@@ -156,6 +156,24 @@ export default function MapsPageClient({
                   </div>
                 ) : null}
               </button>
+              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+                <a
+                  href={`/places/${p.id}`}
+                  className="underline hover:no-underline"
+                  aria-label={`Open place page for ${p.name}`}
+                  title="Open place page"
+                >
+                  Open place page →
+                </a>
+                <a
+                  href={`/map?place=${encodeURIComponent(p.id)}`}
+                  className="underline hover:no-underline"
+                  aria-label={`Open map focused on ${p.name}`}
+                  title="Open map focused on this place"
+                >
+                  Open on map
+                </a>
+              </div>
             </li>
           );
         })}
