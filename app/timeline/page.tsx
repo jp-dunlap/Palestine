@@ -25,7 +25,7 @@ export default function Page({
   const events = filterTimeline({ q, eras, locale: 'en' });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
       <Suspense
         fallback={<div className="mb-6 h-24 animate-pulse rounded border" aria-hidden="true" />}

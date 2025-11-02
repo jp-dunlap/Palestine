@@ -33,6 +33,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${naskh.variable} font-sans`}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 rounded bg-white px-3 py-1 text-sm shadow"
+        >
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>

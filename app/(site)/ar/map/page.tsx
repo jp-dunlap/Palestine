@@ -24,7 +24,7 @@ export default function MapsPageAr({
   const enHref = initialFocusId ? `/map?place=${initialFocusId}` : '/map';
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
 
       <div className="mt-4">

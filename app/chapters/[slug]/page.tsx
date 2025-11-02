@@ -96,7 +96,7 @@ export default async function Page({ params }: Props) {
   return (
     <>
       <JsonLd id={`ld-article-${params.slug}`} data={articleLd} />
-      <main className="mx-auto max-w-3xl px-4 py-12">
+      <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-2xl font-semibold tracking-tight">{meta.title}</h1>
 
         <div className="mt-2 text-sm text-gray-600">

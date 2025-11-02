@@ -25,7 +25,7 @@ export default function Page({
   const events = filterTimeline({ q, eras, locale: 'ar' });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight">الخط الزمني</h1>
       <Suspense
         fallback={
