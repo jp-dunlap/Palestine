@@ -122,7 +122,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
       if (mapped.length >= DEFAULT_LIMIT) break;
     }
     return mapped;
-  }, [docs, index, locale, query]);
+  }, [index, locale, query]);
 
   const statusMessage = useMemo(() => {
     if (status === 'loading') return t.loading;
