@@ -3,17 +3,10 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { loadTimelineEvents } from '@/lib/loaders.timeline';
 import { translateText } from '@/lib/translate';
+import type { SearchDoc } from '@/lib/search.types';
 
 const ROOT = process.cwd();
 const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
-
-export type SearchDoc = {
-  title: string;
-  summary: string;
-  tags: string[];
-  href: string;
-  lang: 'en' | 'ar';
-};
 
 type ChapterFrontmatter = {
   title?: string;
@@ -47,12 +40,15 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
     const fm = data as ChapterFrontmatter;
     const baseSlug = file.replace(/\.mdx$/, '');
 
+    const hrefEn = `/chapters/${baseSlug}`;
     const englishDoc: SearchDoc = {
+      id: hrefEn,
       title: String(fm.title ?? ''),
       summary: String(fm.summary ?? ''),
       tags: normaliseTags(fm.tags),
-      href: `/chapters/${baseSlug}`,
+      href: hrefEn,
       lang: 'en',
+      type: 'chapter',
     };
     docs.push(englishDoc);
 
@@ -87,19 +83,25 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
     let tags: string[] = [];
     if (tagCandidates.length) {
       tags = tagCandidates;
-    } else if (englishDoc.tags.length) {
-      const translated = await Promise.all(
-        englishDoc.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
-      );
-      tags = translated.filter((t) => t && typeof t === 'string');
+    } else {
+      const enTags = Array.isArray(englishDoc.tags) ? englishDoc.tags : [];
+      if (enTags.length > 0) {
+        const translated = await Promise.all(
+          enTags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
+        );
+        tags = translated.filter((t) => t && typeof t === 'string');
+      }
     }
 
+    const hrefAr = `/ar/chapters/${baseSlug}`;
     docs.push({
+      id: hrefAr,
       title: titleAr,
       summary: summaryAr,
       tags,
-      href: `/ar/chapters/${baseSlug}`,
+      href: hrefAr,
       lang: 'ar',
+      type: 'chapter',
     });
   }
 
@@ -117,10 +119,13 @@ async function loadTimelineDocs(): Promise<SearchDoc[]> {
       tags: Array.isArray(event.tags) ? event.tags.map(String) : [],
     };
 
+    const hrefEn = `/timeline#${event.id}`;
     docs.push({
+      id: hrefEn,
       ...english,
-      href: `/timeline#${event.id}`,
+      href: hrefEn,
       lang: 'en',
+      type: 'event',
     });
 
     const arTitleNative = event.title_ar ? String(event.title_ar) : '';
@@ -156,12 +161,15 @@ async function loadTimelineDocs(): Promise<SearchDoc[]> {
       continue;
     }
 
+    const hrefAr = `/ar/timeline#${event.id}`;
     docs.push({
+      id: hrefAr,
       title: arTitle || english.title,
       summary: arSummary,
       tags: arTags,
-      href: `/ar/timeline#${event.id}`,
+      href: hrefAr,
       lang: 'ar',
+      type: 'event',
     });
   }
 

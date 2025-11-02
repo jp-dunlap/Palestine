@@ -31,12 +31,15 @@ async function loadChapterDocs() {
     const { data } = matter(raw);
     const tags = normaliseTags(data.tags);
 
+    const hrefEn = `/chapters/${baseSlug}`;
     docs.push({
+      id: hrefEn,
       title: String(data.title ?? baseSlug),
       summary: String(data.summary ?? ''),
       tags,
-      href: `/chapters/${baseSlug}`,
+      href: hrefEn,
       lang: 'en',
+      type: 'chapter',
     });
 
     const arFile = path.join(CHAPTERS_DIR, `${baseSlug}.ar.mdx`);
@@ -52,12 +55,15 @@ async function loadChapterDocs() {
     const tagsAr = arData?.tags ?? data.tags_ar;
 
     if (hasArabic(titleAr)) {
+      const hrefAr = `/ar/chapters/${baseSlug}`;
       docs.push({
+        id: hrefAr,
         title: String(titleAr),
         summary: hasArabic(summaryAr) ? String(summaryAr) : '',
         tags: normaliseTags(tagsAr),
-        href: `/ar/chapters/${baseSlug}`,
+        href: hrefAr,
         lang: 'ar',
+        type: 'chapter',
       });
     }
   }
@@ -92,21 +98,29 @@ async function loadTimelineDocs() {
         title: String(data.title ?? id),
         summary: String(data.summary ?? ''),
         tags: normaliseTags(data.tags),
-        href: `/timeline#${id}`,
-        lang: 'en',
       };
-      docs.push(english);
+      const hrefEn = `/timeline#${id}`;
+      docs.push({
+        id: hrefEn,
+        ...english,
+        href: hrefEn,
+        lang: 'en',
+        type: 'event',
+      });
 
       const titleAr = data.title_ar;
       const summaryAr = data.summary_ar;
       const tagsAr = data.tags_ar;
       if (hasArabic(titleAr) || hasArabic(summaryAr) || (Array.isArray(tagsAr) && tagsAr.some(hasArabic))) {
+        const hrefAr = `/ar/timeline#${id}`;
         docs.push({
+          id: hrefAr,
           title: String(titleAr || data.title || id),
           summary: hasArabic(summaryAr) ? String(summaryAr) : '',
           tags: normaliseTags(tagsAr),
-          href: `/ar/timeline#${id}`,
+          href: hrefAr,
           lang: 'ar',
+          type: 'event',
         });
       }
     }
@@ -130,8 +144,7 @@ async function main() {
   const byLang = { en: [], ar: [] };
   for (const doc of docs) {
     if (doc.lang === 'en' || doc.lang === 'ar') {
-      const { lang, ...rest } = doc;
-      byLang[doc.lang].push(rest);
+      byLang[doc.lang].push(doc);
     }
   }
 

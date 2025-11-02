@@ -3,13 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MiniSearch from 'minisearch';
-
-type SearchDoc = {
-  title: string;
-  summary: string;
-  tags: string[];
-  href: string;
-};
+import { normalizeSearchDocs } from '@/lib/search-normalize';
+import type { SearchDoc } from '@/lib/search.types';
 
 type Props = {
   locale?: 'en' | 'ar';
@@ -57,9 +52,10 @@ export default function SearchClient({ locale = 'en' }: Props) {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        const data = (await res.json()) as SearchDoc[];
+        const data = await res.json();
         if (!cancelled) {
-          setDocs(data);
+          const normalised = normalizeSearchDocs(data, locale);
+          setDocs(normalised);
           setStatus('ready');
         }
       } catch (err) {
@@ -77,15 +73,23 @@ export default function SearchClient({ locale = 'en' }: Props) {
 
   const index = useMemo(() => {
     if (docs.length === 0) return null;
-    const mini = new MiniSearch({
+    const mini = new MiniSearch<SearchDoc>({
+      idField: 'id',
       fields: ['title', 'summary', 'tags'],
-      storeFields: ['title', 'summary', 'tags', 'href'],
+      storeFields: ['id', 'title', 'summary', 'tags', 'href', 'type', 'lang'],
       searchOptions: {
         combineWith: 'AND',
         prefix: true,
       },
     });
-    mini.addAll(docs);
+
+    try {
+      mini.addAll(docs);
+    } catch (err) {
+      console.error('[search] indexing failed:', err);
+      return null;
+    }
+
     return mini;
   }, [docs]);
 
@@ -99,19 +103,26 @@ export default function SearchClient({ locale = 'en' }: Props) {
     const hits = index.search(trimmed);
     const mapped: SearchDoc[] = [];
     for (const hit of hits) {
-      const href = String(hit.href ?? '');
+      const href = typeof hit.href === 'string' ? hit.href : '';
       if (!href || seen.has(href)) continue;
       seen.add(href);
+
       mapped.push({
-        title: String(hit.title ?? ''),
-        summary: typeof hit.summary === 'string' ? hit.summary : '',
+        id: typeof hit.id === 'string' ? hit.id : href,
+        title: typeof hit.title === 'string' ? hit.title : '',
+        summary: typeof hit.summary === 'string' ? hit.summary : undefined,
         tags: Array.isArray(hit.tags) ? hit.tags.map(String) : [],
         href,
+        type:
+          hit.type === 'chapter' || hit.type === 'event' || hit.type === 'place'
+            ? hit.type
+            : undefined,
+        lang: hit.lang === 'ar' || hit.lang === 'en' ? hit.lang : locale,
       });
       if (mapped.length >= DEFAULT_LIMIT) break;
     }
     return mapped;
-  }, [docs, index, query]);
+  }, [docs, index, locale, query]);
 
   const statusMessage = useMemo(() => {
     if (status === 'loading') return t.loading;
@@ -142,14 +153,14 @@ export default function SearchClient({ locale = 'en' }: Props) {
         {status !== 'error' && results.length === 0 && status !== 'loading' ? (
           <li className="rounded border p-3 text-sm text-gray-600">{t.empty}</li>
         ) : null}
-        {results.map((doc, i) => (
-          <li key={`${doc.href}-${i}`} className="rounded border p-3 hover:bg-gray-50">
+        {results.map((doc) => (
+          <li key={doc.id} className="rounded border p-3 hover:bg-gray-50">
             <Link href={doc.href} className="block">
               <div className="font-semibold">{doc.title}</div>
               {doc.summary ? (
                 <div className="mt-1 text-sm text-gray-600">{doc.summary}</div>
               ) : null}
-              {doc.tags.length ? (
+              {doc.tags && doc.tags.length ? (
                 <div className="mt-1 text-xs text-gray-500">#{doc.tags.join(' #')}</div>
               ) : null}
             </Link>
