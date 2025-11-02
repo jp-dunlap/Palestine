@@ -53,6 +53,7 @@ export default function MapsPageClientAr({
   const [fitTrigger, setFitTrigger] = useState(0);
   const [copied, setCopied] = useState(false);
   const [copyMessage, setCopyMessage] = useState('');
+  const [focusAnnouncement, setFocusAnnouncement] = useState('');
   const copyTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -86,6 +87,15 @@ export default function MapsPageClientAr({
   );
 
   useEffect(() => {
+    if (!focusId) {
+      setFocusAnnouncement('');
+      return;
+    }
+    const label = focusPlace ? displayName(focusPlace) : focusId;
+    setFocusAnnouncement(`تم التركيز على ${label}`);
+  }, [focusId, focusPlace]);
+
+  useEffect(() => {
     return () => {
       if (copyTimer.current) {
         window.clearTimeout(copyTimer.current);
@@ -109,6 +119,10 @@ export default function MapsPageClientAr({
       setCopyMessage('');
     }
   }
+
+  const liveAnnouncement = useMemo(() => {
+    return [focusAnnouncement, copyMessage].filter(Boolean).join('؛ ');
+  }, [focusAnnouncement, copyMessage]);
 
   return (
     <>
@@ -224,7 +238,7 @@ export default function MapsPageClientAr({
       </ul>
 
       <div aria-live="polite" className="sr-only">
-        {copyMessage}
+        {liveAnnouncement}
       </div>
     </>
   );

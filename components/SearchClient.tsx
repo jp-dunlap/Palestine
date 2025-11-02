@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { buildSearchIndex, searchIndex, type QueryOptions, type SearchIndex } from '@/lib/search';
 import { normalizeSearchDocs } from '@/lib/search-normalize';
@@ -121,6 +122,9 @@ export default function SearchClient({ locale = 'en' }: Props) {
 
   const results = useMemo(() => searchResults.map((entry) => entry.doc), [searchResults]);
 
+  const activeQuery = useMemo(() => query.trim(), [query]);
+  const activeQueryLower = useMemo(() => activeQuery.toLowerCase(), [activeQuery]);
+
   const statusMessage = useMemo(() => {
     if (status === 'loading') return t.loading;
     if (status === 'error') return `${t.error}${errorMessage ? ` (${errorMessage})` : ''}`;
@@ -139,6 +143,40 @@ export default function SearchClient({ locale = 'en' }: Props) {
 
   function clearTypes() {
     setSelectedTypes(new Set());
+  }
+
+  function highlight(text: string | undefined) {
+    if (!text) return null;
+    if (!activeQuery) return text;
+    const lower = text.toLowerCase();
+    const queryLength = activeQuery.length;
+    const nodes: ReactNode[] = [];
+    let cursor = 0;
+    let matchIndex = lower.indexOf(activeQueryLower, cursor);
+
+    if (matchIndex === -1) {
+      return text;
+    }
+
+    while (matchIndex !== -1) {
+      if (matchIndex > cursor) {
+        nodes.push(<Fragment key={`text-${cursor}`}>{text.slice(cursor, matchIndex)}</Fragment>);
+      }
+      const matched = text.slice(matchIndex, matchIndex + queryLength);
+      nodes.push(
+        <mark key={`match-${matchIndex}`} className="rounded bg-yellow-200 px-0.5 text-gray-900">
+          {matched}
+        </mark>
+      );
+      cursor = matchIndex + queryLength;
+      matchIndex = lower.indexOf(activeQueryLower, cursor);
+    }
+
+    if (cursor < text.length) {
+      nodes.push(<Fragment key={`text-${cursor}`}>{text.slice(cursor)}</Fragment>);
+    }
+
+    return nodes;
   }
 
   return (
@@ -214,7 +252,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
                 className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="font-semibold">{doc.title}</div>
+                  <div className="font-semibold">{highlight(doc.title)}</div>
                   {typeLabel ? (
                     <span
                       className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
@@ -226,7 +264,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
                   ) : null}
                 </div>
                 {doc.summary ? (
-                  <p className="mt-1 text-sm text-gray-600">{doc.summary}</p>
+                  <p className="mt-1 text-sm text-gray-600">{highlight(doc.summary)}</p>
                 ) : null}
                 {doc.tags?.length ? (
                   <p className="mt-2 text-xs text-gray-500">#{doc.tags.join(' #')}</p>
