@@ -10,7 +10,7 @@ export default function LanguageSwitcher() {
   const searchParams = useSearchParams();
   const search = searchParams.toString();
 
-  const { href, label, linkDir } = useMemo(() => {
+  const { href, label, linkDir, testId } = useMemo(() => {
     const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
     const targetLocale = isArabic ? 'en' : 'ar';
     const params = search ? new URLSearchParams(search) : undefined;
@@ -20,6 +20,7 @@ export default function LanguageSwitcher() {
       href,
       label: isArabic ? 'English' : 'العربية',
       linkDir: isArabic ? ('ltr' as const) : ('rtl' as const),
+      testId: isArabic ? 'language-toggle-en' : 'language-toggle-ar',
     };
   }, [pathname, search]);
 
@@ -28,6 +29,7 @@ export default function LanguageSwitcher() {
       href={href}
       className="text-sm font-semibold underline decoration-dotted underline-offset-4 hover:no-underline"
       dir={linkDir}
+      data-testid={testId}
     >
       {label}
     </Link>
