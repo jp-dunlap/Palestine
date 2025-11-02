@@ -1,13 +1,8 @@
 // Minimal search types + placeholder functions (we'll wire Lunr/MiniSearch later)
 
-export type SearchDoc = {
-  id: string;
-  kind: 'chapter' | 'timeline' | 'place';
-  title: string;
-  slug?: string;         // for chapters
-  summary?: string;
-  tags?: string[];
-};
+import type { SearchDoc } from '@/lib/search.types';
+
+export type { SearchDoc };
 
 export type SearchResult = {
   doc: SearchDoc;
