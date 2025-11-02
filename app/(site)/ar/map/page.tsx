@@ -4,14 +4,14 @@ import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClientAr from '@/components/MapsPageClient.ar';
 
 export const metadata = {
-  title: 'الأماكن',
-  description: 'خريطة تفاعلية للأماكن الفلسطينية.',
+  title: 'خريطة الأماكن الفلسطينية',
+  description: 'خريطة تفاعلية مستمدة من دليل المشروع.',
   alternates: {
     canonical: '/ar/map',
     languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
   },
   openGraph: { url: '/ar/map' },
-} as const;
+};
 
 export default function MapsPageAr({
   searchParams,
@@ -21,25 +21,56 @@ export default function MapsPageAr({
   const places = loadGazetteer();
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
+
   const enHref = initialFocusId ? `/map?place=${initialFocusId}` : '/map';
 
   return (
-    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
-      <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
-      <div className="no-js-notice mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic" dir="rtl">
-        <p className="font-semibold font-arabic">تم تعطيل JavaScript.</p>
-        <p className="mt-1 font-arabic">
-          ما زال بإمكانك تصفّح الأماكن أدناه — استخدم روابط «فتح صفحة المكان» أو «فتح على الخريطة» في كل بطاقة.
-        </p>
-      </div>
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl">
+      <h1 className="text-2xl font-semibold tracking-tight">الأماكن</h1>
 
-      <div className="mt-4">
-        <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
-      </div>
+      {/* يظهر فقط عندما تكون JavaScript معطّلة */}
+      <noscript>
+        <div className="mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800">
+          <p className="font-semibold">تم تعطيل JavaScript.</p>
+          <p className="mt-1">
+            ما زال بإمكانك تصفّح الأماكن أدناه — استخدم روابط «فتح صفحة المكان» أو
+            «فتح على الخريطة» في كل بطاقة.
+          </p>
+
+          <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {places.map((p) => (
+              <li key={p.id} className="rounded border p-3">
+                <div className="font-medium">{p.name_ar ?? p.name}</div>
+                <div className="text-sm text-gray-600">
+                  {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
+                </div>
+                <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+                  <a
+                    href={`/ar/places/${p.id}`}
+                    className="underline hover:no-underline"
+                    title="فتح صفحة المكان"
+                  >
+                    فتح صفحة المكان →
+                  </a>
+                  <a
+                    href={`/ar/map?place=${encodeURIComponent(p.id)}`}
+                    className="underline hover:no-underline"
+                    title="فتح الخريطة مركّزة على هذا المكان"
+                  >
+                    فتح على الخريطة
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </noscript>
+
+      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
 
       <p className="mt-8 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href={enHref}>
-          ← English
+        <a className="underline hover:no-underline" href={enHref} dir="ltr">
+          عرض هذه الخريطة بالإنجليزية →
         </a>
       </p>
     </main>

@@ -28,7 +28,7 @@ export default function MapClient({
   fitTrigger = 0
 }: MapProps) {
   const innerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const [status, setStatus] = useState('mounted');
   const latLngsRef = useRef<L.LatLngExpression[]>([]);
 
@@ -49,7 +49,7 @@ export default function MapClient({
 
       const cLat = center[1];
       const cLng = center[0];
-      const map = L.map(target, {
+      const map = (L as any).map(target, {
         center: [cLat, cLng],
         zoom: zoom ?? 7,
         zoomControl: true,
@@ -92,23 +92,31 @@ export default function MapClient({
       const useFallback = () => {
         if (usedFallback) return;
         usedFallback = true;
-        L.rectangle([[-90, -180], [90, 180]], {
-          pane: bgPaneName,
-          color: '#f5f5f5',
-          weight: 0,
-          fillOpacity: 1
-        }).addTo(map);
+        (L as any).polygon(
+          [
+            [-90, -180],
+            [-90, 180],
+            [90, 180],
+            [90, -180]
+          ],
+          {
+            pane: bgPaneName,
+            color: '#f5f5f5',
+            weight: 0,
+            fillOpacity: 1
+          }
+        ).addTo(map);
         setStatus('ready (Leaflet — no tiles)');
       };
 
-      L.tileLayer(tileUrl, { attribution: tileAttrib })
+      (L as any).tileLayer(tileUrl, { attribution: tileAttrib })
         .on('load', () => setStatus('ready (Leaflet + tiles)'))
         .on('tileerror', useFallback)
         .addTo(map);
 
       const fallbackTimer = window.setTimeout(useFallback, 2000);
 
-      const svgRenderer = L.svg();
+      const svgRenderer = (L as any).svg();
       const inBox = (lon: number, lat: number) =>
         lon > 32 && lon < 36 && lat > 29 && lat < 34;
 
@@ -130,7 +138,7 @@ export default function MapClient({
         const ll: L.LatLngExpression = [lat, lon];
         latLngs.push(ll);
 
-        const marker = L.circleMarker(ll, {
+        const marker = (L as any).circleMarker(ll, {
           renderer: svgRenderer,
           radius: 5,
           color: '#111',
@@ -140,10 +148,10 @@ export default function MapClient({
             `<strong><a href="/places/${encodeURIComponent(p.id)}" target="_self" rel="noopener noreferrer">${escapeHtml(p.name)}</a></strong><br/>${lat.toFixed(3)}, ${lon.toFixed(3)}`
         );
 
-        clusterGroup.addLayer(marker);
+        clusterGroup.addLayers([marker]);
       }
 
-      clusterGroup.addTo(map);
+      (clusterGroup as any).addTo(map);
       latLngsRef.current = latLngs;
 
       if (latLngs.length) {
