@@ -174,7 +174,7 @@ async function loadPlaceDocs() {
 
     const altNames = normaliseAltNames(place.alt_names);
     const baseTags = [...altNames];
-    if (place.name_ar && typeof place.name_ar === 'string') {
+    if (place.name_ar && typeof place.name_ar === 'string' && !altNames.includes(place.name_ar)) {
       baseTags.push(place.name_ar);
     }
 
