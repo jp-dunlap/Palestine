@@ -1,11 +1,14 @@
 id: "lydda-ramle-expulsions-1948"
 title: "Lydda/Ramle expulsions"
+title_ar: "تهجير اللد والرملة"
 start: "1948-07-12"
 end: "1948-07-13"
 places: ["Lydda","Ramle"]
 sources: ["sayigh1997"]
 summary: "Mass expulsions under military orders; tens of thousands forced out in peak heat, many dying en route."
+summary_ar: "أوامر عسكرية بطرد جماعي؛ أُجبر عشرات الآلاف على الرحيل في ذروة الحر، فمات كثيرون أثناء الطريق."
 tags: ["displacement","nakba","war"]
+tags_ar: ["التهجير","النكبة","الحرب"]
 certainty: "high"
 era: "modern"
 

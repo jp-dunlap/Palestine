@@ -1,4 +1,4 @@
-// app/(site)/ar/maps/page.tsx
+// app/(site)/ar/map/page.tsx
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClientAr from '@/components/MapsPageClient.ar';
@@ -6,7 +6,11 @@ import MapsPageClientAr from '@/components/MapsPageClient.ar';
 export const metadata = {
   title: 'الأماكن',
   description: 'خريطة تفاعلية للأماكن الفلسطينية.',
-  alternates: { languages: { en: '/maps' } },
+  alternates: {
+    canonical: '/ar/map',
+    languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
+  },
+  openGraph: { url: '/ar/map' },
 } as const;
 
 export default function MapsPageAr({
@@ -17,11 +21,17 @@ export default function MapsPageAr({
   const places = loadGazetteer();
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
-  const enHref = initialFocusId ? `/maps?place=${initialFocusId}` : '/maps';
+  const enHref = initialFocusId ? `/map?place=${initialFocusId}` : '/map';
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
+      <div className="no-js-notice mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic" dir="rtl">
+        <p className="font-semibold font-arabic">تم تعطيل JavaScript.</p>
+        <p className="mt-1 font-arabic">
+          ما زال بإمكانك تصفّح الأماكن أدناه — استخدم روابط «فتح صفحة المكان» أو «فتح على الخريطة» في كل بطاقة.
+        </p>
+      </div>
 
       <div className="mt-4">
         <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />

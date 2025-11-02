@@ -1,0 +1,202 @@
+[
+  {
+    "id": "/chapters/001-prologue",
+    "title": "Prologue — On Names, Memory, and Return",
+    "summary": "Scope, method, sources, and the politics of telling a 4,000-year history.",
+    "tags": [
+      "method",
+      "memory",
+      "sources"
+    ],
+    "href": "/chapters/001-prologue",
+    "lang": "en",
+    "type": "chapter"
+  },
+  {
+    "id": "/chapters/002-foundations-canaanite-networks",
+    "title": "Foundations — Canaanite Urban Networks (-2000 to -1200)",
+    "summary": "Canaanite city-states, trade circuits, and material culture in Palestine as groundwork for later continuity and rupture.",
+    "tags": [
+      "foundations",
+      "urban",
+      "trade",
+      "material-culture"
+    ],
+    "href": "/chapters/002-foundations-canaanite-networks",
+    "lang": "en",
+    "type": "chapter"
+  },
+  {
+    "id": "/timeline#canaanite-networks",
+    "title": "Canaanite urban networks flourish",
+    "summary": "Urban exchange across the Levant consolidates city-states and maritime trade.",
+    "tags": [
+      "economy",
+      "urbanism"
+    ],
+    "href": "/timeline#canaanite-networks",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#balfour-declaration",
+    "title": "Balfour Declaration announces British support for a Zionist homeland",
+    "summary": "Foreign Secretary Arthur Balfour pledges British backing for a \"national home for the Jewish people\" in Palestine, entrenching imperial control.",
+    "tags": [
+      "mandate",
+      "imperialism",
+      "diplomacy"
+    ],
+    "href": "/timeline#balfour-declaration",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#nakba-1948",
+    "title": "The Nakba — mass displacement and destruction",
+    "summary": "Over 700,000 Palestinians expelled; 400+ villages depopulated or destroyed.",
+    "tags": [
+      "displacement",
+      "violence",
+      "war"
+    ],
+    "href": "/timeline#nakba-1948",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#arab-revolt-1936-39",
+    "title": "The 1936–39 Arab Revolt",
+    "summary": "Sustained Palestinian revolt against British colonial rule and Zionist settlement; crushed by massive British repression.",
+    "tags": [
+      "revolt",
+      "british-mandate",
+      "colonialism"
+    ],
+    "href": "/timeline#arab-revolt-1936-39",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#deir-yassin-1948",
+    "title": "Deir Yassin massacre",
+    "summary": "Irgun and Lehi forces kill scores of Palestinian villagers; event accelerates flight and expulsions during the Nakba.",
+    "tags": [
+      "massacre",
+      "nakba",
+      "war"
+    ],
+    "href": "/timeline#deir-yassin-1948",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#lydda-ramle-expulsions-1948",
+    "title": "Lydda/Ramle expulsions",
+    "summary": "Mass expulsions under military orders; tens of thousands forced out in peak heat, many dying en route.",
+    "tags": [
+      "displacement",
+      "nakba",
+      "war"
+    ],
+    "href": "/timeline#lydda-ramle-expulsions-1948",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#occupation-1967",
+    "title": "Occupation of the West Bank, Gaza, East Jerusalem",
+    "summary": "Israel’s military occupation begins; annexation of East Jerusalem and a long regime of settlements and military orders follow.",
+    "tags": [
+      "occupation",
+      "settlements",
+      "law"
+    ],
+    "href": "/timeline#occupation-1967",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#icj-wall-2004",
+    "title": "ICJ Wall Advisory Opinion",
+    "summary": "International Court of Justice finds the Wall/barrier and related regime contrary to international law; calls for dismantling and reparations.",
+    "tags": [
+      "law",
+      "icj",
+      "barrier"
+    ],
+    "href": "/timeline#icj-wall-2004",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#foundations-canaanite-city-states",
+    "title": "Canaanite city-states in Palestine",
+    "summary": "Urban centers and trade networks in the southern Levant; foundations for later societies.",
+    "tags": [
+      "foundations",
+      "urban",
+      "trade"
+    ],
+    "href": "/timeline#foundations-canaanite-city-states",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#ottoman-incorporation-1517",
+    "title": "Ottoman Incorporation of Palestine",
+    "summary": "After the defeat of the Mamluks, the Ottoman administration reorganizes the region, integrating Palestine into imperial provincial structures.",
+    "tags": [
+      "ottoman",
+      "administration",
+      "governance"
+    ],
+    "href": "/timeline#ottoman-incorporation-1517",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#nakba-1947-1949",
+    "title": "The Nakba (Catastrophe)",
+    "summary": "Mass displacement, village depopulations, and the foundational rupture shaping Palestinian life and exile.",
+    "tags": [
+      "nakba",
+      "displacement",
+      "war",
+      "refugees"
+    ],
+    "href": "/timeline#nakba-1947-1949",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#oslo-accords-1993-1995",
+    "title": "Oslo Accords",
+    "summary": "Interim framework producing fragmented authority under occupation; set conditions for intensified settlement and closure regimes.",
+    "tags": [
+      "oslo",
+      "accords",
+      "occupation",
+      "settlements",
+      "closures"
+    ],
+    "href": "/timeline#oslo-accords-1993-1995",
+    "lang": "en",
+    "type": "event"
+  },
+  {
+    "id": "/timeline#gaza-genocide-2023-present",
+    "title": "Genocide in Gaza (2023–Present)",
+    "summary": "Large-scale destruction, mass displacement, siege and starvation; ICJ indicated provisional measures in the genocide case; ongoing humanitarian catastrophe.",
+    "tags": [
+      "gaza",
+      "genocide",
+      "siege",
+      "displacement",
+      "famine"
+    ],
+    "href": "/timeline#gaza-genocide-2023-present",
+    "lang": "en",
+    "type": "event"
+  }
+]

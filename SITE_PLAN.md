@@ -5,7 +5,7 @@ Minimal plan for the public site. No framework code yet—this document guides t
 ## 1) Routes (planned)
 - `/` — Landing: project intro, featured chapter, featured timeline window
 - `/timeline` — Zoomable 4,000-year timeline (reads `content/timeline/*.yml`, `data/eras.yml`)
-- `/maps` — Base map with place layers (reads `data/gazetteer.json`)
+- `/map` — Base map with place layers (reads `data/gazetteer.json`)
 - `/chapters/[slug]` — Chapter detail (reads `content/chapters/*.mdx`, cites `data/bibliography.json`)
 - `/about` — Method, licensing, contributor guide links
 

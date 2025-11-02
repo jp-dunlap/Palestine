@@ -4,13 +4,63 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Era } from '@/lib/types';
 import * as React from 'react';
 
-export default function TimelineFilters({ eras }: { eras: Era[] }) {
+function formatResultMessage(count: number, isArabic: boolean): string {
+  if (isArabic) {
+    return count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`;
+  }
+  return count === 1 ? 'Showing 1 event' : `Showing ${count} events`;
+}
+
+export default function TimelineFilters({
+  eras,
+  locale = 'en',
+  resultCount,
+}: {
+  eras: Era[];
+  locale?: 'en' | 'ar';
+  resultCount: number;
+}) {
   const sp = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
 
   const [q, setQ] = React.useState(sp.get('q') ?? '');
-  const selectedEras = new Set((sp.get('eras') ?? '').split(',').filter(Boolean));
+  const selectedEras = React.useMemo(() => {
+    const raw = sp.getAll('eras');
+    const values = raw
+      .flatMap(value => value.split(','))
+      .map(value => value.trim())
+      .filter(Boolean);
+    if (values.length) {
+      return new Set(values);
+    }
+    return new Set((sp.get('eras') ?? '').split(',').filter(Boolean));
+  }, [sp]);
+  const isArabic = locale === 'ar';
+  const [announcement, setAnnouncement] = React.useState(() =>
+    formatResultMessage(resultCount, isArabic)
+  );
+
+  const t = React.useMemo(() => {
+    if (isArabic) {
+      return {
+        placeholder: 'ابحث في الخط الزمني…',
+        label: 'ابحث',
+        legend: 'تصفية حسب الحقبة',
+        filterAria: (era: string) => `تصفية حسب الحقبة ${era}`,
+      } as const;
+    }
+    return {
+      placeholder: 'Search timeline…',
+      label: 'Search',
+      legend: 'Filter by era',
+      filterAria: (era: string) => `Filter by era ${era}`,
+    } as const;
+  }, [isArabic]);
+
+  React.useEffect(() => {
+    setAnnouncement(formatResultMessage(resultCount, isArabic));
+  }, [resultCount, isArabic]);
 
   function update(param: string, value: string) {
     const params = new URLSearchParams(sp.toString());
@@ -26,30 +76,78 @@ export default function TimelineFilters({ eras }: { eras: Era[] }) {
     update('eras', Array.from(next).join(','));
   }
 
+  const chipBaseClasses =
+    'inline-flex cursor-pointer select-none rounded-full px-3 py-1 text-sm font-medium transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-gray-900';
+
   return (
-    <div className="mb-6 space-y-3">
+    <form
+      role="search"
+      method="get"
+      action={pathname}
+      className="mb-6 space-y-3"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
       <input
+        name="q"
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
           update('q', e.target.value);
         }}
-        placeholder="Search timeline…"
-        className="w-full rounded border px-3 py-2 text-sm"
+        placeholder={t.placeholder}
+        aria-label={t.label}
+        className={`w-full rounded border px-3 py-2 text-sm ${isArabic ? 'text-right' : ''}`}
       />
 
-      <div className="flex flex-wrap gap-3">
-        {eras.map((e) => (
-          <label key={e.id} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={selectedEras.has(e.id)}
-              onChange={() => toggleEra(e.id)}
-            />
-            <span>{e.title}</span>
-          </label>
-        ))}
+      <fieldset className={`m-0 border-0 p-0 ${isArabic ? 'text-right' : ''}`}>
+        <legend className={`mb-2 text-sm font-medium text-gray-700 ${isArabic ? 'text-right' : ''}`}>
+          {t.legend}
+        </legend>
+        <div className={`flex flex-wrap gap-2 ${isArabic ? 'justify-end' : ''}`}>
+          {eras.map((e) => {
+            const id = `timeline-filter-${e.id}`;
+            const label = isArabic ? e.title_ar ?? e.title : e.title;
+            const selected = selectedEras.has(e.id);
+            const stateClasses = selected
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-300 text-gray-900 hover:bg-gray-400 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600';
+            return (
+              <div key={e.id} className="flex">
+                <input
+                  type="checkbox"
+                  name="eras"
+                  value={e.id}
+                  id={id}
+                  checked={selected}
+                  onChange={() => toggleEra(e.id)}
+                  className="peer sr-only"
+                  aria-label={t.filterAria(label)}
+                />
+                <label
+                  htmlFor={id}
+                  className={`${chipBaseClasses} ${stateClasses}`}
+                  aria-pressed={selected}
+                  aria-controls="timeline-results"
+                  aria-label={t.filterAria(label)}
+                >
+                  {label}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <button
+        type="submit"
+        className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+      >
+        {isArabic ? 'تطبيق' : 'Apply'}
+      </button>
+
+      <div aria-live="polite" className="sr-only">
+        {announcement}
       </div>
-    </div>
+    </form>
   );
 }

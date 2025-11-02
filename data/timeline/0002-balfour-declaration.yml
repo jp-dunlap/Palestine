@@ -1,0 +1,17 @@
+id: "balfour-declaration"
+title: "Balfour Declaration announces British support for a Zionist homeland"
+title_ar: "إعلان بلفور يعلن دعم بريطانيا لوطن لليهود"
+start: "1917-11-02"
+end:
+places: ["Jerusalem", "London"]
+sources: ["balfour1917", "khalidi1997"]
+summary: >-
+  Foreign Secretary Arthur Balfour pledges British backing for a "national home for the Jewish
+  people" in Palestine, entrenching imperial control.
+summary_ar: >-
+  يُعلن وزير الخارجية آرثر بلفور دعم بريطانيا لإنشاء "وطن قومي للشعب اليهودي" في فلسطين، ما يرسّخ
+  السيطرة الاستعمارية.
+tags: ["mandate", "imperialism", "diplomacy"]
+tags_ar: ["الانتداب", "الاستعمار", "الدبلوماسية"]
+certainty: "medium"
+era: "british-mandate"

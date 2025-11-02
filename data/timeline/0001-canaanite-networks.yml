@@ -1,11 +1,14 @@
 id: "canaanite-networks"
 title: "Canaanite urban networks flourish"
+title_ar: "ازدهار الشبكات الحضرية الكنعانية"
 start: "-1800"
 end:
 places: ["Gaza","Jaffa"]
 sources: ["sayigh1997"]
 summary: "Urban exchange across the Levant consolidates city-states and maritime trade."
+summary_ar: "يعزّز التبادل الحضري عبر بلاد الشام المدن-الدول والتجارة البحرية."
 tags: ["economy","urbanism"]
+tags_ar: ["الاقتصاد","التمدّن"]
 certainty: "medium"
 era: "foundations"
 
