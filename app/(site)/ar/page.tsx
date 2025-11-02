@@ -1,5 +1,4 @@
 import SearchIsland from '@/components/SearchIsland';
-import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
   title: 'فلسطين',
@@ -14,9 +13,7 @@ export const metadata = {
   },
 } as const;
 
-export default async function Page() {
-  const docs = (await loadSearchDocs()).filter((d) => d.lang === 'ar');
-
+export default function Page() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <header className="mb-8">
@@ -27,7 +24,7 @@ export default async function Page() {
       </header>
 
       <div className="mb-6" dir="ltr">
-        <SearchIsland docs={docs} locale="ar" />
+        <SearchIsland locale="ar" />
       </div>
 
       <section className="space-y-4">

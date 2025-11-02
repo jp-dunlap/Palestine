@@ -1,6 +1,5 @@
 // app/(site)/page.tsx
 import SearchIsland from '@/components/SearchIsland';
-import { loadSearchDocs } from '@/lib/loaders.search';
 
 export const metadata = {
   title: 'Palestine',
@@ -9,9 +8,7 @@ export const metadata = {
   alternates: { languages: { ar: '/ar' } },
 } as const;
 
-export default async function Page() {
-  const docs = (await loadSearchDocs()).filter((d) => d.lang === 'en');
-
+export default function Page() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-8">
@@ -23,7 +20,7 @@ export default async function Page() {
       </header>
 
       <div className="mb-6">
-        <SearchIsland docs={docs} locale="en" />
+        <SearchIsland locale="en" />
       </div>
 
       <section className="space-y-4">

@@ -1,13 +1,9 @@
-// components/SearchIsland.tsx
-'use client';
-
-import Search from './Search';
+import SearchClient from '@/components/SearchClient';
 
 type Props = {
-  docs: React.ComponentProps<typeof Search>['docs'];
-  locale?: React.ComponentProps<typeof Search>['locale'];
+  locale?: 'en' | 'ar';
 };
 
-export default function SearchIsland({ docs, locale }: Props) {
-  return <Search docs={docs} locale={locale} />;
+export default function SearchIsland({ locale }: Props) {
+  return <SearchClient locale={locale} />;
 }

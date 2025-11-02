@@ -4,7 +4,22 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Era } from '@/lib/types';
 import * as React from 'react';
 
-export default function TimelineFilters({ eras, locale = 'en' }: { eras: Era[]; locale?: 'en' | 'ar' }) {
+function formatResultMessage(count: number, isArabic: boolean): string {
+  if (isArabic) {
+    return count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`;
+  }
+  return count === 1 ? 'Showing 1 event' : `Showing ${count} events`;
+}
+
+export default function TimelineFilters({
+  eras,
+  locale = 'en',
+  resultCount,
+}: {
+  eras: Era[];
+  locale?: 'en' | 'ar';
+  resultCount: number;
+}) {
   const sp = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -12,6 +27,9 @@ export default function TimelineFilters({ eras, locale = 'en' }: { eras: Era[]; 
   const [q, setQ] = React.useState(sp.get('q') ?? '');
   const selectedEras = new Set((sp.get('eras') ?? '').split(',').filter(Boolean));
   const isArabic = locale === 'ar';
+  const [announcement, setAnnouncement] = React.useState(() =>
+    formatResultMessage(resultCount, isArabic)
+  );
 
   const t = React.useMemo(() => {
     if (isArabic) {
@@ -25,6 +43,10 @@ export default function TimelineFilters({ eras, locale = 'en' }: { eras: Era[]; 
       label: 'Search',
     } as const;
   }, [isArabic]);
+
+  React.useEffect(() => {
+    setAnnouncement(formatResultMessage(resultCount, isArabic));
+  }, [resultCount, isArabic]);
 
   function update(param: string, value: string) {
     const params = new URLSearchParams(sp.toString());
@@ -41,7 +63,7 @@ export default function TimelineFilters({ eras, locale = 'en' }: { eras: Era[]; 
   }
 
   return (
-    <div className="mb-6 space-y-3" dir={isArabic ? 'rtl' : 'ltr'}>
+    <div className="mb-6 space-y-3" dir={isArabic ? 'rtl' : 'ltr'} role="search">
       <input
         value={q}
         onChange={(e) => {
@@ -67,6 +89,10 @@ export default function TimelineFilters({ eras, locale = 'en' }: { eras: Era[]; 
             <span>{isArabic ? e.title_ar ?? e.title : e.title}</span>
           </label>
         ))}
+      </div>
+
+      <div aria-live="polite" className="sr-only">
+        {announcement}
       </div>
     </div>
   );
