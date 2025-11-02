@@ -33,3 +33,11 @@ html[lang="ar"] body {
 body {
   font-family: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
+
+.no-js-notice {
+  display: block;
+}
+
+.js-enabled .no-js-notice {
+  display: none;
+}

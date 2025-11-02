@@ -1,6 +1,8 @@
 // app/layout.tsx
 import './globals.css';
 import type { ReactNode } from 'react';
+import Script from 'next/script';
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
 
 export const metadata = {
@@ -21,8 +23,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="no-js">
       <body className="font-sans">
+        <Script id="init-js" strategy="beforeInteractive">
+          {`document.documentElement.classList.remove('no-js');
+document.documentElement.classList.add('js-enabled');`}
+        </Script>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 rounded bg-white px-3 py-1 text-sm shadow"

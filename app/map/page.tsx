@@ -27,15 +27,13 @@ export default function MapsPage({
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">Places</h1>
-      <noscript>
-        <div className="mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800">
-          <p className="font-semibold">JavaScript is disabled.</p>
-          <p className="mt-1">
-            You can still browse places below — use "Open place page" or "Open on map"
-            links on each card.
-          </p>
-        </div>
-      </noscript>
+      <div className="no-js-notice mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800">
+        <p className="font-semibold">JavaScript is disabled.</p>
+        <p className="mt-1">
+          You can still browse places below — use "Open place page" or "Open on map" links
+          on each card.
+        </p>
+      </div>
       <p className="mt-2 text-sm text-gray-600">
         Loaded from <code>data/gazetteer.json</code>
       </p>

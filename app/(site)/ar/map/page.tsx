@@ -26,14 +26,12 @@ export default function MapsPageAr({
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <h1 className="text-2xl font-semibold tracking-tight font-arabic">الأماكن</h1>
-      <noscript>
-        <div className="mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic" dir="rtl">
-          <p className="font-semibold font-arabic">تم تعطيل JavaScript.</p>
-          <p className="mt-1 font-arabic">
-            ما زال بإمكانك تصفّح الأماكن أدناه — استخدم روابط «فتح صفحة المكان» أو «فتح على الخريطة» في كل بطاقة.
-          </p>
-        </div>
-      </noscript>
+      <div className="no-js-notice mt-2 rounded border bg-yellow-50 p-3 text-sm text-yellow-800 font-arabic" dir="rtl">
+        <p className="font-semibold font-arabic">تم تعطيل JavaScript.</p>
+        <p className="mt-1 font-arabic">
+          ما زال بإمكانك تصفّح الأماكن أدناه — استخدم روابط «فتح صفحة المكان» أو «فتح على الخريطة» في كل بطاقة.
+        </p>
+      </div>
 
       <div className="mt-4">
         <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
