@@ -96,7 +96,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
     }
     if (!index) return [];
     const seen = new Set<string>();
-    const hits = index.search(trimmed, { prefix: true, combineWith: 'AND' });
+    const hits = index.search(trimmed);
     const mapped: SearchDoc[] = [];
     for (const hit of hits) {
       const href = String(hit.href ?? '');
