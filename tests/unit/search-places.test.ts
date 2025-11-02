@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { loadPlaceDocs } from '../../scripts/build-search.js';
+import { loadPlaceDocs, SearchDoc } from '../../scripts/build-search.js';
 
-function findDoc(docs: Array<Record<string, unknown>>, href: string) {
-  return docs.find((doc) => doc && typeof doc === 'object' && doc.href === href);
+function findDoc(docs: SearchDoc[], href: string) {
+  return docs.find((doc) => doc.href === href);
 }
 
 describe('search place indexing', () => {
@@ -12,7 +12,7 @@ describe('search place indexing', () => {
     expect(haifa).toBeTruthy();
     expect(haifa?.type).toBe('place');
     expect(Array.isArray(haifa?.tags)).toBe(true);
-    expect((haifa?.tags as string[]).includes('حيفا')).toBe(true);
+    expect(haifa?.tags.includes('حيفا')).toBe(true);
   });
 
   it('includes arabic variants when available', async () => {
