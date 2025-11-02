@@ -33,7 +33,12 @@ export default function Timeline({
         href: (id: string) => `/timeline/${id}`,
       };
   return (
-    <div className="space-y-8" dir={isArabic ? 'rtl' : 'ltr'}>
+    <section
+      id="timeline-results"
+      aria-live="polite"
+      className="space-y-8"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
       {events.map((e) => (
         <div
           key={e.id}
@@ -67,6 +72,6 @@ export default function Timeline({
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }
