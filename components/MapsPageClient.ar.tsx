@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import MapClient from './MapClient';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Load MapClient only on the client so SSR never touches Leaflet/window.
+const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 
 type Place = {
   id: string;
   name: string;
+  name_ar?: string;
   lat: number;
   lon: number;
   kind?: string;
@@ -29,7 +33,6 @@ function displayName(p: Place) {
 }
 function formatKindAr(kind?: string) {
   if (!kind) return '';
-  // quick labels; adjust as you expand taxonomy
   const m: Record<string, string> = {
     city: 'مدينة',
     port_city: 'مدينة ساحلية'
@@ -48,6 +51,8 @@ export default function MapsPageClientAr({
 }) {
   const [focusId, setFocusId] = useState<string | null>(initialFocusId ?? null);
   const [fitTrigger, setFitTrigger] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (!initialFocusId) return;
@@ -56,6 +61,7 @@ export default function MapsPageClientAr({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    setCopied(false);
     const url = new URL(window.location.href);
     if (focusId) url.searchParams.set('place', focusId);
     else url.searchParams.delete('place');
@@ -67,6 +73,35 @@ export default function MapsPageClientAr({
     return p ? { lat: p.lat, lon: p.lon } : null;
   }, [focusId, places]);
 
+  const localizedPlaces = useMemo(
+    () =>
+      places.map((p) => ({
+        ...p,
+        name: p.name_ar ?? displayName(p),
+      })),
+    [places]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) {
+        window.clearTimeout(copyTimer.current);
+      }
+    };
+  }, []);
+
+  async function copyLink() {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   return (
     <>
       <div className="mt-6">
@@ -76,7 +111,7 @@ export default function MapsPageClientAr({
           minZoom={cfg.minZoom}
           maxZoom={cfg.maxZoom}
           bounds={cfg.bounds}
-          places={places}
+          places={localizedPlaces}
           className="w-full rounded border"
           focus={focus}
           fitTrigger={fitTrigger}
@@ -88,19 +123,23 @@ export default function MapsPageClientAr({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="إعادة الضبط لعرض كل الأماكن"
+          aria-label="إعادة الضبط لعرض كل الأماكن"
         >
           إعادة الضبط
         </button>
 
         <button
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
-          onClick={async () => {
-            try { await navigator.clipboard.writeText(window.location.href); } catch {}
-          }}
+          onClick={copyLink}
           title="نسخ رابط قابل للمشاركة"
+          aria-label="نسخ رابط قابل للمشاركة"
         >
           نسخ الرابط
         </button>
+
+        {copied ? (
+          <span className="text-xs text-green-600" aria-live="polite">تم نسخ الرابط</span>
+        ) : null}
 
         {focusId ? (
           <span className="text-sm text-gray-600">
@@ -109,27 +148,56 @@ export default function MapsPageClientAr({
         ) : null}
       </div>
 
-      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <h2 className="sr-only" id="map-places-heading">
+        قائمة الأماكن
+      </h2>
+      <ul
+        aria-labelledby="map-places-heading"
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
         {places.map((p) => {
           const focused = p.id === focusId;
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 cursor-pointer ${
-                focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => setFocusId(p.id)}
-              title="انقر للتركيز على الخريطة"
+              className={`rounded border p-3 ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
             >
-              <div className="font-medium">{displayName(p)}</div>
-              <div className="text-sm text-gray-600">
-                {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
-              </div>
-              {p.alt_names?.length ? (
-                <div className="text-xs text-gray-500 mt-1">
-                  أسماء أخرى: {p.alt_names.join('، ')}
+              <button
+                type="button"
+                className="block w-full text-left"
+                onClick={() => setFocusId(p.id)}
+                aria-pressed={focused}
+                aria-label={`التركيز على ${displayName(p)} في الخريطة`}
+                title="انقر للتركيز على الخريطة"
+              >
+                <div className="font-medium">{displayName(p)}</div>
+                <div className="text-sm text-gray-600">
+                  {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
                 </div>
-              ) : null}
+                {p.alt_names?.length ? (
+                  <div className="text-xs text-gray-500 mt-1">
+                    أسماء أخرى: {p.alt_names.join('، ')}
+                  </div>
+                ) : null}
+              </button>
+              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+                <a
+                  href={`/ar/places/${p.id}`}
+                  className="underline hover:no-underline"
+                  aria-label={`فتح صفحة المكان ${displayName(p)}`}
+                  title="فتح صفحة المكان"
+                >
+                  فتح صفحة المكان →
+                </a>
+                <a
+                  href={`/ar/map?place=${encodeURIComponent(p.id)}`}
+                  className="underline hover:no-underline"
+                  aria-label={`فتح الخريطة مركّزة على ${displayName(p)}`}
+                  title="فتح الخريطة مركّزة على هذا المكان"
+                >
+                  فتح على الخريطة
+                </a>
+              </div>
             </li>
           );
         })}

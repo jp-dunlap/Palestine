@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import MapClient from './MapClient';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Load MapClient only on the client so SSR never touches Leaflet/window.
+const MapClient = dynamic(() => import('./MapClient'), { ssr: false });
 
 type Place = {
   id: string;
   name: string;
+  name_ar?: string;
   lat: number;
   lon: number;
   kind?: string;
@@ -35,16 +39,17 @@ export default function MapsPageClient({
 }) {
   const [focusId, setFocusId] = useState<string | null>(initialFocusId ?? null);
   const [fitTrigger, setFitTrigger] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
 
-  // Apply deep link on first render if present
   useEffect(() => {
     if (!initialFocusId) return;
     setFocusId(initialFocusId);
   }, [initialFocusId]);
 
-  // Keep URL in sync when focus changes (no reload)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    setCopied(false);
     const url = new URL(window.location.href);
     if (focusId) url.searchParams.set('place', focusId);
     else url.searchParams.delete('place');
@@ -56,12 +61,24 @@ export default function MapsPageClient({
     return p ? { lat: p.lat, lon: p.lon } : null;
   }, [focusId, places]);
 
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) {
+        window.clearTimeout(copyTimer.current);
+      }
+    };
+  }, []);
+
   async function copyLink() {
     if (typeof window === 'undefined') return;
     try {
       await navigator.clipboard.writeText(window.location.href);
-      // noop toast-free; stays quiet
-    } catch {}
+      setCopied(true);
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
   }
 
   return (
@@ -85,6 +102,7 @@ export default function MapsPageClient({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="Reset view to show all places"
+          aria-label="Reset view to show all places"
         >
           Reset view
         </button>
@@ -93,9 +111,14 @@ export default function MapsPageClient({
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
           onClick={copyLink}
           title="Copy a shareable link to this view"
+          aria-label="Copy a shareable link to this view"
         >
           Copy link
         </button>
+
+        {copied ? (
+          <span className="text-xs text-green-600" aria-live="polite">Link copied</span>
+        ) : null}
 
         {focusId ? (
           <span className="text-sm text-gray-600">
@@ -104,27 +127,56 @@ export default function MapsPageClient({
         ) : null}
       </div>
 
-      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <h2 className="sr-only" id="map-places-heading">
+        Places list
+      </h2>
+      <ul
+        aria-labelledby="map-places-heading"
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
         {places.map((p) => {
           const focused = p.id === focusId;
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 cursor-pointer ${
-                focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => setFocusId(p.id)}
-              title="Click to focus on the map"
+              className={`rounded border p-3 ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
             >
-              <div className="font-medium">{p.name}</div>
-              <div className="text-sm text-gray-600">
-                {formatKind(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
-              </div>
-              {p.alt_names?.length ? (
-                <div className="text-xs text-gray-500 mt-1">
-                  Also known as: {p.alt_names.join(', ')}
+              <button
+                type="button"
+                className="block w-full text-left"
+                onClick={() => setFocusId(p.id)}
+                aria-pressed={focused}
+                aria-label={`Focus map on ${p.name}`}
+                title="Click to focus on the map"
+              >
+                <div className="font-medium">{p.name}</div>
+                <div className="text-sm text-gray-600">
+                  {formatKind(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
                 </div>
-              ) : null}
+                {p.alt_names?.length ? (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Also known as: {p.alt_names.join(', ')}
+                  </div>
+                ) : null}
+              </button>
+              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+                <a
+                  href={`/places/${p.id}`}
+                  className="underline hover:no-underline"
+                  aria-label={`Open place page for ${p.name}`}
+                  title="Open place page"
+                >
+                  Open place page →
+                </a>
+                <a
+                  href={`/map?place=${encodeURIComponent(p.id)}`}
+                  className="underline hover:no-underline"
+                  aria-label={`Open map focused on ${p.name}`}
+                  title="Open map focused on this place"
+                >
+                  Open on map
+                </a>
+              </div>
             </li>
           );
         })}
