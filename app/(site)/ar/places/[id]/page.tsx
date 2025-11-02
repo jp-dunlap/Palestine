@@ -49,7 +49,7 @@ export default function PlacePageAr({ params }: { params: { id: string } }) {
       ) : null}
 
       <p className="mt-6 text-sm">
-        <a className="underline hover:no-underline" href={`/ar/maps?place=${encodeURIComponent(p.id)}`}>
+        <a className="underline hover:no-underline" href={`/ar/map?place=${encodeURIComponent(p.id)}`}>
           عرض على الخريطة →
         </a>
       </p>

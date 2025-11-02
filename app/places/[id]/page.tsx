@@ -50,7 +50,7 @@ export default function PlacePage({ params }: { params: { id: string } }) {
       ) : null}
 
       <p className="mt-6 text-sm">
-        <a className="underline hover:no-underline" href={`/maps?place=${encodeURIComponent(p.id)}`}>
+        <a className="underline hover:no-underline" href={`/map?place=${encodeURIComponent(p.id)}`}>
           View on map →
         </a>
       </p>
