@@ -212,7 +212,7 @@ export function getRelatedTimelineEvents(
       if (b.score !== a.score) return b.score - a.score;
       const diff = a.candidate.start - b.candidate.start;
       if (diff !== 0) return diff;
-      return a.candidate.title.localeCompare(b.candidate.title);
+      return a.candidate.title.localeCompare(b.candidate.title, locale);
     })
     .slice(0, limit)
     .map((entry) => localiseEvent(entry.candidate, locale));

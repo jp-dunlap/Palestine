@@ -68,7 +68,7 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
         tags: 'وسوم',
         places: 'أماكن',
         viewOnMap: 'عرض على الخريطة',
-        viewPlaceAlt: 'عرض الصفحة بالإنجليزية',
+        viewPlaceAlt: 'عرض صفحة المكان بالإنجليزية',
         related: 'أحداث مرتبطة',
         returnLink: '← العودة إلى الخط الزمني',
       }
