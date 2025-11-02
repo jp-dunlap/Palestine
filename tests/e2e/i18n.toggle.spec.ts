@@ -10,14 +10,18 @@ test('Arabic map preserves place query when switching to English', async ({ page
   await page.goto('/ar/map?place=ramla');
   await page.getByTestId('language-toggle-en').click();
   await expect(page).toHaveURL(/\/map\?place=ramla$/);
-  await expect(page.getByText('Focused: Ramla')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'Focused: Ramla' })
+  ).toBeVisible();
 });
 
 test('English map keeps focus when switching to Arabic', async ({ page }) => {
   await page.goto('/map?place=haifa');
   await page.getByTestId('language-toggle-ar').click();
   await expect(page).toHaveURL(/\/ar\/map\?place=haifa$/);
-  await expect(page.getByText('المركّز: حيفا')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'المركّز: حيفا' })
+  ).toBeVisible();
 });
 
 test('Timeline queries persist across language toggle', async ({ page }) => {
