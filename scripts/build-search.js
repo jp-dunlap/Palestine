@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import matter from 'gray-matter';
 import YAML from 'yaml';
 
@@ -19,7 +20,7 @@ function hasArabic(str) {
   return typeof str === 'string' && /[\u0600-\u06FF]/.test(str);
 }
 
-async function loadChapterDocs() {
+export async function loadChapterDocs() {
   if (!(await exists(CHAPTERS_DIR))) return [];
   const entries = await fs.readdir(CHAPTERS_DIR);
   const docs = [];
@@ -79,7 +80,7 @@ function parseTimelineDir(dir) {
     .catch(() => []);
 }
 
-async function loadTimelineDocs() {
+export async function loadTimelineDocs() {
   const dirs = [DATA_TIMELINE_DIR, CONTENT_TIMELINE_DIR];
   const seen = new Map();
   const docs = [];
@@ -132,9 +133,16 @@ async function loadTimelineDocs() {
 
 function normaliseAltNames(value) {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((entry) => (entry == null ? null : String(entry)))
-    .filter((entry) => entry && entry.length > 0);
+  const seen = new Set();
+  for (const entry of value) {
+    if (entry == null) continue;
+    const normalised = String(entry).trim();
+    if (!normalised) continue;
+    if (!seen.has(normalised)) {
+      seen.add(normalised);
+    }
+  }
+  return [...seen];
 }
 
 function normalisePlaceKind(kind, locale) {
@@ -151,7 +159,7 @@ function normalisePlaceKind(kind, locale) {
   return raw.replace(/_/g, ' ');
 }
 
-async function loadPlaceDocs() {
+export async function loadPlaceDocs() {
   if (!(await exists(GAZETTEER_PATH))) return [];
   const raw = await fs.readFile(GAZETTEER_PATH, 'utf8');
   let data;
@@ -173,10 +181,14 @@ async function loadPlaceDocs() {
     if (!id || !name) continue;
 
     const altNames = normaliseAltNames(place.alt_names);
-    const baseTags = [...altNames];
-    if (place.name_ar && typeof place.name_ar === 'string') {
-      baseTags.push(place.name_ar);
+    const tagsSet = new Set(altNames);
+    if (typeof place.name_ar === 'string') {
+      const trimmedArabic = place.name_ar.trim();
+      if (trimmedArabic && !tagsSet.has(trimmedArabic)) {
+        tagsSet.add(trimmedArabic);
+      }
     }
+    const baseTags = [...tagsSet];
 
     const latValue = Number(place.lat);
     const lonValue = Number(place.lon);
@@ -242,9 +254,12 @@ async function main() {
   }
 }
 
-await main().catch((err) => {
-  console.error('[search] failed:', err);
-  process.exit(1);
-});
-
-export { loadChapterDocs, loadTimelineDocs, loadPlaceDocs };
+if (process.argv[1]) {
+  const entryUrl = pathToFileURL(process.argv[1]).href;
+  if (import.meta.url === entryUrl) {
+    await main().catch((err) => {
+      console.error('[search] failed:', err);
+      process.exit(1);
+    });
+  }
+}

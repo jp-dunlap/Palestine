@@ -21,4 +21,12 @@ describe('search place indexing', () => {
     expect(haifaAr).toBeTruthy();
     expect(haifaAr?.lang).toBe('ar');
   });
+
+  it('deduplicates place tags across locales', async () => {
+    const docs = await loadPlaceDocs();
+    const haifaAr = findDoc(docs, '/ar/places/haifa');
+    expect(haifaAr).toBeTruthy();
+    const tags = Array.isArray(haifaAr?.tags) ? (haifaAr?.tags as string[]) : [];
+    expect(new Set(tags).size).toBe(tags.length);
+  });
 });
