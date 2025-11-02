@@ -1,36 +1,25 @@
-import TimelinePageClient, { Era, TimelineEvent } from '@/components/TimelinePageClient';
-import { loadTimelineEvents } from '@/lib/loaders.timeline';
+// app/timeline/page.tsx
+import { Suspense } from 'react';
+import TimelinePageClient from '@/components/TimelinePageClient'; // ✅ default import, not `* as` or named
+import { loadTimelineEvents, loadEras } from '@/lib/loaders.timeline';
 
-function toEvent(e: any): TimelineEvent {
-  return {
-    id: String(e.id),
-    title: String(e.title || ''),
-    summary: e.summary ? String(e.summary) : '',
-    tags: Array.isArray(e.tags) ? e.tags.map(String) : [],
-    era: e.era ? String(e.era) : undefined,
-    href: `/timeline#${e.id}`,
-  };
-}
+export const metadata = {
+  title: 'Timeline',
+  description: 'A chronological view of events with filters and search.',
+};
 
-export default function Page() {
-  const all = loadTimelineEvents().map(toEvent);
-  const erasMap = new Map<string, Era>();
-  for (const e of all) {
-    if (e.era) {
-      const id = e.era;
-      if (!erasMap.has(id)) {
-        erasMap.set(id, { id, title: id });
-      }
-    }
-  }
-  const eras = Array.from(erasMap.values());
+export default async function Page() {
+  // These are Server functions; fine to run here.
+  const events = await loadTimelineEvents();
+  const eras = loadEras();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">Timeline</h1>
-      <div className="mt-6">
-        <TimelinePageClient events={all} eras={eras} locale="en" />
-      </div>
+    <main className="mx-auto max-w-5xl px-4 py-8">
+      <h1 className="sr-only">Timeline</h1>
+      <Suspense fallback={null}>
+        {/* 👇 Client component rendered inside Suspense */}
+        <TimelinePageClient events={events} eras={eras} />
+      </Suspense>
     </main>
   );
 }
