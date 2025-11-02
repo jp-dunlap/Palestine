@@ -27,16 +27,24 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const title = arFm.title ?? enFm?.title ?? params.slug;
   const summary = arFm.summary ?? enFm?.summary;
+  const canonical = `/ar/chapters/${params.slug}`;
+  const languages = {
+    en: `/chapters/${params.slug}`,
+    ar: canonical,
+    'x-default': `/chapters/${params.slug}`,
+  } as const;
   return {
     title: isFallback ? `${title} (English)` : title,
     description: summary,
     alternates: {
-      languages: hasEn ? { en: `/chapters/${params.slug}` } : {},
+      canonical,
+      languages,
     },
     openGraph: {
       title: isFallback ? `${title} (English)` : title,
       description: summary,
       images: url ? [`${url}/opengraph-image`] : undefined,
+      url: canonical,
     },
   };
 }

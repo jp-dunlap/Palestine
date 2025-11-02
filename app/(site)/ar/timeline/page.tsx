@@ -6,7 +6,11 @@ import TimelineFilters from '@/components/TimelineFilters';
 export const metadata = {
   title: 'الخط الزمني',
   description: 'خط زمني عامّ لفلسطين مع العصور والأمكنة والمصادر.',
-  alternates: { languages: { en: '/timeline' } },
+  alternates: {
+    canonical: '/ar/timeline',
+    languages: { en: '/timeline', ar: '/ar/timeline', 'x-default': '/timeline' },
+  },
+  openGraph: { url: '/ar/timeline' },
 };
 
 export default function Page({

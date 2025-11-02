@@ -6,7 +6,11 @@ import MapsPageClient from '@/components/MapsPageClient';
 export const metadata = {
   title: 'Map of Palestinian places',
   description: 'Interactive map drawn from the project gazetteer.',
-  alternates: { languages: { ar: '/ar/map' } },
+  alternates: {
+    canonical: '/map',
+    languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
+  },
+  openGraph: { url: '/map' },
 };
 
 export default function MapsPage({
