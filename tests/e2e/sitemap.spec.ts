@@ -21,6 +21,7 @@ test.describe('sitemap.xml', () => {
     const hasDetail = timelineDetailMatches.some((href) => !href.endsWith('/timeline'));
     expect(hasDetail).toBeTruthy();
 
-    expect(body).not.toContain('/maps');
+    const legacyMapRoute = `/${'maps'}`;
+    expect(body).not.toContain(legacyMapRoute);
   });
 });

@@ -1,6 +1,7 @@
 // app/places/[id]/page.tsx
-import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { loadGazetteer } from '@/lib/loaders.places';
 
 export const dynamic = 'force-static';
@@ -50,9 +51,9 @@ export default function PlacePage({ params }: { params: { id: string } }) {
       ) : null}
 
       <p className="mt-6 text-sm">
-        <a className="underline hover:no-underline" href={`/map?place=${encodeURIComponent(p.id)}`}>
+        <Link className="underline hover:no-underline" href={`/map?place=${encodeURIComponent(p.id)}`}>
           View on map →
-        </a>
+        </Link>
       </p>
 
       <p className="mt-8 text-sm text-gray-600">
