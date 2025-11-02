@@ -25,9 +25,11 @@ export default function Page({
 }) {
   const q = (searchParams?.q as string) || '';
   const eras = ((searchParams?.eras as string) || '').split(',').filter(Boolean);
+  const logicParam = (searchParams?.logic as string) || '';
+  const logic = logicParam === 'and' ? 'and' : 'or';
 
   const allEras = loadEras();
-  const events = filterTimeline({ q, eras, locale: 'ar' });
+  const events = filterTimeline({ q, eras, locale: 'ar', logic });
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">

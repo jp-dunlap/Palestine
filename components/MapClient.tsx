@@ -14,6 +14,7 @@ type MapProps = {
   className?: string;
   focus?: { lat: number; lon: number } | null;
   fitTrigger?: number;
+  ariaLabel?: string;
 };
 
 export default function MapClient({
@@ -25,7 +26,8 @@ export default function MapClient({
   places,
   className,
   focus,
-  fitTrigger = 0
+  fitTrigger = 0,
+  ariaLabel,
 }: MapProps) {
   const innerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -200,10 +202,14 @@ export default function MapClient({
     map.fitBounds(b, { padding: [40, 40], animate: false });
   }, [fitTrigger]);
 
+  const label = ariaLabel ?? 'Map of Palestinian places';
+
   return (
     <div
       className={className ?? 'w-full rounded border'}
       style={{ height: 420, position: 'relative' }}
+      role="region"
+      aria-label={label}
     >
       <div ref={innerRef} style={{ position: 'absolute', inset: 0 }} />
       <div

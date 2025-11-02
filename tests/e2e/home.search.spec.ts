@@ -37,3 +37,12 @@ test('home search surfaces places with direct navigation', async ({ page }) => {
   await placeLink.click();
   await expect(page).toHaveURL('/places/haifa');
 });
+
+test('search filters by type chips', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Search').fill('Haifa');
+
+  await page.getByRole('button', { name: 'Place' }).click();
+  const timelineHit = page.getByRole('link', { name: 'Haifa Street Protest' });
+  await expect(timelineHit).not.toBeVisible();
+});

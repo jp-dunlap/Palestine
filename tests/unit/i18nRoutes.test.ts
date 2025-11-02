@@ -22,12 +22,35 @@ describe('buildLanguageToggleHref', () => {
     expect(buildLanguageToggleHref('/timeline', '?q=ICJ&eras=modern', 'ar')).toBe('/ar/timeline?q=ICJ&eras=modern');
   });
 
+  it('preserves repeated query keys from strings', () => {
+    expect(buildLanguageToggleHref('/timeline', '?eras=modern&eras=nakba', 'ar')).toBe(
+      '/ar/timeline?eras=modern&eras=nakba'
+    );
+  });
+
+  it('normalises full URLs and preserves query parameters', () => {
+    expect(
+      buildLanguageToggleHref('https://example.com/ar/map?place=haifa', undefined, 'en')
+    ).toBe('/map?place=haifa');
+
+    expect(
+      buildLanguageToggleHref('https://example.com/map?place=haifa', undefined, 'ar')
+    ).toBe('/ar/map?place=haifa');
+  });
+
   it('handles array-based query input', () => {
     const tupleQuery: Array<[string, string]> = [
       ['place', 'ramla'],
       ['eras', 'modern'],
     ];
     expect(buildLanguageToggleHref('/map', tupleQuery, 'ar')).toBe('/ar/map?place=ramla&eras=modern');
+  });
+
+  it('preserves repeated query keys from URLSearchParams', () => {
+    const params = new URLSearchParams();
+    params.append('eras', 'modern');
+    params.append('eras', 'nakba');
+    expect(buildLanguageToggleHref('/ar/timeline', params, 'en')).toBe('/timeline?eras=modern&eras=nakba');
   });
 
   it('ignores undefined values in object queries', () => {

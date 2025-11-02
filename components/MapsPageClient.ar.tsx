@@ -52,6 +52,7 @@ export default function MapsPageClientAr({
   const [focusId, setFocusId] = useState<string | null>(initialFocusId ?? null);
   const [fitTrigger, setFitTrigger] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [copyMessage, setCopyMessage] = useState('');
   const copyTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -97,10 +98,15 @@ export default function MapsPageClientAr({
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
+      setCopyMessage('تم نسخ الرابط');
       if (copyTimer.current) window.clearTimeout(copyTimer.current);
-      copyTimer.current = window.setTimeout(() => setCopied(false), 2500);
+      copyTimer.current = window.setTimeout(() => {
+        setCopied(false);
+        setCopyMessage('');
+      }, 2500);
     } catch {
       setCopied(false);
+      setCopyMessage('');
     }
   }
 
@@ -117,11 +123,13 @@ export default function MapsPageClientAr({
           className="w-full rounded border"
           focus={focus}
           fitTrigger={fitTrigger}
+          ariaLabel="خريطة الأماكن الفلسطينية"
         />
       </div>
 
       <div className="mt-4 flex items-center gap-3">
         <button
+          type="button"
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="إعادة الضبط لعرض كل الأماكن"
@@ -131,6 +139,7 @@ export default function MapsPageClientAr({
         </button>
 
         <button
+          type="button"
           className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={copyLink}
           title="نسخ رابط قابل للمشاركة"
@@ -140,7 +149,7 @@ export default function MapsPageClientAr({
         </button>
 
         {copied ? (
-          <span className="text-xs text-green-600" role="status" aria-live="polite">تم نسخ الرابط</span>
+          <span className="text-xs text-green-600">{copyMessage || 'تم نسخ الرابط'}</span>
         ) : null}
 
         {focusPlace ? (
@@ -170,6 +179,7 @@ export default function MapsPageClientAr({
                 focused ? 'border-gray-900 bg-yellow-100 shadow-inner' : 'hover:bg-gray-50'
               }`}
               data-selected={focused ? 'true' : 'false'}
+              aria-selected={focused}
             >
               <button
                 type="button"
@@ -212,6 +222,10 @@ export default function MapsPageClientAr({
           );
         })}
       </ul>
+
+      <div aria-live="polite" className="sr-only">
+        {copyMessage}
+      </div>
     </>
   );
 }
