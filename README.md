@@ -1,3 +1,5 @@
+[![CI](https://github.com/jp-dunlap/Palestine/actions/workflows/ci.yml/badge.svg)](https://github.com/jp-dunlap/Palestine/actions/workflows/ci.yml)
+
 # Palestine
 
 A public, art-grade digital history of Palestine spanning 4,000 years. Primary sources, timelines, maps, and testimony centered on Palestinian life and anti-colonial memory.
@@ -28,6 +30,20 @@ bun dev
 npm run test:unit   # vitest
 npm run test:e2e    # playwright
 ```
+
+- E2E requires Playwright browsers. Locally:
+  ```bash
+  npm run test:e2e
+  ```
+  If behind a restricted network, either preinstall browsers once with:
+  ```bash
+  npx playwright install --with-deps
+  ```
+  or skip e2e and run unit tests:
+  ```bash
+  npm run test:unit
+  ```
+- In CI, set repository variable `E2E_ENABLED=true` to run e2e. When false, CI will still pass with unit tests + build.
 
 The search index is rebuilt automatically during `npm run build` via `scripts/build-search.js`.
 
