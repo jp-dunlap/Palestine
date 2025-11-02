@@ -41,6 +41,7 @@ export default function MapsPageClient({
   const [fitTrigger, setFitTrigger] = useState(0);
   const [copied, setCopied] = useState(false);
   const [copyMessage, setCopyMessage] = useState('');
+  const [focusAnnouncement, setFocusAnnouncement] = useState('');
   const copyTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -63,6 +64,15 @@ export default function MapsPageClient({
   }, [focusId, places]);
 
   const focusPlace = useMemo(() => places.find((x) => x.id === focusId) ?? null, [focusId, places]);
+
+  useEffect(() => {
+    if (!focusId) {
+      setFocusAnnouncement('');
+      return;
+    }
+    const label = focusPlace?.name ?? focusId;
+    setFocusAnnouncement(`Focused: ${label}`);
+  }, [focusId, focusPlace]);
 
   useEffect(() => {
     return () => {
@@ -88,6 +98,10 @@ export default function MapsPageClient({
       setCopyMessage('');
     }
   }
+
+  const liveAnnouncement = useMemo(() => {
+    return [focusAnnouncement, copyMessage].filter(Boolean).join('. ');
+  }, [focusAnnouncement, copyMessage]);
 
   return (
     <>
@@ -203,7 +217,7 @@ export default function MapsPageClient({
       </ul>
 
       <div aria-live="polite" className="sr-only">
-        {copyMessage}
+        {liveAnnouncement}
       </div>
     </>
   );

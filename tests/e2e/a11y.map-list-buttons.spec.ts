@@ -5,12 +5,16 @@ test('english map place buttons support keyboard activation', async ({ page }) =
 
   const gazaButton = page.getByRole('button', { name: 'Focus map on Gaza' });
   await gazaButton.press('Enter');
-  await expect(page.getByText('Focused: Gaza')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'Focused: Gaza' })
+  ).toBeVisible();
   await expect(gazaButton).toHaveAttribute('aria-pressed', 'true');
 
   const jaffaButton = page.getByRole('button', { name: 'Focus map on Jaffa' });
   await jaffaButton.press(' ');
-  await expect(page.getByText('Focused: Jaffa')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'Focused: Jaffa' })
+  ).toBeVisible();
   await expect(jaffaButton).toHaveAttribute('aria-pressed', 'true');
   await expect(gazaButton).toHaveAttribute('aria-pressed', 'false');
 });
@@ -20,12 +24,16 @@ test('arabic map place buttons expose pressed state for keyboard users', async (
 
   const gazaButton = page.getByRole('button', { name: 'التركيز على غزة في الخريطة' });
   await gazaButton.press('Enter');
-  await expect(page.getByText('المركّز: غزة')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'المركّز: غزة' })
+  ).toBeVisible();
   await expect(gazaButton).toHaveAttribute('aria-pressed', 'true');
 
   const jaffaButton = page.getByRole('button', { name: 'التركيز على يافا في الخريطة' });
   await jaffaButton.press(' ');
-  await expect(page.getByText('المركّز: يافا')).toBeVisible();
+  await expect(
+    page.locator('span.text-sm.text-gray-600', { hasText: 'المركّز: يافا' })
+  ).toBeVisible();
   await expect(jaffaButton).toHaveAttribute('aria-pressed', 'true');
   await expect(gazaButton).toHaveAttribute('aria-pressed', 'false');
 });
