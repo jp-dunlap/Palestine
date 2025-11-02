@@ -145,32 +145,38 @@ export default function MapsPageClientAr({
         ) : null}
       </div>
 
-      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <h2 className="sr-only" id="map-places-heading">
+        قائمة الأماكن
+      </h2>
+      <ul
+        aria-labelledby="map-places-heading"
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
         {places.map((p) => {
           const focused = p.id === focusId;
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 cursor-pointer ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
-              onClick={() => setFocusId(p.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setFocusId(p.id);
-              }}
-              aria-pressed={focused}
-              aria-label={`التركيز على ${displayName(p)} في الخريطة`}
-              title="انقر للتركيز على الخريطة"
+              className={`rounded border p-3 ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
             >
-              <div className="font-medium">{displayName(p)}</div>
-              <div className="text-sm text-gray-600">
-                {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
-              </div>
-              {p.alt_names?.length ? (
-                <div className="text-xs text-gray-500 mt-1">
-                  أسماء أخرى: {p.alt_names.join('، ')}
+              <button
+                type="button"
+                className="block w-full text-left"
+                onClick={() => setFocusId(p.id)}
+                aria-pressed={focused}
+                aria-label={`التركيز على ${displayName(p)} في الخريطة`}
+                title="انقر للتركيز على الخريطة"
+              >
+                <div className="font-medium">{displayName(p)}</div>
+                <div className="text-sm text-gray-600">
+                  {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
                 </div>
-              ) : null}
+                {p.alt_names?.length ? (
+                  <div className="text-xs text-gray-500 mt-1">
+                    أسماء أخرى: {p.alt_names.join('، ')}
+                  </div>
+                ) : null}
+              </button>
             </li>
           );
         })}
