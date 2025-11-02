@@ -42,7 +42,7 @@ export default function PlacePage({ params }: { params: { id: string } }) {
   const arHref = `/ar/places/${p.id}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <JsonLd
         id={`ld-place-${p.id}`}
         data={{

@@ -5,7 +5,7 @@ export default function Page() {
   const items = slugs.map((slug) => ({ slug, meta: loadChapterFrontmatter(slug) }));
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">Chapters</h1>
       <ul className="mt-6 space-y-4">
         {items.map(({ slug, meta }) => (

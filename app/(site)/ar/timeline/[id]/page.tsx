@@ -95,7 +95,7 @@ export default function TimelineEventPageAr({ params }: { params: { id: string }
   const eventUrl = isArabic ? `/ar/timeline/${event.id}` : `/timeline/${event.id}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12 font-arabic" dir="rtl" lang="ar">
       <JsonLd
         id={`ld-event-${event.id}`}
         data={{

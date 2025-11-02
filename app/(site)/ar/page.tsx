@@ -19,7 +19,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <header className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight font-arabic">فلسطين</h1>
         <p className="mt-2 text-base text-gray-600 font-arabic">

@@ -40,7 +40,7 @@ export default function PlacePageAr({ params }: { params: { id: string } }) {
   const enHref = `/places/${p.id}`;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
+    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <JsonLd
         id={`ld-place-${p.id}`}
         data={{
