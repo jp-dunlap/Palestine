@@ -25,7 +25,17 @@ export default function TimelineFilters({
   const { replace } = useRouter();
 
   const [q, setQ] = React.useState(sp.get('q') ?? '');
-  const selectedEras = new Set((sp.get('eras') ?? '').split(',').filter(Boolean));
+  const selectedEras = React.useMemo(() => {
+    const raw = sp.getAll('eras');
+    const values = raw
+      .flatMap(value => value.split(','))
+      .map(value => value.trim())
+      .filter(Boolean);
+    if (values.length) {
+      return new Set(values);
+    }
+    return new Set((sp.get('eras') ?? '').split(',').filter(Boolean));
+  }, [sp]);
   const isArabic = locale === 'ar';
   const [announcement, setAnnouncement] = React.useState(() =>
     formatResultMessage(resultCount, isArabic)
@@ -70,8 +80,15 @@ export default function TimelineFilters({
     'inline-flex cursor-pointer select-none rounded-full px-3 py-1 text-sm font-medium transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-gray-900';
 
   return (
-    <div className="mb-6 space-y-3" dir={isArabic ? 'rtl' : 'ltr'} role="search">
+    <form
+      role="search"
+      method="get"
+      action={pathname}
+      className="mb-6 space-y-3"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
       <input
+        name="q"
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
@@ -98,6 +115,8 @@ export default function TimelineFilters({
               <div key={e.id} className="flex">
                 <input
                   type="checkbox"
+                  name="eras"
+                  value={e.id}
                   id={id}
                   checked={selected}
                   onChange={() => toggleEra(e.id)}
@@ -119,9 +138,16 @@ export default function TimelineFilters({
         </div>
       </fieldset>
 
+      <button
+        type="submit"
+        className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+      >
+        {isArabic ? 'تطبيق' : 'Apply'}
+      </button>
+
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
-    </div>
+    </form>
   );
 }
