@@ -36,7 +36,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   } as const;
   return {
     title: isFallback ? `${title} (English)` : title,
-   description: summary,
+    description: summary,
     alternates: {
       canonical,
       languages,
