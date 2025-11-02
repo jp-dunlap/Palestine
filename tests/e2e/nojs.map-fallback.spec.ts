@@ -5,7 +5,11 @@ test.describe('Map no-JS fallback', () => {
 
   test('EN: can navigate via anchors and get focused view server-side', async ({ page }) => {
     await page.goto('/map');
-    await expect(page.getByText('JavaScript is disabled.')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
+
+    const fallbackNotice = page.locator('text=/JavaScript is disabled\./i');
+    await expect(fallbackNotice).toBeVisible();
+
     await page.getByRole('link', { name: /Open on map/i }).first().click();
     await expect(page).toHaveURL(/\/map\?place=/);
     await expect(page.getByText(/Focused:\s+/)).toBeVisible();
@@ -13,7 +17,11 @@ test.describe('Map no-JS fallback', () => {
 
   test('AR: anchors present and RTL text', async ({ page }) => {
     await page.goto('/ar/map');
-    await expect(page.getByText('تم تعطيل JavaScript.')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
+
+    const fallbackNotice = page.locator('text=/تم تعطيل JavaScript\./');
+    await expect(fallbackNotice).toBeVisible();
+
     await page.getByRole('link', { name: /فتح على الخريطة/ }).first().click();
     await expect(page).toHaveURL(/\/ar\/map\?place=/);
     await expect(page.getByText(/المركّز:/)).toBeVisible();
