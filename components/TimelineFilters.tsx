@@ -115,7 +115,7 @@ function loadStoredBookmarks(): Bookmark[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .map((item) => ({
+      .map((item): Bookmark => ({
         id: String(item.id ?? ''),
         label: String(item.label ?? ''),
         url: String(item.url ?? ''),
