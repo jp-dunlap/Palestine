@@ -34,6 +34,21 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
+}
+
+.place-card a:visited {
+  color: inherit;
+}
+
+.place-card[data-selected='true'] {
+  border-color: #111827;
+}
+
 .no-js-notice {
   display: block;
 }

@@ -43,6 +43,12 @@ export function generateMetadata({
       locale: 'ar',
       type: 'article',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: event.summary ?? undefined,
+      images: [`/ar/timeline/${event.id}/opengraph-image`],
+    },
   };
 }
 

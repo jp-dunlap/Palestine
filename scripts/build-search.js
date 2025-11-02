@@ -8,6 +8,7 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
 const DATA_TIMELINE_DIR = path.join(ROOT, 'data', 'timeline');
 const CONTENT_TIMELINE_DIR = path.join(ROOT, 'content', 'timeline');
+const GAZETTEER_PATH = path.join(ROOT, 'data', 'gazetteer.json');
 
 function normaliseTags(value) {
   if (!Array.isArray(value)) return [];
@@ -129,6 +130,86 @@ async function loadTimelineDocs() {
   return docs;
 }
 
+function normaliseAltNames(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => (entry == null ? null : String(entry)))
+    .filter((entry) => entry && entry.length > 0);
+}
+
+function normalisePlaceKind(kind, locale) {
+  if (!kind) return locale === 'ar' ? 'مكان' : 'place';
+  const raw = typeof kind === 'string' ? kind : String(kind);
+  if (locale === 'ar') {
+    const map = {
+      city: 'مدينة',
+      port_city: 'مدينة ساحلية',
+      village: 'قرية',
+    };
+    return map[raw] ?? raw.replace(/_/g, ' ');
+  }
+  return raw.replace(/_/g, ' ');
+}
+
+async function loadPlaceDocs() {
+  if (!(await exists(GAZETTEER_PATH))) return [];
+  const raw = await fs.readFile(GAZETTEER_PATH, 'utf8');
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (err) {
+    console.warn('[search] unable to parse gazetteer.json:', err);
+    return [];
+  }
+
+  if (!Array.isArray(data)) return [];
+
+  const docs = [];
+  for (const entry of data) {
+    if (!entry || typeof entry !== 'object') continue;
+    const place = entry;
+    const id = typeof place.id === 'string' ? place.id : null;
+    const name = typeof place.name === 'string' ? place.name : null;
+    if (!id || !name) continue;
+
+    const altNames = normaliseAltNames(place.alt_names);
+    const baseTags = [...altNames];
+    if (place.name_ar && typeof place.name_ar === 'string') {
+      baseTags.push(place.name_ar);
+    }
+
+    const latValue = Number(place.lat);
+    const lonValue = Number(place.lon);
+    const latLabel = Number.isFinite(latValue) ? latValue.toFixed(3) : String(place.lat ?? '');
+    const lonLabel = Number.isFinite(lonValue) ? lonValue.toFixed(3) : String(place.lon ?? '');
+
+    docs.push({
+      id: `/places/${id}`,
+      title: name,
+      summary: `${normalisePlaceKind(place.kind, 'en')} · ${latLabel}, ${lonLabel}`,
+      tags: baseTags,
+      href: `/places/${id}`,
+      lang: 'en',
+      type: 'place',
+    });
+
+    const arabicTitle = typeof place.name_ar === 'string' && place.name_ar.trim() ? place.name_ar : null;
+    if (arabicTitle) {
+      docs.push({
+        id: `/ar/places/${id}`,
+        title: arabicTitle,
+        summary: `${normalisePlaceKind(place.kind, 'ar')} · ${latLabel}, ${lonLabel}`,
+        tags: baseTags,
+        href: `/ar/places/${id}`,
+        lang: 'ar',
+        type: 'place',
+      });
+    }
+  }
+
+  return docs;
+}
+
 async function exists(p) {
   try {
     await fs.access(p);
@@ -139,8 +220,12 @@ async function exists(p) {
 }
 
 async function main() {
-  const [chapters, timeline] = await Promise.all([loadChapterDocs(), loadTimelineDocs()]);
-  const docs = [...chapters, ...timeline];
+  const [chapters, timeline, places] = await Promise.all([
+    loadChapterDocs(),
+    loadTimelineDocs(),
+    loadPlaceDocs(),
+  ]);
+  const docs = [...chapters, ...timeline, ...places];
   const byLang = { en: [], ar: [] };
   for (const doc of docs) {
     if (doc.lang === 'en' || doc.lang === 'ar') {
@@ -161,3 +246,5 @@ await main().catch((err) => {
   console.error('[search] failed:', err);
   process.exit(1);
 });
+
+export { loadChapterDocs, loadTimelineDocs, loadPlaceDocs };

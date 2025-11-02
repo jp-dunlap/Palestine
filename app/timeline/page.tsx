@@ -11,6 +11,11 @@ export const metadata = {
     languages: { en: '/timeline', ar: '/ar/timeline', 'x-default': '/timeline' },
   },
   openGraph: { url: '/timeline' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Timeline',
+    description: 'A public, art-grade timeline of Palestine with eras, places, and sources.',
+  },
 };
 
 export default function Page({

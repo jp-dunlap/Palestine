@@ -61,6 +61,8 @@ export default function MapsPageClient({
     return p ? { lat: p.lat, lon: p.lon } : null;
   }, [focusId, places]);
 
+  const focusPlace = useMemo(() => places.find((x) => x.id === focusId) ?? null, [focusId, places]);
+
   useEffect(() => {
     return () => {
       if (copyTimer.current) {
@@ -99,7 +101,7 @@ export default function MapsPageClient({
 
       <div className="mt-4 flex items-center gap-3">
         <button
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="Reset view to show all places"
           aria-label="Reset view to show all places"
@@ -108,7 +110,7 @@ export default function MapsPageClient({
         </button>
 
         <button
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={copyLink}
           title="Copy a shareable link to this view"
           aria-label="Copy a shareable link to this view"
@@ -117,10 +119,16 @@ export default function MapsPageClient({
         </button>
 
         {copied ? (
-          <span className="text-xs text-green-600" aria-live="polite">Link copied</span>
+          <span className="text-xs text-green-600" role="status" aria-live="polite">
+            Link copied
+          </span>
         ) : null}
 
-        {focusId ? (
+        {focusPlace ? (
+          <span className="text-sm text-gray-600">
+            Focused: <strong>{focusPlace.name}</strong>
+          </span>
+        ) : focusId ? (
           <span className="text-sm text-gray-600">
             Focused: <code>{focusId}</code>
           </span>
@@ -139,11 +147,14 @@ export default function MapsPageClient({
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
+              className={`place-card rounded border p-3 transition-shadow ${
+                focused ? 'border-gray-900 bg-yellow-100 shadow-inner' : 'hover:bg-gray-50'
+              }`}
+              data-selected={focused ? 'true' : 'false'}
             >
               <button
                 type="button"
-                className="block w-full text-left"
+                className="block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
                 onClick={() => setFocusId(p.id)}
                 aria-pressed={focused}
                 aria-label={`Focus map on ${p.name}`}
@@ -159,23 +170,24 @@ export default function MapsPageClient({
                   </div>
                 ) : null}
               </button>
-              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600">
                 <a
                   href={`/places/${p.id}`}
-                  className="underline hover:no-underline"
+                  className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
                   aria-label={`Open place page for ${p.name}`}
                   title="Open place page"
                 >
                   Open place page →
                 </a>
-                <a
-                  href={`/map?place=${encodeURIComponent(p.id)}`}
-                  className="underline hover:no-underline"
+                <button
+                  type="button"
+                  className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
+                  onClick={() => setFocusId(p.id)}
                   aria-label={`Open map focused on ${p.name}`}
                   title="Open map focused on this place"
                 >
                   Open on map
-                </a>
+                </button>
               </div>
             </li>
           );

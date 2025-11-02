@@ -10,36 +10,31 @@ test('timeline filters expose accessible names and focus styles', async ({ page 
   const resultsRegion = page.locator('#timeline-results');
   await resultsRegion.waitFor({ state: 'visible' });
 
-  const foundationsCheckbox = page.locator('input#timeline-filter-foundations');
-  await foundationsCheckbox.waitFor({ state: 'attached' });
+  const foundationsButton = page.getByRole('button', { name: 'Filter by era Foundations' });
+  await foundationsButton.waitFor({ state: 'visible' });
+  await expect(foundationsButton).toHaveAttribute('aria-controls', 'timeline-results');
+  await expect(foundationsButton).toHaveAttribute('aria-label', 'Filter by era Foundations');
 
-  const foundationsLabel = page.locator('label[for="timeline-filter-foundations"]');
-  await foundationsLabel.waitFor({ state: 'visible' });
-  await expect(foundationsLabel).toHaveAttribute('aria-controls', 'timeline-results');
-  await expect(foundationsLabel).toHaveAttribute('aria-label', 'Filter by era Foundations');
+  await foundationsButton.focus();
+  await expect(foundationsButton).toBeFocused();
 
-  await foundationsCheckbox.focus();
-  await expect(foundationsCheckbox).toBeFocused();
-
-  const focusShadow = await foundationsLabel.evaluate((el) => getComputedStyle(el).boxShadow);
-  expect(focusShadow).not.toBe('none');
-  expect(focusShadow).not.toBe('rgba(0, 0, 0, 0) 0px 0px 0px 0px');
+  const outlineWidth = await foundationsButton.evaluate((el) => getComputedStyle(el).outlineWidth);
+  expect(outlineWidth).not.toBe('0px');
 
   const earlyEvent = page.getByRole('heading', { level: 3, name: foundationsHeading });
   await expect(earlyEvent).toBeVisible();
 
-  const modernLabel = page.locator('label[for="timeline-filter-modern"]');
-  await modernLabel.waitFor({ state: 'visible' });
-  await expect(modernLabel).toHaveAttribute('aria-label', 'Filter by era Modern / Nakba → Present');
+  const modernButton = page.getByRole('button', { name: 'Filter by era Modern / Nakba → Present' });
+  await modernButton.waitFor({ state: 'visible' });
 
-  await modernLabel.click();
-  await expect(modernLabel).toHaveAttribute('aria-pressed', 'true');
+  await modernButton.click();
+  await expect(modernButton).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { level: 3, name: revoltHeading })).toBeVisible();
   await expect(earlyEvent).not.toBeVisible();
 
   await expect(resultsRegion).toHaveAttribute('aria-live', 'polite');
 
-  await foundationsLabel.click();
-  await expect(foundationsLabel).toHaveAttribute('aria-pressed', 'true');
+  await foundationsButton.click();
+  await expect(foundationsButton).toHaveAttribute('aria-pressed', 'true');
   await expect(earlyEvent).toBeVisible();
 });

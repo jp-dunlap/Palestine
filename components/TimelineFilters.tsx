@@ -77,7 +77,7 @@ export default function TimelineFilters({
   }
 
   const chipBaseClasses =
-    'inline-flex cursor-pointer select-none rounded-full px-3 py-1 text-sm font-medium transition-colors peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white dark:peer-focus-visible:ring-offset-gray-900';
+    'inline-flex cursor-pointer select-none rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
 
   return (
     <form
@@ -103,40 +103,32 @@ export default function TimelineFilters({
         <legend className={`mb-2 text-sm font-medium text-gray-700 ${isArabic ? 'text-right' : ''}`}>
           {t.legend}
         </legend>
-        <div className={`flex flex-wrap gap-2 ${isArabic ? 'justify-end' : ''}`}>
+        <div className={`flex flex-wrap gap-2 ${isArabic ? 'justify-end' : ''}`} role="group" aria-label={t.legend}>
           {eras.map((e) => {
-            const id = `timeline-filter-${e.id}`;
             const label = isArabic ? e.title_ar ?? e.title : e.title;
             const selected = selectedEras.has(e.id);
             const stateClasses = selected
-              ? 'bg-primary-600 text-white'
-              : 'bg-gray-300 text-gray-900 hover:bg-gray-400 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600';
+              ? 'border-gray-900 bg-gray-900 text-white'
+              : 'border-gray-300 text-gray-900 hover:bg-gray-100';
             return (
-              <div key={e.id} className="flex">
-                <input
-                  type="checkbox"
-                  name="eras"
-                  value={e.id}
-                  id={id}
-                  checked={selected}
-                  onChange={() => toggleEra(e.id)}
-                  className="peer sr-only"
-                  aria-label={t.filterAria(label)}
-                />
-                <label
-                  htmlFor={id}
-                  className={`${chipBaseClasses} ${stateClasses}`}
-                  aria-pressed={selected}
-                  aria-controls="timeline-results"
-                  aria-label={t.filterAria(label)}
-                >
-                  {label}
-                </label>
-              </div>
+              <button
+                type="button"
+                key={e.id}
+                className={`${chipBaseClasses} ${stateClasses}`}
+                aria-pressed={selected}
+                aria-controls="timeline-results"
+                aria-label={t.filterAria(label)}
+                onClick={() => toggleEra(e.id)}
+                data-selected={selected ? 'true' : 'false'}
+              >
+                {label}
+              </button>
             );
           })}
         </div>
       </fieldset>
+
+      <input type="hidden" name="eras" value={Array.from(selectedEras).join(',')} />
 
       <button
         type="submit"

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import JsonLd from '@/components/JsonLd';
 import { loadGazetteer } from '@/lib/loaders.places';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const dynamic = 'force-static';
 
@@ -30,6 +31,12 @@ export async function generateMetadata({
       images: [`/ar/places/${p.id}/opengraph-image`],
       url: `/ar/places/${p.id}`,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: p.name,
+      description: `${p.kind ?? 'مكان'} · ${p.lat}, ${p.lon}`,
+      images: [`/ar/places/${p.id}/opengraph-image`],
+    },
   };
 }
 
@@ -37,7 +44,7 @@ export default function PlacePageAr({ params }: { params: { id: string } }) {
   const p = loadGazetteer().find((x) => x.id === params.id);
   if (!p) notFound();
 
-  const enHref = `/places/${p.id}`;
+  const enHref = buildLanguageToggleHref(`/ar/places/${p.id}`, undefined, 'en');
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">

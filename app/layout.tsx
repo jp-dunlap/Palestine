@@ -16,6 +16,12 @@ export const metadata = {
       'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Palestine — 4,000 Years of Memory',
+    description:
+      'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
+  },
   alternates: {
     languages: { ar: '/ar' },
   },

@@ -5,7 +5,18 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export const metadata = {
   title: 'فلسطين',
-  description: 'تاريخ عام وفني لفلسطين'
+  description: 'تاريخ عام وفني لفلسطين',
+  openGraph: {
+    title: 'فلسطين',
+    description: 'تاريخ عام وفني لفلسطين',
+    type: 'website',
+    url: '/ar',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'فلسطين',
+    description: 'تاريخ عام وفني لفلسطين',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

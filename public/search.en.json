@@ -198,5 +198,153 @@
     "href": "/timeline#gaza-genocide-2023-present",
     "lang": "en",
     "type": "event"
+  },
+  {
+    "id": "/places/gaza",
+    "title": "Gaza",
+    "summary": "city · 31.502, 34.467",
+    "tags": [
+      "Ghazzah",
+      "غزة",
+      "غزة"
+    ],
+    "href": "/places/gaza",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/jaffa",
+    "title": "Jaffa",
+    "summary": "port city · 32.050, 34.752",
+    "tags": [
+      "Yafo",
+      "Yafa",
+      "يافا",
+      "يافا"
+    ],
+    "href": "/places/jaffa",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/hebron",
+    "title": "Hebron",
+    "summary": "city · 31.533, 35.100",
+    "tags": [
+      "Al-Khalil",
+      "الخليل",
+      "الخليل"
+    ],
+    "href": "/places/hebron",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/jericho",
+    "title": "Jericho",
+    "summary": "city · 31.870, 35.443",
+    "tags": [
+      "Ariha",
+      "أريحا",
+      "أريحا"
+    ],
+    "href": "/places/jericho",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/shechem",
+    "title": "Shechem",
+    "summary": "city · 32.221, 35.254",
+    "tags": [
+      "Nablus",
+      "שכם",
+      "نابلس",
+      "نابلس"
+    ],
+    "href": "/places/shechem",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/ramallah",
+    "title": "Ramallah",
+    "summary": "city · 31.904, 35.203",
+    "tags": [
+      "Rām Allāh",
+      "رام الله",
+      "رام الله"
+    ],
+    "href": "/places/ramallah",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/haifa",
+    "title": "Haifa",
+    "summary": "port city · 32.816, 34.990",
+    "tags": [
+      "حيفا",
+      "Ḥayfa",
+      "حيفا"
+    ],
+    "href": "/places/haifa",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/lydda",
+    "title": "Lydda",
+    "summary": "city · 31.952, 34.889",
+    "tags": [
+      "Lod",
+      "לוד",
+      "اللد",
+      "اللد"
+    ],
+    "href": "/places/lydda",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/ramla",
+    "title": "Ramla",
+    "summary": "city · 31.931, 34.873",
+    "tags": [
+      "الرملة",
+      "الرملة"
+    ],
+    "href": "/places/ramla",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/acre",
+    "title": "Acre",
+    "summary": "port city · 32.924, 35.082",
+    "tags": [
+      "ʿAkka",
+      "Akka",
+      "عكا",
+      "عكا"
+    ],
+    "href": "/places/acre",
+    "lang": "en",
+    "type": "place"
+  },
+  {
+    "id": "/places/safad",
+    "title": "Safad",
+    "summary": "city · 32.965, 35.496",
+    "tags": [
+      "Safed",
+      "Ṣafad",
+      "צפת",
+      "صفد",
+      "صفد"
+    ],
+    "href": "/places/safad",
+    "lang": "en",
+    "type": "place"
   }
 ]
