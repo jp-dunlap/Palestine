@@ -128,5 +128,142 @@
     "href": "/ar/timeline#icj-wall-2004",
     "lang": "ar",
     "type": "event"
+  },
+  {
+    "id": "/ar/places/gaza",
+    "title": "غزة",
+    "summary": "مدينة · 31.502, 34.467",
+    "tags": [
+      "Ghazzah",
+      "غزة"
+    ],
+    "href": "/ar/places/gaza",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/jaffa",
+    "title": "يافا",
+    "summary": "مدينة ساحلية · 32.050, 34.752",
+    "tags": [
+      "Yafo",
+      "Yafa",
+      "يافا"
+    ],
+    "href": "/ar/places/jaffa",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/hebron",
+    "title": "الخليل",
+    "summary": "مدينة · 31.533, 35.100",
+    "tags": [
+      "Al-Khalil",
+      "الخليل"
+    ],
+    "href": "/ar/places/hebron",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/jericho",
+    "title": "أريحا",
+    "summary": "مدينة · 31.870, 35.443",
+    "tags": [
+      "Ariha",
+      "أريحا"
+    ],
+    "href": "/ar/places/jericho",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/shechem",
+    "title": "نابلس",
+    "summary": "مدينة · 32.221, 35.254",
+    "tags": [
+      "Nablus",
+      "שכם",
+      "نابلس"
+    ],
+    "href": "/ar/places/shechem",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/ramallah",
+    "title": "رام الله",
+    "summary": "مدينة · 31.904, 35.203",
+    "tags": [
+      "Rām Allāh",
+      "رام الله"
+    ],
+    "href": "/ar/places/ramallah",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/haifa",
+    "title": "حيفا",
+    "summary": "مدينة ساحلية · 32.816, 34.990",
+    "tags": [
+      "حيفا",
+      "Ḥayfa"
+    ],
+    "href": "/ar/places/haifa",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/lydda",
+    "title": "اللد",
+    "summary": "مدينة · 31.952, 34.889",
+    "tags": [
+      "Lod",
+      "לוד",
+      "اللد"
+    ],
+    "href": "/ar/places/lydda",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/ramla",
+    "title": "الرملة",
+    "summary": "مدينة · 31.931, 34.873",
+    "tags": [
+      "الرملة"
+    ],
+    "href": "/ar/places/ramla",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/acre",
+    "title": "عكا",
+    "summary": "مدينة ساحلية · 32.924, 35.082",
+    "tags": [
+      "ʿAkka",
+      "Akka",
+      "عكا"
+    ],
+    "href": "/ar/places/acre",
+    "lang": "ar",
+    "type": "place"
+  },
+  {
+    "id": "/ar/places/safad",
+    "title": "صفد",
+    "summary": "مدينة · 32.965, 35.496",
+    "tags": [
+      "Safed",
+      "Ṣafad",
+      "צפת",
+      "صفد"
+    ],
+    "href": "/ar/places/safad",
+    "lang": "ar",
+    "type": "place"
   }
 ]

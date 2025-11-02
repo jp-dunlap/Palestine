@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import matter from 'gray-matter';
 import YAML from 'yaml';
 
@@ -8,6 +9,7 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
 const DATA_TIMELINE_DIR = path.join(ROOT, 'data', 'timeline');
 const CONTENT_TIMELINE_DIR = path.join(ROOT, 'content', 'timeline');
+const GAZETTEER_PATH = path.join(ROOT, 'data', 'gazetteer.json');
 
 function normaliseTags(value) {
   if (!Array.isArray(value)) return [];
@@ -18,7 +20,7 @@ function hasArabic(str) {
   return typeof str === 'string' && /[\u0600-\u06FF]/.test(str);
 }
 
-async function loadChapterDocs() {
+export async function loadChapterDocs() {
   if (!(await exists(CHAPTERS_DIR))) return [];
   const entries = await fs.readdir(CHAPTERS_DIR);
   const docs = [];
@@ -78,7 +80,7 @@ function parseTimelineDir(dir) {
     .catch(() => []);
 }
 
-async function loadTimelineDocs() {
+export async function loadTimelineDocs() {
   const dirs = [DATA_TIMELINE_DIR, CONTENT_TIMELINE_DIR];
   const seen = new Map();
   const docs = [];
@@ -129,6 +131,97 @@ async function loadTimelineDocs() {
   return docs;
 }
 
+function normaliseAltNames(value) {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set();
+  for (const entry of value) {
+    if (entry == null) continue;
+    const normalised = String(entry).trim();
+    if (!normalised) continue;
+    if (!seen.has(normalised)) {
+      seen.add(normalised);
+    }
+  }
+  return [...seen];
+}
+
+function normalisePlaceKind(kind, locale) {
+  if (!kind) return locale === 'ar' ? 'مكان' : 'place';
+  const raw = typeof kind === 'string' ? kind : String(kind);
+  if (locale === 'ar') {
+    const map = {
+      city: 'مدينة',
+      port_city: 'مدينة ساحلية',
+      village: 'قرية',
+    };
+    return map[raw] ?? raw.replace(/_/g, ' ');
+  }
+  return raw.replace(/_/g, ' ');
+}
+
+export async function loadPlaceDocs() {
+  if (!(await exists(GAZETTEER_PATH))) return [];
+  const raw = await fs.readFile(GAZETTEER_PATH, 'utf8');
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (err) {
+    console.warn('[search] unable to parse gazetteer.json:', err);
+    return [];
+  }
+
+  if (!Array.isArray(data)) return [];
+
+  const docs = [];
+  for (const entry of data) {
+    if (!entry || typeof entry !== 'object') continue;
+    const place = entry;
+    const id = typeof place.id === 'string' ? place.id : null;
+    const name = typeof place.name === 'string' ? place.name : null;
+    if (!id || !name) continue;
+
+    const altNames = normaliseAltNames(place.alt_names);
+    const tagsSet = new Set(altNames);
+    if (typeof place.name_ar === 'string') {
+      const trimmedArabic = place.name_ar.trim();
+      if (trimmedArabic && !tagsSet.has(trimmedArabic)) {
+        tagsSet.add(trimmedArabic);
+      }
+    }
+    const baseTags = [...tagsSet];
+
+    const latValue = Number(place.lat);
+    const lonValue = Number(place.lon);
+    const latLabel = Number.isFinite(latValue) ? latValue.toFixed(3) : String(place.lat ?? '');
+    const lonLabel = Number.isFinite(lonValue) ? lonValue.toFixed(3) : String(place.lon ?? '');
+
+    docs.push({
+      id: `/places/${id}`,
+      title: name,
+      summary: `${normalisePlaceKind(place.kind, 'en')} · ${latLabel}, ${lonLabel}`,
+      tags: baseTags,
+      href: `/places/${id}`,
+      lang: 'en',
+      type: 'place',
+    });
+
+    const arabicTitle = typeof place.name_ar === 'string' && place.name_ar.trim() ? place.name_ar : null;
+    if (arabicTitle) {
+      docs.push({
+        id: `/ar/places/${id}`,
+        title: arabicTitle,
+        summary: `${normalisePlaceKind(place.kind, 'ar')} · ${latLabel}, ${lonLabel}`,
+        tags: baseTags,
+        href: `/ar/places/${id}`,
+        lang: 'ar',
+        type: 'place',
+      });
+    }
+  }
+
+  return docs;
+}
+
 async function exists(p) {
   try {
     await fs.access(p);
@@ -139,8 +232,12 @@ async function exists(p) {
 }
 
 async function main() {
-  const [chapters, timeline] = await Promise.all([loadChapterDocs(), loadTimelineDocs()]);
-  const docs = [...chapters, ...timeline];
+  const [chapters, timeline, places] = await Promise.all([
+    loadChapterDocs(),
+    loadTimelineDocs(),
+    loadPlaceDocs(),
+  ]);
+  const docs = [...chapters, ...timeline, ...places];
   const byLang = { en: [], ar: [] };
   for (const doc of docs) {
     if (doc.lang === 'en' || doc.lang === 'ar') {
@@ -157,7 +254,12 @@ async function main() {
   }
 }
 
-await main().catch((err) => {
-  console.error('[search] failed:', err);
-  process.exit(1);
-});
+if (process.argv[1]) {
+  const entryUrl = pathToFileURL(process.argv[1]).href;
+  if (import.meta.url === entryUrl) {
+    await main().catch((err) => {
+      console.error('[search] failed:', err);
+      process.exit(1);
+    });
+  }
+}

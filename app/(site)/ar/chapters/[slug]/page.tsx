@@ -8,10 +8,11 @@ import {
   loadChapterFrontmatterAr,
   hasArChapter,
 } from '@/lib/loaders.chapters';
-import { mdxComponents } from '@/mdx-components';
+import { createMdxComponents } from '@/mdx-components';
 import { loadEras } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
 import JsonLd from '@/components/JsonLd';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
@@ -46,6 +47,12 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
       images: [`/ar/chapters/${params.slug}/opengraph-image`],
       url: canonical,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: isFallback ? `${title} (English)` : title,
+      description: summary,
+      images: [`/ar/chapters/${params.slug}/opengraph-image`],
+    },
   };
 }
 
@@ -58,10 +65,12 @@ export default async function Page({ params }: Props) {
     notFound();
   }
   const { source, isFallback } = loadChapterSourceAr(params.slug);
+  const { components, FootnotesSection } = createMdxComponents('ar');
+
   const { content, frontmatter } = await compileMDX({
     source,
-    components: mdxComponents,
-    options: { parseFrontmatter: true }
+    components,
+    options: { parseFrontmatter: true },
   });
 
   const meta = frontmatter as {
@@ -132,6 +141,8 @@ export default async function Page({ params }: Props) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
   };
 
+  const englishHref = buildLanguageToggleHref(`/ar/chapters/${params.slug}`, undefined, 'en');
+
   return (
     <>
       <JsonLd id={`ld-article-${params.slug}`} data={articleLd} />
@@ -150,7 +161,7 @@ export default async function Page({ params }: Props) {
 
         <div className="mt-2 text-sm text-gray-600">
           {enAvailable ? (
-            <a className="underline" href={`/chapters/${params.slug}`}>English</a>
+            <a className="underline" href={englishHref}>English</a>
           ) : null}
         </div>
 
@@ -184,6 +195,8 @@ export default async function Page({ params }: Props) {
         <article className="mt-8 space-y-4 font-arabic">
           {content}
         </article>
+
+        <FootnotesSection />
       </main>
     </>
   );

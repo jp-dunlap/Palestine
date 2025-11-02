@@ -73,6 +73,8 @@ export default function MapsPageClientAr({
     return p ? { lat: p.lat, lon: p.lon } : null;
   }, [focusId, places]);
 
+  const focusPlace = useMemo(() => places.find((x) => x.id === focusId) ?? null, [focusId, places]);
+
   const localizedPlaces = useMemo(
     () =>
       places.map((p) => ({
@@ -120,7 +122,7 @@ export default function MapsPageClientAr({
 
       <div className="mt-4 flex items-center gap-3">
         <button
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={() => setFitTrigger((n) => n + 1)}
           title="إعادة الضبط لعرض كل الأماكن"
           aria-label="إعادة الضبط لعرض كل الأماكن"
@@ -129,7 +131,7 @@ export default function MapsPageClientAr({
         </button>
 
         <button
-          className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded border px-3 py-1 text-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
           onClick={copyLink}
           title="نسخ رابط قابل للمشاركة"
           aria-label="نسخ رابط قابل للمشاركة"
@@ -138,10 +140,14 @@ export default function MapsPageClientAr({
         </button>
 
         {copied ? (
-          <span className="text-xs text-green-600" aria-live="polite">تم نسخ الرابط</span>
+          <span className="text-xs text-green-600" role="status" aria-live="polite">تم نسخ الرابط</span>
         ) : null}
 
-        {focusId ? (
+        {focusPlace ? (
+          <span className="text-sm text-gray-600">
+            المركّز: <strong>{displayName(focusPlace)}</strong>
+          </span>
+        ) : focusId ? (
           <span className="text-sm text-gray-600">
             المركّز: <code className="ltr:ml-1 rtl:mr-1">{focusId}</code>
           </span>
@@ -160,11 +166,14 @@ export default function MapsPageClientAr({
           return (
             <li
               key={p.id}
-              className={`rounded border p-3 ${focused ? 'bg-yellow-50 border-yellow-300' : 'hover:bg-gray-50'}`}
+              className={`place-card rounded border p-3 transition-shadow ${
+                focused ? 'border-gray-900 bg-yellow-100 shadow-inner' : 'hover:bg-gray-50'
+              }`}
+              data-selected={focused ? 'true' : 'false'}
             >
               <button
                 type="button"
-                className="block w-full text-left"
+                className="block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
                 onClick={() => setFocusId(p.id)}
                 aria-pressed={focused}
                 aria-label={`التركيز على ${displayName(p)} في الخريطة`}
@@ -180,23 +189,24 @@ export default function MapsPageClientAr({
                   </div>
                 ) : null}
               </button>
-              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600">
                 <a
                   href={`/ar/places/${p.id}`}
-                  className="underline hover:no-underline"
+                  className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
                   aria-label={`فتح صفحة المكان ${displayName(p)}`}
                   title="فتح صفحة المكان"
                 >
                   فتح صفحة المكان →
                 </a>
-                <a
-                  href={`/ar/map?place=${encodeURIComponent(p.id)}`}
-                  className="underline hover:no-underline"
+                <button
+                  type="button"
+                  className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"
+                  onClick={() => setFocusId(p.id)}
                   aria-label={`فتح الخريطة مركّزة على ${displayName(p)}`}
                   title="فتح الخريطة مركّزة على هذا المكان"
                 >
                   فتح على الخريطة
-                </a>
+                </button>
               </div>
             </li>
           );

@@ -1,5 +1,6 @@
 // app/(site)/page.tsx
 import SearchIsland from '@/components/SearchIsland';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
   title: 'Palestine',
@@ -10,9 +11,16 @@ export const metadata = {
     languages: { en: '/', ar: '/ar', 'x-default': '/' },
   },
   openGraph: { url: '/' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Palestine',
+    description:
+      'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
+  },
 } as const;
 
 export default function Page() {
+  const arabicHref = buildLanguageToggleHref('/', undefined, 'ar');
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-8">
@@ -55,7 +63,7 @@ export default function Page() {
       </section>
 
       <p className="mt-10 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href="/ar">
+        <a className="underline hover:no-underline" href={arabicHref}>
           View this site in Arabic →
         </a>
       </p>

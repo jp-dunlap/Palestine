@@ -2,6 +2,7 @@
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClientAr from '@/components/MapsPageClient.ar';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
   title: 'خريطة الأماكن الفلسطينية',
@@ -11,6 +12,11 @@ export const metadata = {
     languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
   },
   openGraph: { url: '/ar/map' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'خريطة الأماكن الفلسطينية',
+    description: 'خريطة تفاعلية مستمدة من دليل المشروع.',
+  },
 };
 
 export default function MapsPageAr({
@@ -22,7 +28,11 @@ export default function MapsPageAr({
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
 
-  const enHref = initialFocusId ? `/map?place=${initialFocusId}` : '/map';
+  const enHref = buildLanguageToggleHref(
+    '/ar/map',
+    initialFocusId ? { place: initialFocusId } : undefined,
+    'en'
+  );
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl">

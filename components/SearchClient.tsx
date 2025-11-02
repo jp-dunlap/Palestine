@@ -28,6 +28,16 @@ export default function SearchClient({ locale = 'en' }: Props) {
         error: 'تعذّر تحميل الفهرس. حاول مجددًا.',
         empty: 'لا توجد نتائج مطابقة.',
         count: (n: number) => (n === 1 ? 'نتيجة واحدة' : `${n} من النتائج`),
+        typeLabels: {
+          chapter: 'فصل',
+          event: 'حدث',
+          place: 'مكان',
+        } as const,
+        typeIcons: {
+          chapter: '📖',
+          event: '🗓️',
+          place: '📍',
+        } as const,
       } as const;
     }
     return {
@@ -37,6 +47,16 @@ export default function SearchClient({ locale = 'en' }: Props) {
       error: 'Unable to load the search index. Please try again.',
       empty: 'No matching results yet.',
       count: (n: number) => (n === 1 ? '1 result' : `${n} results`),
+      typeLabels: {
+        chapter: 'Chapter',
+        event: 'Timeline event',
+        place: 'Place',
+      } as const,
+      typeIcons: {
+        chapter: '📖',
+        event: '🗓️',
+        place: '📍',
+      } as const,
     } as const;
   }, [isArabic]);
 
@@ -153,19 +173,40 @@ export default function SearchClient({ locale = 'en' }: Props) {
         {status !== 'error' && results.length === 0 && status !== 'loading' ? (
           <li className="rounded border p-3 text-sm text-gray-600">{t.empty}</li>
         ) : null}
-        {results.map((doc) => (
-          <li key={doc.id} className="rounded border p-3 hover:bg-gray-50">
-            <Link href={doc.href} className="block">
-              <div className="font-semibold">{doc.title}</div>
+        {results.map((doc) => {
+          const typeLabel = doc.type ? t.typeLabels[doc.type] : null;
+          const typeIcon = doc.type ? t.typeIcons[doc.type] : null;
+          return (
+            <li
+              key={doc.id}
+              className="rounded border p-3 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-gray-900 focus-within:ring-offset-2 focus-within:ring-offset-white"
+            >
+              <Link
+                href={doc.href}
+                className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="font-semibold">{doc.title}</div>
+                  {typeLabel ? (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
+                      aria-label={typeLabel}
+                    >
+                      {typeIcon ? <span aria-hidden="true">{typeIcon}</span> : null}
+                      <span>{typeLabel}</span>
+                    </span>
+                  ) : null}
+                </div>
               {doc.summary ? (
                 <div className="mt-1 text-sm text-gray-600">{doc.summary}</div>
               ) : null}
               {doc.tags && doc.tags.length ? (
                 <div className="mt-1 text-xs text-gray-500">#{doc.tags.join(' #')}</div>
               ) : null}
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

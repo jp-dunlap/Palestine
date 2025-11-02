@@ -1,4 +1,5 @@
 import SearchIsland from '@/components/SearchIsland';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
   title: 'فلسطين',
@@ -15,9 +16,16 @@ export const metadata = {
     type: 'website',
     url: '/ar',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'فلسطين',
+    description:
+      'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
+  },
 } as const;
 
 export default function Page() {
+  const englishHref = buildLanguageToggleHref('/ar', undefined, 'en');
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl" lang="ar">
       <header className="mb-8">
@@ -59,7 +67,7 @@ export default function Page() {
       </section>
 
       <p className="mt-10 text-sm text-gray-600 font-arabic">
-        <a className="underline hover:no-underline" href="/">
+        <a className="underline hover:no-underline" href={englishHref}>
           عرض هذا الموقع بالإنجليزية →
         </a>
       </p>

@@ -3,31 +3,24 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export default function LanguageSwitcher() {
   const pathname = usePathname() ?? '/';
   const searchParams = useSearchParams();
   const search = searchParams.toString();
 
-  const { href, label, linkDir } = useMemo(() => {
+  const { href, label, linkDir, testId } = useMemo(() => {
     const isArabic = pathname === '/ar' || pathname.startsWith('/ar/');
-    const params = search ? `?${search}` : '';
+    const targetLocale = isArabic ? 'en' : 'ar';
+    const params = search ? new URLSearchParams(search) : undefined;
+    const href = buildLanguageToggleHref(pathname || '/', params, targetLocale);
 
-    if (isArabic) {
-      const withoutPrefix = pathname.replace(/^\/ar(\b|\/)/, '/');
-      const target = withoutPrefix === '' ? '/' : withoutPrefix;
-      return {
-        href: `${target}${params}` || '/',
-        label: 'English',
-        linkDir: 'ltr' as const,
-      };
-    }
-
-    const suffix = pathname === '/' ? '' : pathname;
     return {
-      href: `/ar${suffix}${params}`,
-      label: 'العربية',
-      linkDir: 'rtl' as const,
+      href,
+      label: isArabic ? 'English' : 'العربية',
+      linkDir: isArabic ? ('ltr' as const) : ('rtl' as const),
+      testId: isArabic ? 'language-toggle-en' : 'language-toggle-ar',
     };
   }, [pathname, search]);
 
@@ -36,6 +29,7 @@ export default function LanguageSwitcher() {
       href={href}
       className="text-sm font-semibold underline decoration-dotted underline-offset-4 hover:no-underline"
       dir={linkDir}
+      data-testid={testId}
     >
       {label}
     </Link>

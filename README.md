@@ -11,9 +11,38 @@ Next.js (App Router) · TypeScript · Tailwind · MDX · MapLibre/Leaflet · D3 
 - Ship fast, static-first pages with progressive enhancement.
 
 ## Run locally
+
 ```bash
-bun i
+# with npm
+npm install
+npm run dev
+
+# or with bun
+bun install
 bun dev
+```
+
+## Testing
+
+```bash
+npm run test:unit   # vitest
+npm run test:e2e    # playwright
+```
+
+The search index is rebuilt automatically during `npm run build` via `scripts/build-search.js`.
+
+## i18n routing
+
+Use `buildLanguageToggleHref` from `lib/i18nRoutes.ts` to derive language switcher links. The helper accepts the
+current pathname, query parameters, and the target locale, returning a safe, leading-slash URL that preserves
+existing query parameters.
+
+```ts
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
+
+const arabicHref = buildLanguageToggleHref('/map', { place: 'haifa' }, 'ar');
+// => '/ar/map?place=haifa'
+```
 
 ## Maps
 
@@ -23,14 +52,3 @@ Routes
 
 Features
 - Marker clustering, deep links (`?place=<id>`), click any list item to focus the map, “Reset view”, “Copy link”.
-
-Run locally
-```bash
-# with npm
-npm i
-npm run dev
-
-# or with bun (already in README)
-bun i
-bun dev
-

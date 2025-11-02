@@ -28,3 +28,12 @@ test('search index loads without MiniSearch id errors', async ({ page }) => {
 
   expect(miniSearchErrors).toHaveLength(0);
 });
+
+test('home search surfaces places with direct navigation', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Search').fill('Haifa');
+  const placeLink = page.getByRole('link', { name: /Haifa/ }).first();
+  await expect(placeLink).toBeVisible();
+  await placeLink.click();
+  await expect(page).toHaveURL('/places/haifa');
+});

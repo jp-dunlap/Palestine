@@ -42,6 +42,12 @@ export function generateMetadata({
       url: `/timeline/${event.id}`,
       type: 'article',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: event.summary ?? undefined,
+      images: [`/timeline/${event.id}/opengraph-image`],
+    },
   };
 }
 

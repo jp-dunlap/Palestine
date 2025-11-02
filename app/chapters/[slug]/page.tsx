@@ -8,8 +8,9 @@ import {
 } from '@/lib/loaders.chapters';
 import { compileMDX } from 'next-mdx-remote/rsc';
 import { formatSources } from '@/lib/bibliography';
-import { mdxComponents } from '@/mdx-components';
+import { createMdxComponents } from '@/mdx-components';
 import JsonLd from '@/components/JsonLd';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
@@ -42,6 +43,12 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
       images: [`/chapters/${params.slug}/opengraph-image`],
       url: canonical,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: fm.title,
+      description: fm.summary,
+      images: [`/chapters/${params.slug}/opengraph-image`],
+    },
   };
 }
 
@@ -53,9 +60,11 @@ export default async function Page({ params }: Props) {
   }
   const source = loadChapterSource(params.slug);
 
+  const { components, FootnotesSection } = createMdxComponents('en');
+
   const { content, frontmatter } = await compileMDX({
     source,
-    components: mdxComponents,
+    components,
     options: { parseFrontmatter: true }
   });
 
@@ -71,6 +80,10 @@ export default async function Page({ params }: Props) {
   };
 
   const renderedSources = meta.sources ? formatSources(meta.sources) : [];
+  const hasArabic = hasArChapter(params.slug);
+  const arabicHref = hasArabic
+    ? buildLanguageToggleHref(`/chapters/${params.slug}`, undefined, 'ar')
+    : null;
 
   const articleUrl = `/chapters/${params.slug}`;
 
@@ -104,6 +117,13 @@ export default async function Page({ params }: Props) {
         </div>
 
         {meta.summary && <p className="mt-4">{meta.summary}</p>}
+        {arabicHref ? (
+          <p className="mt-2 text-sm text-gray-600">
+            <a className="underline hover:no-underline" href={arabicHref}>
+              View this chapter in Arabic →
+            </a>
+          </p>
+        ) : null}
         {meta.places?.length ? (
           <p className="mt-2 text-sm text-gray-600">Places: {meta.places.join(', ')}</p>
         ) : null}
@@ -114,6 +134,8 @@ export default async function Page({ params }: Props) {
         <article className="mt-8 space-y-4">
           {content}
         </article>
+
+        <FootnotesSection />
 
         {renderedSources.length > 0 && (
           <section className="mt-10">

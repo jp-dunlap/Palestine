@@ -2,6 +2,7 @@
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClient from '@/components/MapsPageClient';
+import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
   title: 'Map of Palestinian places',
@@ -11,6 +12,11 @@ export const metadata = {
     languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
   },
   openGraph: { url: '/map' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Map of Palestinian places',
+    description: 'Interactive map drawn from the project gazetteer.',
+  },
 };
 
 export default function MapsPage({
@@ -22,7 +28,11 @@ export default function MapsPage({
   const cfg = loadMapConfig();
   const initialFocusId = searchParams?.place;
 
-  const arHref = initialFocusId ? `/ar/map?place=${initialFocusId}` : '/ar/map';
+  const arHref = buildLanguageToggleHref(
+    '/map',
+    initialFocusId ? { place: initialFocusId } : undefined,
+    'ar'
+  );
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
@@ -73,7 +83,12 @@ export default function MapsPage({
       <MapsPageClient places={places} cfg={cfg} initialFocusId={initialFocusId} />
 
       <p className="mt-8 text-sm text-gray-600">
-        <a className="underline hover:no-underline" href={arHref}>
+        <a
+          className="underline hover:no-underline"
+          href={arHref}
+          data-testid="language-toggle-ar"
+          dir="rtl"
+        >
           View this map in Arabic →
         </a>
       </p>

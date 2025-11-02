@@ -11,6 +11,11 @@ export const metadata = {
     languages: { en: '/timeline', ar: '/ar/timeline', 'x-default': '/timeline' },
   },
   openGraph: { url: '/ar/timeline' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'الخط الزمني',
+    description: 'خط زمني عامّ لفلسطين مع العصور والأمكنة والمصادر.',
+  },
 };
 
 export default function Page({
