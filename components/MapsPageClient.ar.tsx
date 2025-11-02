@@ -177,6 +177,24 @@ export default function MapsPageClientAr({
                   </div>
                 ) : null}
               </button>
+              <div className="mt-2 text-xs text-gray-600 flex flex-wrap gap-3">
+                <a
+                  href={`/ar/places/${p.id}`}
+                  className="underline hover:no-underline"
+                  aria-label={`فتح صفحة المكان ${displayName(p)}`}
+                  title="فتح صفحة المكان"
+                >
+                  فتح صفحة المكان →
+                </a>
+                <a
+                  href={`/ar/map?place=${encodeURIComponent(p.id)}`}
+                  className="underline hover:no-underline"
+                  aria-label={`فتح الخريطة مركّزة على ${displayName(p)}`}
+                  title="فتح الخريطة مركّزة على هذا المكان"
+                >
+                  فتح على الخريطة
+                </a>
+              </div>
             </li>
           );
         })}
