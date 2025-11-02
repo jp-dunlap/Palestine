@@ -158,11 +158,8 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
                   ? `/places/${placeId}`
                   : `/ar/places/${placeId}`
                 : null;
-              const mapHref = placeId
-                ? isArabic
-                  ? `/ar/map?place=${encodeURIComponent(placeId)}`
-                  : `/map?place=${encodeURIComponent(placeId)}`
-                : null;
+              const mapBase = isArabic ? '/ar/map' : '/map';
+              const mapHref = placeId ? `${mapBase}?place=${encodeURIComponent(placeId)}` : null;
 
               return (
                 <li key={raw} className={isArabic ? 'font-arabic space-y-1' : 'space-y-1'}>
