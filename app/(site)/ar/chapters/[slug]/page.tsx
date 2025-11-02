@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { compileMDX } from 'next-mdx-remote/rsc';
 import {
   loadChapterSlugsAr,
@@ -5,6 +6,7 @@ import {
   hasEnChapter,
   loadChapterFrontmatter,
   loadChapterFrontmatterAr,
+  hasArChapter,
 } from '@/lib/loaders.chapters';
 import { mdxComponents } from '@/mdx-components';
 import { loadEras } from '@/lib/loaders.timeline';
@@ -14,18 +16,22 @@ export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export function generateMetadata({ params }: { params: { slug: string } }) {
+  const hasAr = hasArChapter(params.slug);
+  const hasEn = hasEnChapter(params.slug);
+  if (!hasAr && !hasEn) {
+    notFound();
+  }
   const { frontmatter: arFm, isFallback } = loadChapterFrontmatterAr(params.slug);
-  const enFm = loadChapterFrontmatter(params.slug);
+  const enFm = hasEn ? loadChapterFrontmatter(params.slug) : null;
   const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
-  const en = hasEnChapter(params.slug);
-  const title = arFm.title ?? enFm.title;
-  const summary = arFm.summary ?? enFm.summary;
+  const title = arFm.title ?? enFm?.title ?? params.slug;
+  const summary = arFm.summary ?? enFm?.summary;
   return {
     title: isFallback ? `${title} (English)` : title,
     description: summary,
     alternates: {
-      languages: en ? { en: `/chapters/${params.slug}` } : {},
+      languages: hasEn ? { en: `/chapters/${params.slug}` } : {},
     },
     openGraph: {
       title: isFallback ? `${title} (English)` : title,
@@ -38,6 +44,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 type Props = { params: { slug: string } };
 
 export default async function Page({ params }: Props) {
+  const hasAr = hasArChapter(params.slug);
+  const hasEn = hasEnChapter(params.slug);
+  if (!hasAr && !hasEn) {
+    notFound();
+  }
   const { source, isFallback } = loadChapterSourceAr(params.slug);
   const { content, frontmatter } = await compileMDX({
     source,
@@ -49,15 +60,15 @@ export default async function Page({ params }: Props) {
     title?: string; summary?: string; authors?: string[]; places?: string[]; tags?: string[]; era?: string;
   };
 
-  const enAvailable = hasEnChapter(params.slug);
-  const enMeta = loadChapterFrontmatter(params.slug);
+  const enAvailable = hasEn;
+  const enMeta = enAvailable ? loadChapterFrontmatter(params.slug) : null;
 
-  const title = meta.title ?? enMeta.title;
-  const summary = meta.summary ?? enMeta.summary;
-  const authors = meta.authors?.length ? meta.authors : enMeta.authors;
-  const places = meta.places?.length ? meta.places : enMeta.places;
-  const tags = meta.tags?.length ? meta.tags : enMeta.tags;
-  const era = (meta as any).era ?? enMeta.era;
+  const title = meta.title ?? enMeta?.title ?? params.slug;
+  const summary = meta.summary ?? enMeta?.summary;
+  const authors = meta.authors?.length ? meta.authors : enMeta?.authors;
+  const places = meta.places?.length ? meta.places : enMeta?.places;
+  const tags = meta.tags?.length ? meta.tags : enMeta?.tags;
+  const era = (meta as any).era ?? enMeta?.era;
 
   const eras = loadEras();
   const eraDisplay = (() => {

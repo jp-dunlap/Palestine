@@ -1,4 +1,11 @@
-import { loadChapterSlugs, loadChapterSource, loadChapterFrontmatter, hasArChapter } from '@/lib/loaders.chapters';
+import { notFound } from 'next/navigation';
+import {
+  loadChapterSlugs,
+  loadChapterSource,
+  loadChapterFrontmatter,
+  hasArChapter,
+  hasEnChapter,
+} from '@/lib/loaders.chapters';
 import { compileMDX } from 'next-mdx-remote/rsc';
 import { formatSources } from '@/lib/bibliography';
 import { mdxComponents } from '@/mdx-components';
@@ -7,7 +14,10 @@ export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export function generateMetadata({ params }: { params: { slug: string } }) {
+  if (!hasEnChapter(params.slug)) {
+    notFound();
+  }
   const fm = loadChapterFrontmatter(params.slug);
   const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const ar = hasArChapter(params.slug);
@@ -28,6 +38,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 type Props = { params: { slug: string } };
 
 export default async function Page({ params }: Props) {
+  if (!hasEnChapter(params.slug)) {
+    notFound();
+  }
   const source = loadChapterSource(params.slug);
 
   const { content, frontmatter } = await compileMDX({
