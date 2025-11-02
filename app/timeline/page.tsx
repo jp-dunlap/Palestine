@@ -6,7 +6,11 @@ import TimelineFilters from '@/components/TimelineFilters';
 export const metadata = {
   title: 'Timeline',
   description: 'A public, art-grade timeline of Palestine with eras, places, and sources.',
-  alternates: { languages: { ar: '/ar/timeline' } },
+  alternates: {
+    canonical: '/timeline',
+    languages: { en: '/timeline', ar: '/ar/timeline', 'x-default': '/timeline' },
+  },
+  openGraph: { url: '/timeline' },
 };
 
 export default function Page({

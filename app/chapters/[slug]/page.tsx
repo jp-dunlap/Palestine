@@ -21,16 +21,26 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   const fm = loadChapterFrontmatter(params.slug);
   const url = process.env.NEXT_PUBLIC_SITE_URL ?? '';
   const ar = hasArChapter(params.slug);
+  const canonical = `/chapters/${params.slug}`;
+  const languages: Record<string, string> = {
+    en: canonical,
+    'x-default': canonical,
+  };
+  if (ar) {
+    languages.ar = `/ar/chapters/${params.slug}`;
+  }
   return {
     title: fm.title,
     description: fm.summary,
     alternates: {
-      languages: ar ? { ar: `/ar/chapters/${params.slug}` } : {},
+      canonical,
+      languages,
     },
     openGraph: {
       title: fm.title,
       description: fm.summary,
       images: url ? [`${url}/opengraph-image`] : undefined,
+      url: canonical,
     },
   };
 }

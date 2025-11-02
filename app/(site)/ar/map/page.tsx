@@ -6,7 +6,11 @@ import MapsPageClientAr from '@/components/MapsPageClient.ar';
 export const metadata = {
   title: 'الأماكن',
   description: 'خريطة تفاعلية للأماكن الفلسطينية.',
-  alternates: { languages: { en: '/map' } },
+  alternates: {
+    canonical: '/ar/map',
+    languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
+  },
+  openGraph: { url: '/ar/map' },
 } as const;
 
 export default function MapsPageAr({

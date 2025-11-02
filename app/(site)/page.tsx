@@ -5,7 +5,11 @@ export const metadata = {
   title: 'Palestine',
   description:
     'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
-  alternates: { languages: { ar: '/ar' } },
+  alternates: {
+    canonical: '/',
+    languages: { en: '/', ar: '/ar', 'x-default': '/' },
+  },
+  openGraph: { url: '/' },
 } as const;
 
 export default function Page() {

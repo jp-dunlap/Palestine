@@ -4,12 +4,16 @@ export const metadata = {
   title: 'فلسطين',
   description:
     'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
-  alternates: { languages: { en: '/' } },
+  alternates: {
+    canonical: '/ar',
+    languages: { en: '/', ar: '/ar', 'x-default': '/' },
+  },
   openGraph: {
     title: 'فلسطين',
     description:
       'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
     type: 'website',
+    url: '/ar',
   },
 } as const;
 
