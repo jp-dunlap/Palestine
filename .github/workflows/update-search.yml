@@ -1,0 +1,30 @@
+name: Rebuild search index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'content/**'
+      - 'data/**'
+      - 'scripts/build-search.js'
+      - 'package.json'
+      - '.github/workflows/update-search.yml'
+
+jobs:
+  build-search:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: node scripts/build-search.js
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore(search): rebuild index'
+          file_pattern: public/search.en.json public/search.ar.json

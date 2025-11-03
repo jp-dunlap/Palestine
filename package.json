@@ -6,11 +6,12 @@
     "dev": "next dev",
     "prebuild": "node scripts/build-search.js",
     "build": "next build",
+    "postbuild": "node scripts/build-search.js",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "BASIC_AUTH_USER=test BASIC_AUTH_PASS=secret CMS_MODE=token CMS_GITHUB_TOKEN=dummy playwright test"
   },
   "dependencies": {
     "@next/mdx": "^16.0.1",
