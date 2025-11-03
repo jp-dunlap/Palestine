@@ -5,7 +5,8 @@ export const revalidate = 0;
 import { NextResponse } from 'next/server';
 
 const DEFAULT_REPO = 'jp-dunlap/Palestine';
-const DEFAULT_BRANCH = process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
+const DEFAULT_BRANCH =
+  process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
 function parseMode() {
   const value = (process.env.CMS_MODE ?? 'token').toLowerCase();
@@ -17,7 +18,6 @@ function getTokenBackend() {
   if (!token) {
     throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
   }
-
   return {
     name: 'github',
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
@@ -25,16 +25,15 @@ function getTokenBackend() {
     auth_type: 'token',
     token,
     use_graphql: false,
-  };
+  } as const;
 }
 
-// NOTE: Only require CLIENT_ID here. The CLIENT_SECRET is only needed in the /callback exchange.
+// Only require CLIENT_ID here; CLIENT_SECRET is enforced in /callback.
 function getOAuthBackend(origin: string) {
   const clientId = process.env.GITHUB_CLIENT_ID;
   if (!clientId) {
     throw new Error('GITHUB_CLIENT_ID is required when CMS_MODE=oauth');
   }
-
   return {
     name: 'github',
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
@@ -42,7 +41,7 @@ function getOAuthBackend(origin: string) {
     base_url: `${origin}/api/cms/oauth`,
     auth_endpoint: 'authorize',
     use_graphql: false,
-  };
+  } as const;
 }
 
 function chapterFields(language: 'en' | 'ar') {
@@ -57,18 +56,8 @@ function chapterFields(language: 'en' | 'ar') {
       field: { label: 'Author', name: 'author', widget: 'string' },
       required: false,
     },
-    {
-      label: 'Language',
-      name: 'language',
-      widget: 'hidden',
-      default: language,
-    },
-    {
-      label: 'Summary',
-      name: 'summary',
-      widget: 'text',
-      required: false,
-    },
+    { label: 'Language', name: 'language', widget: 'hidden', default: language },
+    { label: 'Summary', name: 'summary', widget: 'text', required: false },
     {
       label: 'Date',
       name: 'date',
@@ -77,12 +66,7 @@ function chapterFields(language: 'en' | 'ar') {
       format: 'YYYY-MM-DD',
       required: false,
     },
-    {
-      label: 'Tags',
-      name: 'tags',
-      widget: 'list',
-      required: false,
-    },
+    { label: 'Tags', name: 'tags', widget: 'list', required: false },
     {
       label: 'Sources',
       name: 'sources',
@@ -93,17 +77,8 @@ function chapterFields(language: 'en' | 'ar') {
         { label: 'Source URL', name: 'url', widget: 'string', required: false },
       ],
     },
-    {
-      label: 'Places',
-      name: 'places',
-      widget: 'list',
-      required: false,
-    },
-    {
-      label: 'Body',
-      name: 'body',
-      widget: 'markdown',
-    },
+    { label: 'Places', name: 'places', widget: 'list', required: false },
+    { label: 'Body', name: 'body', widget: 'markdown' },
   ];
 }
 
@@ -116,7 +91,6 @@ function timelineFields(includeArabic: boolean) {
       name: 'title_ar',
       widget: 'string',
       required: !includeArabic,
-      hint: 'Optional Arabic title for localisation.',
       default: '',
     },
     {
@@ -126,19 +100,8 @@ function timelineFields(includeArabic: boolean) {
       value_type: 'int',
       hint: 'Negative numbers represent BCE years.',
     },
-    {
-      label: 'End Year',
-      name: 'end',
-      widget: 'number',
-      value_type: 'int',
-      required: false,
-    },
-    {
-      label: 'Summary',
-      name: 'summary',
-      widget: 'text',
-      required: false,
-    },
+    { label: 'End Year', name: 'end', widget: 'number', value_type: 'int', required: false },
+    { label: 'Summary', name: 'summary', widget: 'text', required: false },
     {
       label: 'Summary (Arabic)',
       name: 'summary_ar',
@@ -146,12 +109,7 @@ function timelineFields(includeArabic: boolean) {
       required: !includeArabic,
       default: '',
     },
-    {
-      label: 'Places',
-      name: 'places',
-      widget: 'list',
-      required: false,
-    },
+    { label: 'Places', name: 'places', widget: 'list', required: false },
     {
       label: 'Sources',
       name: 'sources',
@@ -159,19 +117,8 @@ function timelineFields(includeArabic: boolean) {
       field: { label: 'Reference', name: 'reference', widget: 'string' },
       required: false,
     },
-    {
-      label: 'Tags',
-      name: 'tags',
-      widget: 'list',
-      required: false,
-    },
-    {
-      label: 'Tags (Arabic)',
-      name: 'tags_ar',
-      widget: 'list',
-      required: !includeArabic,
-      default: [],
-    },
+    { label: 'Tags', name: 'tags', widget: 'list', required: false },
+    { label: 'Tags (Arabic)', name: 'tags_ar', widget: 'list', required: !includeArabic, default: [] },
     {
       label: 'Certainty',
       name: 'certainty',
@@ -184,11 +131,9 @@ function timelineFields(includeArabic: boolean) {
       required: false,
     },
   ];
-
   if (!includeArabic) {
-    return base.filter((field) => !['title_ar', 'summary_ar', 'tags_ar'].includes(field.name));
+    return base.filter((f) => !['title_ar', 'summary_ar', 'tags_ar'].includes((f as any).name));
   }
-
   return base;
 }
 
@@ -209,11 +154,7 @@ function bibliographyCollection() {
             name: 'entries',
             widget: 'list',
             label_singular: 'Entry',
-            field: {
-              label: 'CSL JSON Entry',
-              name: 'json',
-              widget: 'json',
-            },
+            field: { label: 'CSL JSON Entry', name: 'json', widget: 'json' },
           },
         ],
       },
@@ -238,11 +179,7 @@ function gazetteerCollection() {
             name: 'entries',
             widget: 'list',
             label_singular: 'Place',
-            field: {
-              label: 'Place JSON',
-              name: 'json',
-              widget: 'json',
-            },
+            field: { label: 'Place JSON', name: 'json', widget: 'json' },
           },
         ],
       },
@@ -254,7 +191,6 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const mode = parseMode();
-
     const backend = mode === 'token' ? getTokenBackend() : getOAuthBackend(url.origin);
 
     const config = {
@@ -312,7 +248,7 @@ export async function GET(request: Request) {
       ],
     } satisfies Record<string, unknown>;
 
-    return NextResponse.json(config);
+    return NextResponse.json(config, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'CMS configuration failed';
     return new NextResponse(message, { status: 500 });
