@@ -9,33 +9,37 @@
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
     #app{max-width:960px;margin:0 auto}
     .card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}
+    .err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}
   </style>
 </head>
 <body>
   <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.0.11/dist/decap-cms.js"></script>
+  <!-- Decap CMS -->
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
   <script>
-  (async function(){
+  (async function boot(){
     try{
-      const r = await fetch('/api/cms/config',{cache:'no-store',headers:{accept:'application/json'}});
-      if(!r.ok){ const txt = await r.text(); document.getElementById('app').innerHTML = '<pre>'+txt+'</pre>'; return; }
-      const cfg = await r.json();
+      // Fetch JSON config directly from our API; browser will send Basic Auth automatically.
+      const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' } });
+      if (!res.ok) {
+        const txt = await res.text();
+        document.getElementById('app').innerHTML = '<div class="err">Config load failed:\\n' + txt + '</div>';
+        return;
+      }
+      const cfg = await res.json();
 
-      // Nuke any OAuth bits just in case
+      // Force token-only; remove any OAuth hints
       if (cfg.backend) {
-        if (cfg.backend.auth_type !== 'token') {
-          cfg.backend.auth_type = 'token';
-        }
+        cfg.backend.auth_type = 'token';
         delete cfg.backend.base_url;
         delete cfg.backend.auth_endpoint;
       }
-      // Prevent netlify identity fallback
-      window.netlifyIdentity = undefined;
 
-      window.CMS.init({ config: cfg });
+      // absolutely do not fetch /config.yml
+      window.CMS.init({ config: cfg, load_config_file: false });
     }catch(e){
-      document.getElementById('app').innerHTML = '<pre>Admin boot error:\n'+(e?.message||e)+'</pre>';
+      document.getElementById('app').innerHTML = '<div class="err">Admin boot error:\\n' + (e?.message || e) + '</div>';
     }
   })();
   </script>

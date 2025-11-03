@@ -29,7 +29,6 @@ export function middleware(req: NextRequest) {
     return new Response('CMS authentication is not configured', { status: 500 });
   }
 
-  // Allow preflight, etc.
   if (req.method === 'OPTIONS') {
     return NextResponse.next();
   }
