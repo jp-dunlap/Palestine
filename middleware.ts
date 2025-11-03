@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextResponse, NextRequest } from 'next/server';
 
 const REALM = 'Palestine CMS';
@@ -7,6 +6,13 @@ const REALM = 'Palestine CMS';
 export const config = {
   matcher: ['/admin/:path*', '/api/cms/:path*'],
 };
+
+function unauthorized() {
+  return new Response('Unauthorized', {
+    status: 401,
+    headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
+  });
+}
 
 export function middleware(req: NextRequest) {
   const user =
@@ -17,30 +23,33 @@ export function middleware(req: NextRequest) {
     process.env.BASIC_AUTH_PASS ??
     process.env.BASIC_AUTH_PASSWORD ??
     '';
-  const mode = process.env.CMS_MODE ?? ''; // 'oauth' or 'token'
+  const mode = (process.env.CMS_MODE ?? '').toLowerCase();
 
   if (!user || !pass || !mode) {
     return new Response('CMS authentication is not configured', { status: 500 });
   }
 
-  if (req.method === 'OPTIONS') return NextResponse.next();
+  if (req.method === 'OPTIONS') {
+    return NextResponse.next();
+  }
 
   const auth = req.headers.get('authorization') || '';
   if (!auth.startsWith('Basic ')) {
-    return new Response('Unauthorized', {
-      status: 401,
-      headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
-    });
+    return unauthorized();
   }
 
-  // Edge-safe decode
-  const [name, pwd] = atob(auth.slice(6)).split(':');
+  // Edge-safe base64 decode (no Buffer on Edge)
+  let name = '';
+  let pwd = '';
+  try {
+    const encoded = auth.slice(6);
+    [name, pwd] = atob(encoded).split(':');
+  } catch {
+    return unauthorized();
+  }
 
   if (name !== user || pwd !== pass) {
-    return new Response('Unauthorized', {
-      status: 401,
-      headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
-    });
+    return unauthorized();
   }
 
   return NextResponse.next();

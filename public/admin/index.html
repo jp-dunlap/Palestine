@@ -1,28 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="robots" content="noindex, nofollow" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Palestine — CMS</title>
+    <title>Palestine — Private CMS</title>
+
+    <!-- Keep the shell simple and fast; preconnect both CDNs -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+
+    <style>
+      :root { color-scheme: dark light; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: #0f172a; color: #f8fafc;
+      }
+      .status {
+        padding: 2rem; border-radius: 0.75rem; max-width: 32rem; text-align: center;
+        background: rgba(15, 23, 42, 0.85);
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.65);
+      }
+      .status h1 { margin-top: 0; font-size: 1.5rem; letter-spacing: 0.04em; text-transform: uppercase; }
+      .status p { line-height: 1.5; color: rgba(226, 232, 240, 0.9); }
+    </style>
+
+    <!-- Decap must *not* auto-init; we init after config + CMS are ready -->
     <script>window.CMS_MANUAL_INIT = true;</script>
-    <script src="https://unpkg.com/decap-cms@^3/dist/decap-cms.js"></script>
+
+    <!-- Load Decap CMS from jsDelivr; fall back to UNPKG if it fails. -->
+    <script
+      id="decap-cms-cdn"
+      src="https://cdn.jsdelivr.net/npm/decap-cms@^3/dist/decap-cms.js"
+      defer
+      onerror="(function () {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/decap-cms@^3/dist/decap-cms.js';
+        s.defer = true;
+        document.head.appendChild(s);
+      })();">
+    </script>
   </head>
+
   <body>
-    <noscript>You need to enable JavaScript to use the CMS.</noscript>
-    <script>
-      (async function () {
+    <div class="status" id="cms-status">
+      <h1>Private CMS</h1>
+      <p id="cms-status-message">Loading…</p>
+    </div>
+
+    <script type="module">
+      const statusEl = document.getElementById('cms-status');
+      const messageEl = document.getElementById('cms-status-message');
+
+      function updateStatus(text, isError = false) {
+        if (messageEl) messageEl.textContent = text;
+        if (isError && statusEl) statusEl.style.background = 'rgba(153, 27, 27, 0.85)';
+      }
+
+      // Poll for window.CMS so the UNPKG fallback gets a chance to load
+      function waitForCMS(timeoutMs = 12000) {
+        return new Promise((resolve, reject) => {
+          const start = Date.now();
+          (function poll() {
+            if (window.CMS) return resolve(window.CMS);
+            if (Date.now() - start > timeoutMs) {
+              return reject(new Error('Decap CMS failed to load (CDN + fallback timed out).'));
+            }
+            setTimeout(poll, 100);
+          })();
+        });
+      }
+
+      async function fetchConfig() {
+        const res = await fetch('/api/cms/config', { headers: { Accept: 'application/json' } });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new Error(text || `Unable to load CMS configuration (status ${res.status})`);
+        }
+        return res.json();
+      }
+
+      // Optional nicety: parse/stringify JSON fields for specific collections
+      function registerJsonCollectionTransforms(CMS) {
+        const { fromJS, List, Map } = CMS?.utils?.Immutable ?? {};
+        if (!fromJS || !List || !Map) return;
+
+        const collections = new Set(['bibliography', 'gazetteer']);
+
+        // Convert stringified JSON to objects when loading an entry
+        CMS.registerEventListener({
+          name: 'entryLoaded',
+          handler: ({ entry }) => {
+            try {
+              const coll = entry?.get && entry.get('collection');
+              if (!collections.has(coll)) return;
+
+              const data = entry.get('data');
+              if (!Map.isMap(data)) return;
+
+              const entries = data.get('entries');
+              if (!List.isList(entries)) return;
+
+              const parsed = entries.map((item) => {
+                const value = item?.get ? item.get('json') : item?.json;
+                if (typeof value === 'string') {
+                  try { return item.set('json', JSON.parse(value)); }
+                  catch (err) { throw new Error(`Invalid JSON detected: ${err.message}`); }
+                }
+                return item;
+              }).toArray();
+
+              entry.setIn(['data', 'entries'], fromJS(parsed));
+            } catch { /* noop */ }
+          },
+        });
+
+        // Ensure objects are stringified again before saving
+        CMS.registerEventListener({
+          name: 'preSave',
+          handler: ({ entry }) => {
+            try {
+              const data = entry.get('data');
+              if (!Map.isMap(data)) return;
+
+              const entries = data.get('entries');
+              if (!List.isList(entries)) return;
+
+              const stringified = entries.map((item) => {
+                const value = item?.get ? item.get('json') : item?.json;
+                if (value && typeof value !== 'string') {
+                  return item.set('json', JSON.stringify(value));
+                }
+                return item;
+              }).toArray();
+
+              entry.setIn(['data', 'entries'], fromJS(stringified));
+            } catch { /* noop */ }
+          },
+        });
+      }
+
+      (async function boot() {
         try {
-          const res = await fetch('/api/cms/config', { credentials: 'include' });
-          if (!res.ok) {
-            const txt = await res.text();
-            document.body.innerHTML = '<pre>' + txt + '</pre>';
-            return;
-          }
-          const cfg = await res.json();
-          CMS.init({ config: cfg });
+          updateStatus('Loading editor…');
+          await waitForCMS();              // <- critical: allow fallback to load
+          const { CMS } = window;
+
+          // Initialize once config is fetched and transforms are registered
+          const config = await fetchConfig();
+          registerJsonCollectionTransforms(CMS);
+
+          CMS.init({ config });
+          updateStatus('Authenticated. Loading collections…');
+
+          CMS.registerEventListener({ name: 'preSave',  handler: () => updateStatus('Saving changes…') });
+          CMS.registerEventListener({ name: 'postSave', handler: () => updateStatus('Changes saved to Git.') });
+
         } catch (err) {
-          document.body.innerHTML = '<pre>Failed to load CMS config: ' + (err && err.message || err) + '</pre>';
+          console.error('[cms] initialization error', err);
+          updateStatus(err?.message || 'CMS failed to load.', true);
         }
       })();
     </script>
