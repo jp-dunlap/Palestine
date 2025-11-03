@@ -10,9 +10,7 @@ const DEFAULT_BRANCH =
 
 function getTokenBackend() {
   const token = process.env.CMS_GITHUB_TOKEN;
-  if (!token) {
-    throw new Error('CMS_GITHUB_TOKEN is required when using token mode');
-  }
+  if (!token) throw new Error('CMS_GITHUB_TOKEN is required when using token mode');
   return {
     name: 'github',
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
@@ -168,7 +166,6 @@ function gazetteerCollection() {
 
 export async function GET(request: Request) {
   try {
-    // Force token backend for now so the CMS works immediately
     const backend = getTokenBackend();
 
     const config = {
