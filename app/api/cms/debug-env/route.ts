@@ -12,4 +12,3 @@ export async function GET() {
     branch: process.env.CMS_GITHUB_BRANCH,
   });
 }
-TS
