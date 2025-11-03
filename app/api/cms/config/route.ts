@@ -30,10 +30,6 @@ function getTokenBackend() {
 
 // Only require CLIENT_ID here; CLIENT_SECRET is enforced in /callback.
 function getOAuthBackend(origin: string) {
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  if (!clientId) {
-    throw new Error('GITHUB_CLIENT_ID is required when CMS_MODE=oauth');
-  }
   return {
     name: 'github',
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
