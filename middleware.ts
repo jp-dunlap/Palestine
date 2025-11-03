@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const REALM = 'Palestine CMS';
 
-// Protect private surfaces (all /admin assets + /api/cms/*)
+// Protect private surfaces (all /admin assets + /api/cms/* + /config.yml)
 export const config = {
-  matcher: ['/admin/:path*', '/api/cms/:path*'],
+  matcher: ['/admin/:path*', '/api/cms/:path*', '/config.yml'],
 };
 
 function unauthorized() {
@@ -29,6 +29,7 @@ export function middleware(req: NextRequest) {
     return new Response('CMS authentication is not configured', { status: 500 });
   }
 
+  // Allow preflight, etc.
   if (req.method === 'OPTIONS') {
     return NextResponse.next();
   }
