@@ -4,46 +4,28 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Palestine — Private CMS</title>
-    <!-- Added jsDelivr preconnect (keep UNPKG for fallback) -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <style>
-      :root {
-        color-scheme: dark light;
-      }
+      :root { color-scheme: dark light; }
       body {
         margin: 0;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #0f172a;
-        color: #f8fafc;
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: #0f172a; color: #f8fafc;
       }
       .status {
-        padding: 2rem;
-        border-radius: 0.75rem;
-        max-width: 32rem;
-        text-align: center;
+        padding: 2rem; border-radius: 0.75rem; max-width: 32rem; text-align: center;
         background: rgba(15, 23, 42, 0.85);
         box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.65);
       }
-      .status h1 {
-        margin-top: 0;
-        font-size: 1.5rem;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-      .status p {
-        line-height: 1.5;
-        color: rgba(226, 232, 240, 0.9);
-      }
+      .status h1 { margin-top: 0; font-size: 1.5rem; letter-spacing: 0.04em; text-transform: uppercase; }
+      .status p { line-height: 1.5; color: rgba(226, 232, 240, 0.9); }
     </style>
-    <script>
-      window.CMS_MANUAL_INIT = true;
-    </script>
-    <!-- CHANGED: load Decap CMS from jsDelivr with an UNPKG fallback -->
+
+    <script>window.CMS_MANUAL_INIT = true;</script>
+
+    <!-- Load Decap CMS from jsDelivr; fall back to UNPKG if it fails -->
     <script
       src="https://cdn.jsdelivr.net/npm/decap-cms@^3/dist/decap-cms.js"
       onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/decap-cms@^3/dist/decap-cms.js';document.head.appendChild(s);})();">
@@ -59,31 +41,22 @@
       const messageEl = document.getElementById('cms-status-message');
 
       function updateStatus(text, isError = false) {
-        if (messageEl) {
-          messageEl.textContent = text;
-        }
-        if (isError && statusEl) {
-          statusEl.style.background = 'rgba(153, 27, 27, 0.85)';
-        }
+        if (messageEl) messageEl.textContent = text;
+        if (isError && statusEl) statusEl.style.background = 'rgba(153, 27, 27, 0.85)';
       }
 
       async function fetchConfig() {
-        const response = await fetch('/api/cms/config', {
-          headers: { Accept: 'application/json' },
-        });
-
+        const response = await fetch('/api/cms/config', { headers: { Accept: 'application/json' } });
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || `Unable to load CMS configuration (status ${response.status})`);
         }
-
         return response.json();
       }
 
       function registerJsonCollectionTransforms(CMS) {
         const { fromJS, List, Map } = CMS?.utils?.Immutable ?? {};
         const collections = new Set(['bibliography', 'gazetteer']);
-
         if (!fromJS || !List || !Map) return;
 
         CMS.registerEventListener({
@@ -114,11 +87,8 @@
               .map((item) => {
                 const value = item?.get ? item.get('json') : item?.json;
                 if (typeof value === 'string') {
-                  try {
-                    return JSON.parse(value);
-                  } catch (err) {
-                    throw new Error(`Invalid JSON detected: ${err.message}`);
-                  }
+                  try { return JSON.parse(value); }
+                  catch (err) { throw new Error(`Invalid JSON detected: ${err.message}`); }
                 }
                 return value?.toJS ? value.toJS() : value;
               })
@@ -133,22 +103,14 @@
         try {
           const config = await fetchConfig();
           const { CMS } = window;
-          if (!CMS) {
-            throw new Error('Netlify CMS failed to load. Check the CDN script.');
-          }
+          if (!CMS) throw new Error('Decap CMS failed to load. Check the CDN script.');
 
           registerJsonCollectionTransforms(CMS);
-
           CMS.init({ config });
           updateStatus('Authenticated. Loading collections…');
-          CMS.registerEventListener({
-            name: 'preSave',
-            handler: () => updateStatus('Saving changes…'),
-          });
-          CMS.registerEventListener({
-            name: 'postSave',
-            handler: () => updateStatus('Changes saved to Git.'),
-          });
+
+          CMS.registerEventListener({ name: 'preSave', handler: () => updateStatus('Saving changes…') });
+          CMS.registerEventListener({ name: 'postSave', handler: () => updateStatus('Changes saved to Git.') });
         } catch (error) {
           console.error('[cms] initialization error', error);
           updateStatus(error.message || 'CMS failed to load.', true);
