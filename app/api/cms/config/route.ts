@@ -1,114 +1,314 @@
-// app/api/cms/config/route.ts
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+const DEFAULT_REPO = 'jp-dunlap/Palestine';
+const DEFAULT_BRANCH = process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
-export async function GET() {
-  const repo = process.env.CMS_GITHUB_REPO || 'jp-dunlap/Palestine';
-  const branch = process.env.CMS_GITHUB_BRANCH || 'main';
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://palestine-two.vercel.app';
-  const mode = process.env.CMS_MODE || 'oauth';
+function parseMode() {
+  const value = (process.env.CMS_MODE ?? 'token').toLowerCase();
+  return value === 'oauth' ? 'oauth' : 'token';
+}
 
-  if (mode !== 'oauth') {
-    // We only wire OAuth here; token mode needs a custom gateway (not recommended)
-    return new NextResponse('CMS_MODE must be "oauth" for this config endpoint', { status: 500 });
+function getTokenBackend() {
+  const token = process.env.CMS_GITHUB_TOKEN;
+  if (!token) {
+    throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
   }
 
-  // Decap reads this and triggers the OAuth flow against our /oauth endpoints.
-  const cfg = {
-    site_url: siteUrl,
-    backend: {
-      name: 'github',
-      repo,
-      branch,
-      // Decap docs: when using an external OAuth server/proxy,
-      // set base_url (host + optional path) and auth_endpoint.
-      // It will open {base_url}/{auth_endpoint} in a popup and expect a postMessage
-      // with `authorization:github:success:{...}` carrying the token.
-      base_url: `${siteUrl}/api/cms/oauth`,
-      auth_endpoint: 'auth',
+  return {
+    name: 'github',
+    repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
+    branch: DEFAULT_BRANCH,
+    auth_type: 'token',
+    token,
+    use_graphql: false,
+  };
+}
+
+function getOAuthBackend(origin: string) {
+  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    throw new Error('GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are required when CMS_MODE=oauth');
+  }
+
+  return {
+    name: 'github',
+    repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
+    branch: DEFAULT_BRANCH,
+    base_url: `${origin}/api/cms/oauth`,
+    auth_endpoint: 'authorize',
+    use_graphql: false,
+  };
+}
+
+function chapterFields(language: 'en' | 'ar') {
+  return [
+    { label: 'Title', name: 'title', widget: 'string' },
+    { label: 'Slug', name: 'slug', widget: 'string' },
+    { label: 'Era', name: 'era', widget: 'string', required: false },
+    {
+      label: 'Authors',
+      name: 'authors',
+      widget: 'list',
+      field: { label: 'Author', name: 'author', widget: 'string' },
+      required: false,
     },
-    media_folder: 'public/images/uploads',
-    public_folder: '/images/uploads',
-    // Minimal collections to start; expand as needed
-    collections: [
+    {
+      label: 'Language',
+      name: 'language',
+      widget: 'hidden',
+      default: language,
+    },
+    {
+      label: 'Summary',
+      name: 'summary',
+      widget: 'text',
+      required: false,
+    },
+    {
+      label: 'Date',
+      name: 'date',
+      widget: 'datetime',
+      time_format: false,
+      format: 'YYYY-MM-DD',
+      required: false,
+    },
+    {
+      label: 'Tags',
+      name: 'tags',
+      widget: 'list',
+      required: false,
+    },
+    {
+      label: 'Sources',
+      name: 'sources',
+      widget: 'list',
+      required: false,
+      fields: [
+        { label: 'Bibliography ID', name: 'id', widget: 'string', required: false },
+        { label: 'Source URL', name: 'url', widget: 'string', required: false },
+      ],
+    },
+    {
+      label: 'Places',
+      name: 'places',
+      widget: 'list',
+      required: false,
+    },
+    {
+      label: 'Body',
+      name: 'body',
+      widget: 'markdown',
+    },
+  ];
+}
+
+function timelineFields(includeArabic: boolean) {
+  const base = [
+    { label: 'ID', name: 'id', widget: 'string' },
+    { label: 'Title', name: 'title', widget: 'string' },
+    {
+      label: 'Title (Arabic)',
+      name: 'title_ar',
+      widget: 'string',
+      required: !includeArabic,
+      hint: 'Optional Arabic title for localisation.',
+      default: '',
+    },
+    {
+      label: 'Start Year',
+      name: 'start',
+      widget: 'number',
+      value_type: 'int',
+      hint: 'Negative numbers represent BCE years.',
+    },
+    {
+      label: 'End Year',
+      name: 'end',
+      widget: 'number',
+      value_type: 'int',
+      required: false,
+    },
+    {
+      label: 'Summary',
+      name: 'summary',
+      widget: 'text',
+      required: false,
+    },
+    {
+      label: 'Summary (Arabic)',
+      name: 'summary_ar',
+      widget: 'text',
+      required: !includeArabic,
+      default: '',
+    },
+    {
+      label: 'Places',
+      name: 'places',
+      widget: 'list',
+      required: false,
+    },
+    {
+      label: 'Sources',
+      name: 'sources',
+      widget: 'list',
+      field: { label: 'Reference', name: 'reference', widget: 'string' },
+      required: false,
+    },
+    {
+      label: 'Tags',
+      name: 'tags',
+      widget: 'list',
+      required: false,
+    },
+    {
+      label: 'Tags (Arabic)',
+      name: 'tags_ar',
+      widget: 'list',
+      required: !includeArabic,
+      default: [],
+    },
+    {
+      label: 'Certainty',
+      name: 'certainty',
+      widget: 'select',
+      options: [
+        { label: 'High confidence', value: 'high' },
+        { label: 'Medium confidence', value: 'medium' },
+        { label: 'Low confidence', value: 'low' },
+      ],
+      required: false,
+    },
+  ];
+
+  if (!includeArabic) {
+    return base.filter((field) => !['title_ar', 'summary_ar', 'tags_ar'].includes(field.name));
+  }
+
+  return base;
+}
+
+function bibliographyCollection() {
+  return {
+    name: 'bibliography',
+    label: 'Bibliography',
+    editor: { preview: false },
+    files: [
       {
-        name: 'chapters_en',
-        label: 'Chapters (English)',
-        folder: 'content/chapters',
-        create: true,
-        extension: 'mdx',
-        format: 'frontmatter',
-        filter: { field: 'language', value: 'en' },
-        slug: '{{slug}}',
+        label: 'Bibliography Entries',
+        name: 'entries',
+        file: 'data/bibliography.json',
+        format: 'json',
         fields: [
-          { name: 'language', widget: 'hidden', default: 'en' },
-          { name: 'title', widget: 'string' },
-          { name: 'slug', widget: 'string' },
-          { name: 'era', widget: 'string' },
-          { name: 'authors', widget: 'list' },
-          { name: 'summary', widget: 'text' },
-          { name: 'tags', widget: 'list' },
-          { name: 'date', widget: 'string' },
-          { name: 'sources', widget: 'list', fields: [
-            { name: 'id', widget: 'string', required: false },
-            { name: 'url', widget: 'string', required: false }
-          ]},
-          { name: 'places', widget: 'list', required: false },
-          { name: 'body', widget: 'markdown' }
-        ]
+          {
+            label: 'Entries',
+            name: 'entries',
+            widget: 'list',
+            label_singular: 'Entry',
+            field: {
+              label: 'CSL JSON Entry',
+              name: 'json',
+              widget: 'json',
+            },
+          },
+        ],
       },
-      {
-        name: 'chapters_ar',
-        label: 'Chapters (Arabic)',
-        folder: 'content/chapters',
-        create: true,
-        extension: 'mdx',
-        format: 'frontmatter',
-        filter: { field: 'language', value: 'ar' },
-        slug: '{{slug}}',
-        fields: [
-          { name: 'language', widget: 'hidden', default: 'ar' },
-          { name: 'title', widget: 'string' },
-          { name: 'slug', widget: 'string' },
-          { name: 'era', widget: 'string' },
-          { name: 'authors', widget: 'list' },
-          { name: 'summary', widget: 'text' },
-          { name: 'tags', widget: 'list' },
-          { name: 'date', widget: 'string' },
-          { name: 'sources', widget: 'list', fields: [
-            { name: 'id', widget: 'string', required: false },
-            { name: 'url', widget: 'string', required: false }
-          ]},
-          { name: 'places', widget: 'list', required: false },
-          { name: 'title_ar', widget: 'string', required: false },
-          { name: 'summary_ar', widget: 'text', required: false },
-          { name: 'tags_ar', widget: 'list', required: false },
-          { name: 'body', widget: 'markdown' }
-        ]
-      },
-      {
-        name: 'timeline',
-        label: 'Timeline — Content',
-        folder: 'content/timeline',
-        create: true,
-        extension: 'yml',
-        format: 'yml',
-        fields: [
-          { name: 'id', widget: 'string' },
-          { name: 'title', widget: 'string' },
-          { name: 'start', widget: 'number' },
-          { name: 'end', widget: 'number', required: false },
-          { name: 'places', widget: 'list' },
-          { name: 'sources', widget: 'list' },
-          { name: 'summary', widget: 'text' },
-          { name: 'tags', widget: 'list' },
-          { name: 'certainty', widget: 'select', options: ['low', 'medium', 'high'], default: 'medium' }
-        ]
-      },
-      // Bibliography/gazetteer are JSON arrays; you can wire them later with the JSON widget or keep them in Git reviews
     ],
   };
+}
 
-  return NextResponse.json(cfg, { headers: { 'Cache-Control': 'no-store' } });
+function gazetteerCollection() {
+  return {
+    name: 'gazetteer',
+    label: 'Gazetteer',
+    editor: { preview: false },
+    files: [
+      {
+        label: 'Gazetteer Entries',
+        name: 'places',
+        file: 'data/gazetteer.json',
+        format: 'json',
+        fields: [
+          {
+            label: 'Places',
+            name: 'entries',
+            widget: 'list',
+            label_singular: 'Place',
+            field: {
+              label: 'Place JSON',
+              name: 'json',
+              widget: 'json',
+            },
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const mode = parseMode();
+
+    const backend = mode === 'token' ? getTokenBackend() : getOAuthBackend(url.origin);
+
+    const config = {
+      backend,
+      publish_mode: 'simple',
+      media_folder: 'public/images/uploads',
+      public_folder: '/images/uploads',
+      collections: [
+        {
+          name: 'chapters_en',
+          label: 'Chapters (English)',
+          label_singular: 'Chapter',
+          folder: 'content/chapters',
+          extension: 'mdx',
+          create: true,
+          filter: { field: 'language', value: 'en' },
+          slug: '{{slug}}',
+          fields: chapterFields('en'),
+        },
+        {
+          name: 'chapters_ar',
+          label: 'Chapters (Arabic)',
+          label_singular: 'Arabic Chapter',
+          folder: 'content/chapters',
+          extension: 'mdx',
+          create: true,
+          filter: { field: 'language', value: 'ar' },
+          slug: '{{slug}}.ar',
+          fields: chapterFields('ar'),
+        },
+        {
+          name: 'timeline_content',
+          label: 'Timeline — Content',
+          folder: 'content/timeline',
+          extension: 'yml',
+          create: true,
+          slug: '{{id}}',
+          fields: timelineFields(false),
+        },
+        {
+          name: 'timeline_data',
+          label: 'Timeline — Data',
+          folder: 'data/timeline',
+          extension: 'yml',
+          create: true,
+          slug: '{{id}}',
+          fields: timelineFields(true),
+        },
+        bibliographyCollection(),
+        gazetteerCollection(),
+      ],
+    } satisfies Record<string, unknown>;
+
+    return NextResponse.json(config);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'CMS configuration failed';
+    return new NextResponse(message, { status: 500 });
+  }
 }
