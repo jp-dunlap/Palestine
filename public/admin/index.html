@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Private CMS</title>
-  <!-- Stop Decap from auto-booting with /config.yml -->
+  <!-- Stop automatic boot; we will initialize manually -->
   <script>window.CMS_MANUAL_INIT = true;</script>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
@@ -22,7 +22,7 @@
   <script>
   (async function boot(){
     try{
-      // 1) Get server JSON config (Basic Auth handled by the browser)
+      // 1) Pull JSON config (Basic Auth handled by browser)
       const res = await fetch('/api/cms/config', {
         cache: 'no-store',
         headers: { accept: 'application/json' }
@@ -35,22 +35,23 @@
       }
       const cfg = await res.json();
 
-      // 2) Force token-only backend and disable any login UI
+      // 2) Force token-only backend; strip any OAuth hints
       if (cfg.backend) {
         cfg.backend.auth_type = 'token';
         delete cfg.backend.base_url;
         delete cfg.backend.auth_endpoint;
       }
-      cfg.login = false;           // <- hide login screen
-      cfg.local_backend = false;   // <- explicit (no local backend)
 
-      // 3) Expose config globally so Decap uses it (canonical path)
+      // 3) Hard-disable login UI across Decap versions
+      cfg.login = false;
+      cfg.local_backend = false;
+
+      // 4) Expose config globally (some builds rely on this)
       window.CMS_CONFIG = cfg;
-
-      // 4) Belt & suspenders: tell any code paths not to load a file
+      // Also hint that no file should be fetched
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
-      // 5) Wait for the CMS bundle to be fully ready
+      // 5) Wait for the library, then init with options (covers other builds)
       function ready() {
         return new Promise((resolve) => {
           (function check(){
@@ -61,23 +62,23 @@
       }
       await ready();
 
-      // 6) Init with *no args* so it consumes window.CMS_CONFIG only
-      window.CMS.init();
+      // 6) Initialize with explicit options AND global fallback
+      //    This combination prevents any /config.yml fetch and suppresses login.
+      window.CMS.init({ config: cfg, load_config_file: false });
 
-      // 7) (Optional) surface errors early
+      // 7) If Decap somehow still renders a login button, surface a visible error
       setTimeout(() => {
         if (document.querySelector('[data-testid="login-button"]')) {
-          console.warn('Decap still rendered login; config seen was:', cfg);
+          console.warn('Decap still rendered login; cfg.backend was:', cfg.backend);
           document.getElementById('app').insertAdjacentHTML(
             'beforeend',
-            '<div class="err">Unexpected login UI — verify /api/cms/config shows backend.auth_type:"token" and collections.</div>'
+            '<div class="err">Unexpected login UI — but config is loaded. Hard refresh with cache disabled or open in a new Private window.</div>'
           );
         }
-      }, 1500);
-
-    } catch (e) {
+      }, 1200);
+    }catch(e){
       document.getElementById('app').innerHTML =
-        '<div class="err">Admin boot error:\\n' + (e && e.message ? e.message : e) + '</div>';
+        '<div class="err">Admin boot error:\\n' + (e?.message || e) + '</div>';
     }
   })();
   </script>
