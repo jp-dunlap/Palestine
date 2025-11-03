@@ -16,7 +16,7 @@
 <body>
   <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-  <!-- Decap CMS -->
+  <!-- Decap CMS (app bundle) -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
 
   <script>
@@ -30,7 +30,7 @@
       if (!res.ok) {
         const txt = await res.text();
         document.getElementById('app').innerHTML =
-          '<div class="err">Config load failed:\\n' + txt + '</div>';
+          '<div class="err">Config load failed:\n' + txt + '</div>';
         return;
       }
       const cfg = await res.json();
@@ -42,16 +42,15 @@
         delete cfg.backend.auth_endpoint;
       }
 
-      // 3) Hard-disable login UI across Decap versions
+      // 3) Disable login screen in UI
       cfg.login = false;
       cfg.local_backend = false;
 
-      // 4) Expose config globally (some builds rely on this)
+      // 4) Provide config globally AND as explicit init options
       window.CMS_CONFIG = cfg;
-      // Also hint that no file should be fetched
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
-      // 5) Wait for the library, then init with options (covers other builds)
+      // 5) Wait for the library
       function ready() {
         return new Promise((resolve) => {
           (function check(){
@@ -62,23 +61,25 @@
       }
       await ready();
 
-      // 6) Initialize with explicit options AND global fallback
-      //    This combination prevents any /config.yml fetch and suppresses login.
+      console.log('[admin] using backend:', cfg.backend);
+
+      // 6) Init with options (covers builds that ignore the global)
       window.CMS.init({ config: cfg, load_config_file: false });
 
-      // 7) If Decap somehow still renders a login button, surface a visible error
+      // 7) Sanity: if a login button appears, show a visible hint
       setTimeout(() => {
         if (document.querySelector('[data-testid="login-button"]')) {
-          console.warn('Decap still rendered login; cfg.backend was:', cfg.backend);
+          console.warn('[admin] Unexpected login UI, backend seen:', cfg.backend);
           document.getElementById('app').insertAdjacentHTML(
             'beforeend',
-            '<div class="err">Unexpected login UI — but config is loaded. Hard refresh with cache disabled or open in a new Private window.</div>'
+            '<div class="err">Unexpected login UI — verify /api/cms/config shows backend.auth_type:"token" and collections.</div>'
           );
         }
       }, 1200);
-    }catch(e){
+
+    } catch (e) {
       document.getElementById('app').innerHTML =
-        '<div class="err">Admin boot error:\\n' + (e?.message || e) + '</div>';
+        '<div class="err">Admin boot error:\n' + (e?.message || e) + '</div>';
     }
   })();
   </script>
