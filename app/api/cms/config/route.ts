@@ -8,15 +8,27 @@ const DEFAULT_REPO = 'jp-dunlap/Palestine';
 const DEFAULT_BRANCH =
   process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
-function parseMode() {
-  const value = (process.env.CMS_MODE ?? 'token').toLowerCase();
-  return value === 'oauth' ? 'oauth' : 'token';
+// Decide mode robustly:
+// - If CMS_MODE=token → token
+// - If CMS_MODE=oauth but no client id visible → fall back to token
+// - If CMS_MODE missing → prefer token when a PAT is present; else oauth if id present; else token
+function pickMode(): 'token' | 'oauth' {
+  const env = (process.env.CMS_MODE ?? '').toLowerCase();
+  const hasToken = Boolean(process.env.CMS_GITHUB_TOKEN);
+  const hasOAuthId = Boolean(process.env.GITHUB_CLIENT_ID || process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID);
+
+  if (env === 'token') return 'token';
+  if (env === 'oauth') return hasOAuthId ? 'oauth' : (hasToken ? 'token' : 'oauth');
+
+  if (hasToken) return 'token';
+  if (hasOAuthId) return 'oauth';
+  return 'token';
 }
 
 function getTokenBackend() {
   const token = process.env.CMS_GITHUB_TOKEN;
   if (!token) {
-    throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
+    throw new Error('CMS_GITHUB_TOKEN is required when using token mode');
   }
   return {
     name: 'github',
@@ -28,7 +40,8 @@ function getTokenBackend() {
   } as const;
 }
 
-// Only require CLIENT_ID here; CLIENT_SECRET is enforced in /callback.
+// Build the OAuth descriptor without enforcing presence of CLIENT_ID here.
+// (Authorize route will handle it — and can fall back to NEXT_PUBLIC_GITHUB_CLIENT_ID.)
 function getOAuthBackend(origin: string) {
   return {
     name: 'github',
@@ -186,7 +199,7 @@ function gazetteerCollection() {
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const mode = parseMode();
+    const mode = pickMode();
     const backend = mode === 'token' ? getTokenBackend() : getOAuthBackend(url.origin);
 
     const config = {
