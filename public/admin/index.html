@@ -23,12 +23,34 @@
       .status p { line-height: 1.5; color: rgba(226, 232, 240, 0.9); }
     </style>
 
-    <script>window.CMS_MANUAL_INIT = true;</script>
+    <script>
+      // We will initialize manually after config + CMS library are ready
+      window.CMS_MANUAL_INIT = true;
 
-    <!-- Load Decap CMS from jsDelivr; fall back to UNPKG if it fails -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/decap-cms@^3/dist/decap-cms.js"
-      onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/decap-cms@^3/dist/decap-cms.js';document.head.appendChild(s);})();">
+      // Simple script loader
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error('Failed to load ' + src));
+          document.head.appendChild(s);
+        });
+      }
+
+      // Ensure Decap CMS is present; try jsDelivr, then UNPKG
+      async function ensureCMSLoaded() {
+        if (window.CMS) return;
+        try {
+          await loadScript('https://cdn.jsdelivr.net/npm/decap-cms@^3/dist/decap-cms.js');
+        } catch {
+          await loadScript('https://unpkg.com/decap-cms@^3/dist/decap-cms.js');
+        }
+        if (!window.CMS) {
+          throw new Error('Decap CMS failed to load from both CDNs.');
+        }
+      }
     </script>
   </head>
   <body>
@@ -36,6 +58,7 @@
       <h1>Palestine CMS</h1>
       <p id="cms-status-message">Loading secure editor…</p>
     </div>
+
     <script type="module">
       const statusEl = document.getElementById('cms-status');
       const messageEl = document.getElementById('cms-status-message');
@@ -101,11 +124,20 @@
 
       async function init() {
         try {
+          updateStatus('Loading editor…');
+
+          // 1) Load Decap CMS (with fallback) BEFORE checking window.CMS
+          await ensureCMSLoaded();
+
+          // 2) Load server-side config
           const config = await fetchConfig();
+
+          // 3) Initialize CMS
           const { CMS } = window;
-          if (!CMS) throw new Error('Decap CMS failed to load. Check the CDN script.');
+          if (!CMS) throw new Error('Decap CMS failed to initialize.');
 
           registerJsonCollectionTransforms(CMS);
+
           CMS.init({ config });
           updateStatus('Authenticated. Loading collections…');
 
