@@ -1,25 +1,9 @@
-// next.config.mjs
-import createMDX from '@next/mdx';
-
-/** Enable MDX so we can import .mdx if/when we need it later.
- * We still primarily load MDX from /content via loaders.
- */
-const withMDX = createMDX({
-  extension: /\.mdx?$/,
-});
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    mdxRs: true,
-  },
-  pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
-  async redirects() {
+  async rewrites() {
     return [
-      { source: '/maps', destination: '/map', permanent: true },
-      { source: '/ar/maps', destination: '/ar/map', permanent: true },
+      { source: '/admin', destination: '/admin/index.html' },
     ];
   },
 };
-
-export default withMDX(nextConfig);
+export default nextConfig;

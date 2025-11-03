@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Palestine — Private CMS</title>
+    <!-- Added jsDelivr preconnect (keep UNPKG for fallback) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <style>
       :root {
@@ -41,7 +43,11 @@
     <script>
       window.CMS_MANUAL_INIT = true;
     </script>
-    <script src="https://unpkg.com/netlify-cms-app@^2.19.0/dist/netlify-cms.js"></script>
+    <!-- CHANGED: load Decap CMS from jsDelivr with an UNPKG fallback -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/decap-cms@^3/dist/decap-cms.js"
+      onerror="(function(){var s=document.createElement('script');s.src='https://unpkg.com/decap-cms@^3/dist/decap-cms.js';document.head.appendChild(s);})();">
+    </script>
   </head>
   <body>
     <div class="status" id="cms-status">

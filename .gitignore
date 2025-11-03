@@ -38,3 +38,12 @@ next-env.d.ts
 # accidental folder
 next
 test-results/
+
+# Playwright (reports & browser downloads)
+playwright-report/
+blob-report/
+ms-playwright/
+
+# IDE settings
+.idea/
+.vscode/
