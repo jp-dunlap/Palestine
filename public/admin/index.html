@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Private CMS</title>
-  <!-- Stop automatic boot; we will initialize manually with a JSON object -->
+  <!-- Stop Decap from auto-booting with /config.yml -->
   <script>window.CMS_MANUAL_INIT = true;</script>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
@@ -16,13 +16,13 @@
 <body>
   <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-  <!-- Decap CMS (app bundle) -->
+  <!-- Decap CMS -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
 
   <script>
   (async function boot(){
     try{
-      // 1) Fetch the server-side JSON config (protected by Basic Auth)
+      // 1) Get server JSON config (Basic Auth handled by the browser)
       const res = await fetch('/api/cms/config', {
         cache: 'no-store',
         headers: { accept: 'application/json' }
@@ -35,33 +35,45 @@
       }
       const cfg = await res.json();
 
-      // 2) Force token-only backend; strip any OAuth fields just in case
+      // 2) Force token-only backend and disable any login UI
       if (cfg.backend) {
         cfg.backend.auth_type = 'token';
         delete cfg.backend.base_url;
         delete cfg.backend.auth_endpoint;
       }
+      cfg.login = false;           // <- hide login screen
+      cfg.local_backend = false;   // <- explicit (no local backend)
 
-      // 3) Provide config via the global that Decap reads during init
+      // 3) Expose config globally so Decap uses it (canonical path)
       window.CMS_CONFIG = cfg;
 
-      // 4) Belt & suspenders: tell the app *not* to load a file
-      // (Some Decap builds read this hint.)
+      // 4) Belt & suspenders: tell any code paths not to load a file
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
-      // 5) Ensure the CMS library is available before init
-      function waitForCMS() {
+      // 5) Wait for the CMS bundle to be fully ready
+      function ready() {
         return new Promise((resolve) => {
-          (function check() {
+          (function check(){
             if (window.CMS && typeof window.CMS.init === 'function') return resolve();
             setTimeout(check, 10);
           })();
         });
       }
-      await waitForCMS();
+      await ready();
 
-      // 6) Initialize *without* passing options — use window.CMS_CONFIG
+      // 6) Init with *no args* so it consumes window.CMS_CONFIG only
       window.CMS.init();
+
+      // 7) (Optional) surface errors early
+      setTimeout(() => {
+        if (document.querySelector('[data-testid="login-button"]')) {
+          console.warn('Decap still rendered login; config seen was:', cfg);
+          document.getElementById('app').insertAdjacentHTML(
+            'beforeend',
+            '<div class="err">Unexpected login UI — verify /api/cms/config shows backend.auth_type:"token" and collections.</div>'
+          );
+        }
+      }, 1500);
 
     } catch (e) {
       document.getElementById('app').innerHTML =
