@@ -81,42 +81,11 @@
         return res.json();
       }
 
-      // Optional nicety: parse/stringify JSON fields for specific collections
+      // Ensure objects in "entries[].json" are stringified before save
       function registerJsonCollectionTransforms(CMS) {
-        const { fromJS, List, Map } = CMS?.utils?.Immutable ?? {};
-        if (!fromJS || !List || !Map) return;
+        const { List, Map } = CMS?.utils?.Immutable ?? {};
+        if (!List || !Map) return;
 
-        const collections = new Set(['bibliography', 'gazetteer']);
-
-        // Convert stringified JSON to objects when loading an entry
-        CMS.registerEventListener({
-          name: 'entryLoaded',
-          handler: ({ entry }) => {
-            try {
-              const coll = entry?.get && entry.get('collection');
-              if (!collections.has(coll)) return;
-
-              const data = entry.get('data');
-              if (!Map.isMap(data)) return;
-
-              const entries = data.get('entries');
-              if (!List.isList(entries)) return;
-
-              const parsed = entries.map((item) => {
-                const value = item?.get ? item.get('json') : item?.json;
-                if (typeof value === 'string') {
-                  try { return item.set('json', JSON.parse(value)); }
-                  catch (err) { throw new Error(`Invalid JSON detected: ${err.message}`); }
-                }
-                return item;
-              }).toArray();
-
-              entry.setIn(['data', 'entries'], fromJS(parsed));
-            } catch { /* noop */ }
-          },
-        });
-
-        // Ensure objects are stringified again before saving
         CMS.registerEventListener({
           name: 'preSave',
           handler: ({ entry }) => {
@@ -128,15 +97,20 @@
               if (!List.isList(entries)) return;
 
               const stringified = entries.map((item) => {
-                const value = item?.get ? item.get('json') : item?.json;
-                if (value && typeof value !== 'string') {
-                  return item.set('json', JSON.stringify(value));
-                }
-                return item;
-              }).toArray();
+                const value = item && item.get && item.get('json');
+                return (value && typeof value !== 'string')
+                  ? item.set('json', JSON.stringify(value))
+                  : item;
+              });
 
-              entry.setIn(['data', 'entries'], fromJS(stringified));
-            } catch { /* noop */ }
+              // Status hint the moment we begin saving
+              if (typeof updateStatus === 'function') updateStatus('Saving changes…');
+
+              // Return the updated entry so Decap uses this value
+              return { entry: entry.setIn(['data', 'entries'], stringified) };
+            } catch (err) {
+              console.warn('[cms] preSave transform failed:', err);
+            }
           },
         });
       }
@@ -154,8 +128,10 @@
           CMS.init({ config });
           updateStatus('Authenticated. Loading collections…');
 
-          CMS.registerEventListener({ name: 'preSave',  handler: () => updateStatus('Saving changes…') });
-          CMS.registerEventListener({ name: 'postSave', handler: () => updateStatus('Changes saved to Git.') });
+          CMS.registerEventListener({
+            name: 'postSave',
+            handler: () => updateStatus('Changes saved to Git.'),
+          });
 
         } catch (err) {
           console.error('[cms] initialization error', err);
