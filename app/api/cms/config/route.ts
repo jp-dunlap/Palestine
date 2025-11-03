@@ -8,23 +8,6 @@ const DEFAULT_REPO = 'jp-dunlap/Palestine';
 const DEFAULT_BRANCH =
   process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
-// Decide mode robustly:
-// - If CMS_MODE=token → token
-// - If CMS_MODE=oauth but no client id visible → fall back to token
-// - If CMS_MODE missing → prefer token when a PAT is present; else oauth if id present; else token
-function pickMode(): 'token' | 'oauth' {
-  const env = (process.env.CMS_MODE ?? '').toLowerCase();
-  const hasToken = Boolean(process.env.CMS_GITHUB_TOKEN);
-  const hasOAuthId = Boolean(process.env.GITHUB_CLIENT_ID || process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID);
-
-  if (env === 'token') return 'token';
-  if (env === 'oauth') return hasOAuthId ? 'oauth' : (hasToken ? 'token' : 'oauth');
-
-  if (hasToken) return 'token';
-  if (hasOAuthId) return 'oauth';
-  return 'token';
-}
-
 function getTokenBackend() {
   const token = process.env.CMS_GITHUB_TOKEN;
   if (!token) {
@@ -36,19 +19,6 @@ function getTokenBackend() {
     branch: DEFAULT_BRANCH,
     auth_type: 'token',
     token,
-    use_graphql: false,
-  } as const;
-}
-
-// Build the OAuth descriptor without enforcing presence of CLIENT_ID here.
-// (Authorize route will handle it — and can fall back to NEXT_PUBLIC_GITHUB_CLIENT_ID.)
-function getOAuthBackend(origin: string) {
-  return {
-    name: 'github',
-    repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
-    branch: DEFAULT_BRANCH,
-    base_url: `${origin}/api/cms/oauth`,
-    auth_endpoint: 'authorize',
     use_graphql: false,
   } as const;
 }
@@ -198,9 +168,8 @@ function gazetteerCollection() {
 
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url);
-    const mode = pickMode();
-    const backend = mode === 'token' ? getTokenBackend() : getOAuthBackend(url.origin);
+    // Force token backend for now so the CMS works immediately
+    const backend = getTokenBackend();
 
     const config = {
       backend,
