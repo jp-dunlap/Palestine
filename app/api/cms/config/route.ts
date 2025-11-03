@@ -28,9 +28,11 @@ function getTokenBackend() {
   };
 }
 
+// NOTE: Only require CLIENT_ID here. The CLIENT_SECRET is only needed in the /callback exchange.
 function getOAuthBackend(origin: string) {
-  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-    throw new Error('GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are required when CMS_MODE=oauth');
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('GITHUB_CLIENT_ID is required when CMS_MODE=oauth');
   }
 
   return {
