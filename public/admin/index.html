@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Private CMS</title>
-  <!-- Stop Decap from auto-booting with /config.yml -->
+  <!-- Stop automatic boot; we will initialize manually with a JSON object -->
   <script>window.CMS_MANUAL_INIT = true;</script>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
@@ -16,35 +16,56 @@
 <body>
   <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-  <!-- Decap CMS -->
+  <!-- Decap CMS (app bundle) -->
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
 
   <script>
   (async function boot(){
     try{
-      // Pull the JSON config from our API; do NOT allow Decap to fetch /config.yml.
-      const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' } });
+      // 1) Fetch the server-side JSON config (protected by Basic Auth)
+      const res = await fetch('/api/cms/config', {
+        cache: 'no-store',
+        headers: { accept: 'application/json' }
+      });
       if (!res.ok) {
         const txt = await res.text();
-        document.getElementById('app').innerHTML = '<div class="err">Config load failed:\n' + txt + '</div>';
+        document.getElementById('app').innerHTML =
+          '<div class="err">Config load failed:\\n' + txt + '</div>';
         return;
       }
       const cfg = await res.json();
 
-      // Force token-only backend and strip any OAuth hints
+      // 2) Force token-only backend; strip any OAuth fields just in case
       if (cfg.backend) {
         cfg.backend.auth_type = 'token';
         delete cfg.backend.base_url;
         delete cfg.backend.auth_endpoint;
       }
 
-      // Prevent any Netlify identity fallback
-      window.netlifyIdentity = undefined;
+      // 3) Provide config via the global that Decap reads during init
+      window.CMS_CONFIG = cfg;
 
-      // The key bit: no config file load, we pass the object directly.
-      window.CMS.init({ config: cfg, load_config_file: false });
-    }catch(e){
-      document.getElementById('app').innerHTML = '<div class="err">Admin boot error:\n' + (e && e.message ? e.message : e) + '</div>';
+      // 4) Belt & suspenders: tell the app *not* to load a file
+      // (Some Decap builds read this hint.)
+      window.__DECAP_CMS_LOAD_CONFIG__ = false;
+
+      // 5) Ensure the CMS library is available before init
+      function waitForCMS() {
+        return new Promise((resolve) => {
+          (function check() {
+            if (window.CMS && typeof window.CMS.init === 'function') return resolve();
+            setTimeout(check, 10);
+          })();
+        });
+      }
+      await waitForCMS();
+
+      // 6) Initialize *without* passing options — use window.CMS_CONFIG
+      window.CMS.init();
+
+    } catch (e) {
+      document.getElementById('app').innerHTML =
+        '<div class="err">Admin boot error:\\n' + (e && e.message ? e.message : e) + '</div>';
     }
   })();
   </script>
