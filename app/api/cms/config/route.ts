@@ -164,7 +164,7 @@ function gazetteerCollection() {
   };
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const backend = getTokenBackend();
 
