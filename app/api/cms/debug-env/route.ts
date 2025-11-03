@@ -1,4 +1,3 @@
-tee app/api/cms/debug-env/route.ts >/dev/null <<'TS'
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
