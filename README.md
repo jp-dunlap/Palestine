@@ -39,6 +39,10 @@ npm run test:e2e    # playwright
   ```bash
   npx playwright install --with-deps
   ```
+
+## Editing content via the private CMS
+
+Maintainers can edit chapters, timelines, bibliography entries, gazetteer data, and media through the secured Netlify CMS instance under `/admin`. The interface is protected with HTTP Basic Auth and a GitHub-backed workflow. See [CMS.md](CMS.md) for setup, environment variables, and editorial guidance.
   or skip e2e and run unit tests:
   ```bash
   npm run test:unit

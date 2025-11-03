@@ -9,6 +9,7 @@ test.describe('robots.txt', () => {
 
     expect(body).toMatch(/User-agent:\s*\*/i);
     expect(body).toMatch(/Allow:\s*\//i);
+    expect(body).toMatch(/Disallow:\s*\/admin/i);
     expect(body).toMatch(/Sitemap:\s*(https?:\/\/[^\s]+)?\/sitemap\.xml/i);
   });
 });
