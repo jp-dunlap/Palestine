@@ -40,59 +40,60 @@ npm run test:e2e    # playwright
   npx playwright install --with-deps
   ```
 
-## Private CMS (Decap) — Setup & Troubleshooting
+## Private admin interface
 
-We ship a private Decap CMS instance at `/admin` with manual JSON config loading and GitHub-backed authentication. The CMS never requests `config.yml`; all configuration comes from `/api/cms/config`.
+The Decap CMS integration has been replaced with a custom admin SPA at `/admin`. The admin surface speaks directly to the GitHub API using server-side helpers and offers two auth modes:
 
-### Required Vercel Project environment variables
+- **OAuth mode** – editors sign in with GitHub via the bundled OAuth flow. Requests use the editor's GitHub token and respect allowlists for email or login.
+- **Token mode** – the server authenticates with a repository PAT supplied via `CMS_GITHUB_TOKEN`. Optional HTTP basic auth can gate `/admin` in this mode.
 
-Set these keys at the **project** level (not the account level) in Vercel:
+### Environment variables
 
-- `CMS_MODE` — `oauth` (GitHub OAuth, default) or `token` (fallback with PAT)
-- `BASIC_AUTH_USER` **and** `BASIC_AUTH_PASS` *(or `BASIC_AUTH_USERS` / `BASIC_AUTH_PASSWORD`)*
-- `CMS_GITHUB_REPO` (e.g., `jp-dunlap/Palestine`)
-- `CMS_GITHUB_BRANCH` (e.g., `main`)
-- `NEXT_PUBLIC_SITE_URL` (e.g., `https://palestine-two.vercel.app`)
-- OAuth mode: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-- Token mode: `CMS_GITHUB_TOKEN` (GitHub PAT with minimal `repo` scope)
+Create an `.env.local` (for local dev) or configure the variables on Vercel:
 
-Missing credentials will surface as HTTP 500 responses from either the middleware or `/api/cms/config`.
+| Key | Notes |
+| --- | --- |
+| `CMS_AUTH_MODE` | `oauth` (default) or `token` |
+| `CMS_GITHUB_REPO` | `owner/name` of the content repo |
+| `CMS_GITHUB_BRANCH` | Default branch, usually `main` |
+| `ALLOWED_EMAILS` | Comma separated allowlist (optional) |
+| `ALLOWED_GITHUB_LOGINS` | Comma separated allowlist (optional) |
+| `BASIC_AUTH_USER` / `BASIC_AUTH_PASS` | Optional basic auth for token mode |
+| `NEXTAUTH_SECRET` | 16+ character secret for signing session cookies |
 
-### GitHub OAuth App setup
+**OAuth mode** additionally requires:
 
-1. Create a GitHub OAuth App under the `jp-dunlap` org or your personal account.
-2. Authorization callback URL: `https://palestine-two.vercel.app/api/cms/oauth/callback`
-3. Set the homepage URL to the public site (e.g., `https://palestine-two.vercel.app`).
-4. Copy the **Client ID** and **Client Secret** into the Vercel env vars listed above.
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`
+- `NEXTAUTH_URL` (base URL, e.g. `https://palestine-two.vercel.app`)
 
-During local development you can run `npm run dev` with a `.env.local` file that sets the same variables (adjust the callback URL to match your localhost origin).
+**Token mode** additionally requires:
 
-### Smoke tests
+- `CMS_GITHUB_TOKEN` – GitHub PAT with `repo` scope for the content repository
 
-After deploying, validate the private CMS with:
+### GitHub OAuth setup
 
-```bash
-# /admin unauthenticated
-curl -sI https://palestine-two.vercel.app/admin | sed -n '1,14p'
+1. Register a GitHub OAuth application.
+2. Set the callback URL to `<origin>/api/auth/callback/github`.
+3. Provide the Client ID and Client Secret via environment variables.
+4. Add editors to `ALLOWED_EMAILS` or `ALLOWED_GITHUB_LOGINS`.
 
-# /admin with Basic Auth
-curl -sI -u "<user>:<pass>" https://palestine-two.vercel.app/admin | sed -n '1,14p'
+The admin UI exposes sign-in/sign-out controls, draft/publish toggles, and PR links for draft saves. Draft saves create branches named `cms/<slug>` and open or update pull requests. Publish saves commit directly to the main branch and return the commit SHA plus a raw file URL.
 
-# Config endpoint (should show the OAuth backend in production)
-curl -s -u "<user>:<pass>" https://palestine-two.vercel.app/api/cms/config | jq '.backend'
+### Image uploads
 
-# OAuth authorize (302 to GitHub)
-curl -sI -u "<user>:<pass>" https://palestine-two.vercel.app/api/cms/oauth/authorize | sed -n '1,20p'
+Editors can upload images via the admin. Files are committed to `public/images/uploads/` using the same workflow as other entries and return a CDN-safe URL (e.g. `/images/uploads/<timestamp>-<filename>`).
 
-# Debug flags (no secrets)
-curl -s -u "<user>:<pass>" https://palestine-two.vercel.app/api/cms/debug-env
-```
+### Adding a new collection
 
-### Token mode fallback
+Collections are defined in `lib/collections.ts` with a zod schema, file format, default workflow, and directory. To add a new collection:
 
-If GitHub OAuth becomes unavailable, set `CMS_MODE=token` and provide `CMS_GITHUB_TOKEN`. The `/api/cms/config` response will embed the token directly for Decap. Remember to rotate the PAT regularly and revert to `CMS_MODE=oauth` once OAuth is back online.
+1. Append a new entry to the `collections` array with the correct directory and schema.
+2. Export any additional TypeScript helpers as needed.
+3. Ensure the GitHub repo contains the directory structure described in the collection config.
+4. Optionally update tests and add fixtures for the new content type.
 
-The search index is rebuilt automatically during `npm run build` via `scripts/build-search.js`.
+Once deployed the admin UI will automatically surface the new collection in the switcher.
 
 ## i18n routing
 
