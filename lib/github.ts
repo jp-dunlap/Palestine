@@ -9,8 +9,14 @@ type RepoConfig = {
   defaultBranch: string
 }
 
+type GitHubRequestInit = Omit<RequestInit, 'body' | 'headers'> & {
+  body?: unknown
+  headers?: HeadersInit
+  asJson?: boolean
+}
+
 export type GitHubClient = {
-  request<T>(method: string, path: string, init?: RequestInit & { asJson?: boolean }): Promise<T>
+  request<T = unknown>(method: string, path: string, init?: GitHubRequestInit): Promise<T>
   token: string
   sessionUser?: OAuthSession
 }
@@ -31,25 +37,27 @@ const createClient = (token: string, sessionUser?: OAuthSession): GitHubClient =
   return {
     token,
     sessionUser,
-    async request(method, path, init = {}) {
+    async request<T = unknown>(method: string, path: string, init: GitHubRequestInit = {}) {
       const url = `${GITHUB_API}${path}`
-      const headers: HeadersInit = {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'User-Agent': getUserAgent(),
+      const { body, asJson, headers: initHeaders, ...rest } = init
+      const headers = new Headers(initHeaders ?? {})
+      headers.set('Accept', 'application/vnd.github+json')
+      headers.set('Authorization', `Bearer ${token}`)
+      headers.set('User-Agent', getUserAgent())
+      if (!(body instanceof FormData) && body !== undefined) {
+        headers.set('Content-Type', 'application/json')
       }
-      const body = init.body
       const response = await fetch(url, {
         method,
-        headers: body instanceof FormData ? headers : { ...headers, 'Content-Type': 'application/json' },
-        body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+        headers,
+        body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
+        ...rest,
       })
       if (response.status >= 200 && response.status < 300) {
         if (response.status === 204) {
           return undefined as T
         }
-        if (init.asJson === false) {
-          // @ts-ignore
+        if (asJson === false) {
           return (await response.text()) as T
         }
         return (await response.json()) as T

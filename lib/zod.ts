@@ -19,14 +19,7 @@ export type ParseResult<T> =
   | { success: true; data: T }
   | { success: false; error: ZodError }
 
-export interface ZodSchema<T> {
-  parse(input: unknown): T
-  safeParse(input: unknown): ParseResult<T>
-  optional(): ZodSchema<T | undefined>
-  default(value: T): ZodSchema<T>
-}
-
-abstract class BaseSchema<T> implements ZodSchema<T> {
+abstract class BaseSchema<T> {
   abstract _parse(input: unknown, path: (string | number)[]): T
 
   parse(input: unknown): T {
@@ -44,7 +37,7 @@ abstract class BaseSchema<T> implements ZodSchema<T> {
     }
   }
 
-  optional(): ZodSchema<T | undefined> {
+  optional(): BaseSchema<T | undefined> {
     const inner = this
     return new (class extends BaseSchema<T | undefined> {
       _parse(input: unknown, path: (string | number)[]): T | undefined {
@@ -56,7 +49,7 @@ abstract class BaseSchema<T> implements ZodSchema<T> {
     })()
   }
 
-  default(value: T): ZodSchema<T> {
+  default(value: T): BaseSchema<T> {
     const inner = this
     return new (class extends BaseSchema<T> {
       _parse(input: unknown, path: (string | number)[]): T {
@@ -286,6 +279,8 @@ export const z = {
   effects,
   ZodError,
 }
+
+export type ZodSchema<T> = BaseSchema<T>
 
 export type infer<T extends ZodSchema<any>> = T extends ZodSchema<infer U> ? U : never
 
