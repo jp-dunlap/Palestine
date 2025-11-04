@@ -54,7 +54,13 @@
     <button class="logout" type="button" style="display:none">Clear saved token</button>
   </div>
 
-<script src="/admin/decap-cms-3.8.4.js?v=local2"></script>
+  <!-- React 18 UMD + ReactDOM 18 UMD (must load before Decap) -->
+  <script src="/admin/vendor/react-18.2.0.min.js?v=r18"></script>
+  <script src="/admin/vendor/react-dom-18.2.0.min.js?v=rd18"></script>
+
+  <!-- Decap CMS app bundle pinned to 3.6.x (compatible with React 18 UMD) -->
+  <script src="/admin/decap-cms-3.6.1.js?v=local1"></script>
+
   <script>
     function ensureUseOpenAuthoring(payload) {
       if (payload && typeof payload.useOpenAuthoring === 'undefined') {
