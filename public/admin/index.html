@@ -17,7 +17,21 @@
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
   <script>
-  (async function(){
+  (function installFailsafeTokenListener(){
+    window.addEventListener('message', function(e){
+      var d = e && e.data;
+      if (d && typeof d === 'object' && d.token) {
+        try {
+          var payload = JSON.stringify({ token: d.token });
+          localStorage.setItem('decap-cms-user', payload);
+          localStorage.setItem('netlify-cms-user', payload);
+          location.reload();
+        } catch (_) {}
+      }
+    });
+  })();
+
+  (async function boot(){
     try{
       const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' }});
       if (!res.ok) {
@@ -27,6 +41,7 @@
         return;
       }
       const cfg = await res.json();
+
       window.CMS_CONFIG = cfg;
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 

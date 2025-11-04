@@ -2,7 +2,6 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const REALM = 'Palestine CMS';
 
-// Guard all private CMS surfaces (admin UI, OAuth endpoints, config API, YAML fallbacks)
 export const config = {
   matcher: ['/admin/:path*', '/api/cms/:path*', '/config.yml'],
 };
