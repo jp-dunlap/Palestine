@@ -1,23 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Private CMS</title>
+  <script>window.CMS_MANUAL_INIT = true;</script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
+    #app{max-width:960px;margin:0 auto}
+    .card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}
+    .err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}
+  </style>
+</head>
+<body>
+  <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Private CMS</title><script>window.CMS_MANUAL_INIT=true;</script>
-<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}#app{max-width:960px;margin:0 auto}.card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}.err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}</style>
-</head><body>
-<div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
-<script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
-<script>
-(async function(){
-  try{
-    const res = await fetch('/api/cms/config',{cache:'no-store',headers:{accept:'application/json'}});
-    if(!res.ok){document.getElementById('app').innerHTML='<div class="err">Config load failed</div>';return;}
-    const cfg = await res.json();
-    window.CMS_CONFIG = cfg; window.__DECAP_CMS_LOAD_CONFIG__ = false;
-    function ready(){return new Promise(r=>(function t(){(window.CMS&&CMS.init)?r():setTimeout(t,10)})());}
-    await ready(); CMS.init({config:cfg,load_config_file:false});
-  }catch(e){
-    document.getElementById('app').innerHTML='<div class="err">Admin boot error:<br>'+(e?.message||e)+'</div>';
-  }
-})();
-</script></body></html>
+  <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
+  <script>
+  (async function(){
+    try{
+      const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' }});
+      if (!res.ok) {
+        const txt = await res.text();
+        document.getElementById('app').innerHTML =
+          '<div class="err">Config load failed:<br>'+txt+'</div>';
+        return;
+      }
+      const cfg = await res.json();
+      window.CMS_CONFIG = cfg;
+      window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
+      function ready(){return new Promise(r => (function t(){(window.CMS&&CMS.init)?r():setTimeout(t,10)})());}
+      await ready();
+      CMS.init({ config: cfg, load_config_file: false });
+    }catch(e){
+      document.getElementById('app').innerHTML =
+        '<div class="err">Admin boot error:<br>'+(e&&e.message?e.message:e)+'</div>';
+    }
+  })();
+  </script>
+</body>
+</html>

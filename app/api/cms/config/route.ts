@@ -1,4 +1,3 @@
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -19,7 +18,7 @@ function getOAuthBackend(origin: string) {
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
     branch: DEFAULT_BRANCH,
     base_url: `${origin}/api/cms/oauth`,
-    auth_endpoint: 'authorize', // matches your file path
+    auth_endpoint: 'authorize',
     use_graphql: false,
   } as const;
 }
@@ -29,17 +28,34 @@ function chapterFields(language: 'en' | 'ar') {
     { label: 'Title', name: 'title', widget: 'string' },
     { label: 'Slug', name: 'slug', widget: 'string' },
     { label: 'Era', name: 'era', widget: 'string', required: false },
-    { label: 'Authors', name: 'authors', widget: 'list',
-      field: { label: 'Author', name: 'author', widget: 'string' }, required: false },
+    {
+      label: 'Authors',
+      name: 'authors',
+      widget: 'list',
+      field: { label: 'Author', name: 'author', widget: 'string' },
+      required: false,
+    },
     { label: 'Language', name: 'language', widget: 'hidden', default: language },
     { label: 'Summary', name: 'summary', widget: 'text', required: false },
-    { label: 'Date', name: 'date', widget: 'datetime', time_format: false, format: 'YYYY-MM-DD', required: false },
+    {
+      label: 'Date',
+      name: 'date',
+      widget: 'datetime',
+      time_format: false,
+      format: 'YYYY-MM-DD',
+      required: false,
+    },
     { label: 'Tags', name: 'tags', widget: 'list', required: false },
-    { label: 'Sources', name: 'sources', widget: 'list', required: false,
+    {
+      label: 'Sources',
+      name: 'sources',
+      widget: 'list',
+      required: false,
       fields: [
         { label: 'Bibliography ID', name: 'id', widget: 'string', required: false },
         { label: 'Source URL', name: 'url', widget: 'string', required: false },
-      ] },
+      ],
+    },
     { label: 'Places', name: 'places', widget: 'list', required: false },
     { label: 'Body', name: 'body', widget: 'markdown' },
   ];
@@ -90,13 +106,11 @@ export async function GET(req: Request) {
           fields: [
             { label: 'ID', name: 'id', widget: 'string' },
             { label: 'Title', name: 'title', widget: 'string' },
-            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int',
-              hint: 'Negative numbers represent BCE years.' },
+            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int', hint: 'Negative numbers represent BCE years.' },
             { label: 'End Year', name: 'end', widget: 'number', value_type: 'int', required: false },
             { label: 'Summary', name: 'summary', widget: 'text', required: false },
             { label: 'Places', name: 'places', widget: 'list', required: false },
-            { label: 'Sources', name: 'sources', widget: 'list',
-              field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
+            { label: 'Sources', name: 'sources', widget: 'list', field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
             { label: 'Tags', name: 'tags', widget: 'list', required: false },
             { label: 'Certainty', name: 'certainty', widget: 'select', options: [
                 { label: 'High confidence', value: 'high' },
@@ -117,14 +131,12 @@ export async function GET(req: Request) {
             { label: 'ID', name: 'id', widget: 'string' },
             { label: 'Title', name: 'title', widget: 'string' },
             { label: 'Title (Arabic)', name: 'title_ar', widget: 'string', required: false, default: '' },
-            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int',
-              hint: 'Negative numbers represent BCE years.' },
+            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int', hint: 'Negative numbers represent BCE years.' },
             { label: 'End Year', name: 'end', widget: 'number', value_type: 'int', required: false },
             { label: 'Summary', name: 'summary', widget: 'text', required: false },
             { label: 'Summary (Arabic)', name: 'summary_ar', widget: 'text', required: false, default: '' },
             { label: 'Places', name: 'places', widget: 'list', required: false },
-            { label: 'Sources', name: 'sources', widget: 'list',
-              field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
+            { label: 'Sources', name: 'sources', widget: 'list', field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
             { label: 'Tags', name: 'tags', widget: 'list', required: false },
             { label: 'Tags (Arabic)', name: 'tags_ar', widget: 'list', required: false, default: [] },
             { label: 'Certainty', name: 'certainty', widget: 'select', options: [
