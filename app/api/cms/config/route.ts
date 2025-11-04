@@ -8,49 +8,17 @@ const DEFAULT_REPO = 'jp-dunlap/Palestine';
 const DEFAULT_BRANCH =
   process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
-type CmsMode = 'oauth' | 'token';
-
-function getMode(): CmsMode {
-  const raw = process.env.CMS_MODE;
-  if (!raw) {
-    throw new Error('CMS_MODE is not configured');
+function getOAuthBackend(origin: string) {
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('GITHUB_CLIENT_ID is required for GitHub OAuth backend');
   }
-  const value = raw.toLowerCase();
-  if (value !== 'oauth' && value !== 'token') {
-    throw new Error('CMS_MODE must be set to "oauth" or "token"');
-  }
-  return value;
-}
-
-function getBackend(mode: CmsMode) {
-  const repo = process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO;
-  const branch = DEFAULT_BRANCH;
-
-  if (mode === 'oauth') {
-    if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-      throw new Error('GitHub OAuth credentials are not configured');
-    }
-    return {
-      name: 'github',
-      repo,
-      branch,
-      base_url: '/api/cms/oauth',
-      auth_endpoint: 'authorize',
-      use_graphql: false,
-    } as const;
-  }
-
-  const token = process.env.CMS_GITHUB_TOKEN;
-  if (!token) {
-    throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
-  }
-
   return {
     name: 'github',
-    repo,
-    branch,
-    auth_type: 'token',
-    token,
+    repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
+    branch: DEFAULT_BRANCH,
+    base_url: `${origin}/api/cms/oauth`,
+    auth_endpoint: 'authorize',
     use_graphql: false,
   } as const;
 }
@@ -93,10 +61,12 @@ function chapterFields(language: 'en' | 'ar') {
   ];
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const origin = new URL(req.url).origin;
+
     const config = {
-      backend: getBackend(getMode()),
+      backend: getOAuthBackend(origin),
       publish_mode: 'simple',
       media_folder: 'public/images/uploads',
       public_folder: '/images/uploads',

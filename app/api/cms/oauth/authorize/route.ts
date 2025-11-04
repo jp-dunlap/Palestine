@@ -17,14 +17,13 @@ export async function GET(req: Request) {
   const gh = new URL('https://github.com/login/oauth/authorize');
   gh.searchParams.set('client_id', clientId);
   gh.searchParams.set('redirect_uri', redirectUri);
-  gh.searchParams.set('scope', 'repo');
+  gh.searchParams.set('scope', 'repo,user:email');
   gh.searchParams.set('state', state);
-  gh.searchParams.set('allow_signup', 'false');
 
   const res = NextResponse.redirect(gh.toString(), 302);
   res.cookies.set('cms_oauth_state', state, {
     httpOnly: true,
-    secure: url.protocol === 'https:',
+    secure: true,
     sameSite: 'lax',
     path: '/api/cms/oauth',
     maxAge: 600,

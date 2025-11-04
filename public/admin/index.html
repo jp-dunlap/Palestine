@@ -4,10 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Private CMS</title>
-  <script>
-    window.CMS_MANUAL_INIT = true;
-    window.__DECAP_CMS_LOAD_CONFIG__ = false;
-  </script>
+  <script>window.CMS_MANUAL_INIT = true;</script>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
     #app{max-width:960px;margin:0 auto}
@@ -21,52 +18,34 @@
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
   <script>
   (function installAuthMessageHandler(){
-    window.addEventListener('message', function(event){
-      var data = event && event.data;
-      if (!data || typeof data !== 'object') return;
-      if (data.provider !== 'github' || data.backendName !== 'github') return;
-      if (!data.token) return;
+    // Accept the token from the OAuth popup and persist in the shape Decap expects.
+    window.addEventListener('message', function(e){
+      var d = e && e.data;
+      if (!d || typeof d !== 'object') return;
+      if (!d.token) return;
 
+      // Decap/Netlify CMS historically looks for these keys
       var payload = {
-        token: data.token,
+        token: d.token,
         provider: 'github',
         backendName: 'github',
         useOpenAuthoring: false
       };
 
       try {
-        var serialized = JSON.stringify(payload);
-        localStorage.setItem('decap-cms-user', serialized);
-        localStorage.setItem('netlify-cms-user', serialized);
+        var s = JSON.stringify(payload);
+        localStorage.setItem('decap-cms-user', s);     // current
+        localStorage.setItem('netlify-cms-user', s);   // legacy
       } catch (_) {}
 
+      // Hard reload so the app reboots into the authenticated editor
       location.replace(location.href.split('#')[0]);
     });
   })();
 
-  function syncStoredCredentials(){
-    try {
-      var primary = localStorage.getItem('decap-cms-user');
-      var legacy = localStorage.getItem('netlify-cms-user');
-      var value = primary || legacy;
-      if (!value) return;
-      var parsed = JSON.parse(value);
-      if (!parsed || typeof parsed !== 'object' || !parsed.token) return;
-      var serialized = JSON.stringify({
-        token: parsed.token,
-        provider: 'github',
-        backendName: 'github',
-        useOpenAuthoring: false
-      });
-      localStorage.setItem('decap-cms-user', serialized);
-      localStorage.setItem('netlify-cms-user', serialized);
-    } catch (_) {}
-  }
-
   (async function boot(){
     try{
-      syncStoredCredentials();
-
+      // Pull JSON config from our API (no config.yml fetch)
       const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' }});
       if (!res.ok) {
         const txt = await res.text();
@@ -76,9 +55,12 @@
       }
       const cfg = await res.json();
 
+      // Provide config to Decap explicitly; do not load a file
       window.CMS_CONFIG = cfg;
+      window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
-      function ready(){return new Promise(function(resolve){(function wait(){(window.CMS&&CMS.init)?resolve():setTimeout(wait,10);}());});}
+      // If a token is already present (prior login), Decap should boot directly into the UI
+      function ready(){return new Promise(r => (function t(){(window.CMS&&CMS.init)?r():setTimeout(t,10)})());}
       await ready();
       CMS.init({ config: cfg, load_config_file: false });
     }catch(e){
