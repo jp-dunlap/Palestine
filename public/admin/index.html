@@ -1,106 +1,23 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Private CMS</title>
-  <script>window.CMS_MANUAL_INIT = true;</script>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}
-    #app{max-width:960px;margin:0 auto}
-    .card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}
-    .err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}
-    /* hide any login splash if it blips */
-    [data-testid="login-button"]{display:none!important}
-  </style>
-</head>
-<body>
-  <div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Private CMS</title><script>window.CMS_MANUAL_INIT=true;</script>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f4f5f7;margin:0;padding:40px}#app{max-width:960px;margin:0 auto}.card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}.err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}</style>
+</head><body>
+<div id="app"><div class="card">PRIVATE CMS — Authenticated. Loading collections…</div></div>
+<script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
+<script>
+(async function(){
+  try{
+    const res = await fetch('/api/cms/config',{cache:'no-store',headers:{accept:'application/json'}});
+    if(!res.ok){document.getElementById('app').innerHTML='<div class="err">Config load failed</div>';return;}
+    const cfg = await res.json();
+    window.CMS_CONFIG = cfg; window.__DECAP_CMS_LOAD_CONFIG__ = false;
+    function ready(){return new Promise(r=>(function t(){(window.CMS&&CMS.init)?r():setTimeout(t,10)})());}
+    await ready(); CMS.init({config:cfg,load_config_file:false});
+  }catch(e){
+    document.getElementById('app').innerHTML='<div class="err">Admin boot error:<br>'+(e?.message||e)+'</div>';
+  }
+})();
+</script></body></html>
 
-  <script>
-  (async function boot(){
-    try{
-      // 1) Get config (browser sends Basic Auth)
-      const res = await fetch('/api/cms/config', {
-        cache: 'no-store', headers: { accept: 'application/json' }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        document.getElementById('app').innerHTML =
-          '<div class="err">Config load failed:\n' + txt + '</div>';
-        return;
-      }
-      const cfg = await res.json();
-
-      // 2) Force token backend + disable any OAuth hints/UI
-      if (cfg.backend) {
-        cfg.backend.auth_type = 'token';
-        delete cfg.backend.base_url;
-        delete cfg.backend.auth_endpoint;
-      }
-      cfg.login = false;
-      cfg.local_backend = false;
-
-      // 3) Seed token where decap looks for "already authenticated"
-      try {
-        const tok = cfg?.backend?.token;
-        if (tok) {
-          const payload = JSON.stringify({ token: tok });
-          localStorage.setItem('netlify-cms-user', payload); // legacy
-          localStorage.setItem('decap-cms-user', payload);   // newer
-
-          // also mimic implicit OAuth callback:
-          if (!location.hash || location.hash.startsWith('#/login')) {
-            location.hash = '#access_token=' + encodeURIComponent(tok);
-          }
-        }
-      } catch (e) { console.warn('[admin] could not set stored token:', e); }
-
-      // 4) Init (both global + explicit to cover version quirks)
-      window.CMS_CONFIG = cfg;
-      window.__DECAP_CMS_LOAD_CONFIG__ = false;
-
-      function ready() {
-        return new Promise((resolve) => {
-          (function check(){
-            if (window.CMS && typeof window.CMS.init === 'function') return resolve();
-            setTimeout(check, 10);
-          })();
-        });
-      }
-      await ready();
-
-      console.log('[admin] using backend:', cfg.backend);
-      window.CMS.init({ config: cfg, load_config_file: false });
-
-      // 5) Route straight to first collection
-      const first = (cfg.collections && cfg.collections[0] && cfg.collections[0].name) || null;
-      const goto = () => {
-        if (first) {
-          const h = location.hash || '';
-          if (h.startsWith('#/login') || h === '#/' || h.indexOf('#/collections/') === -1) {
-            location.hash = '#/collections/' + first;
-          }
-        }
-      };
-      goto(); setTimeout(goto, 150); setTimeout(goto, 600); setTimeout(goto, 1200);
-
-      // 6) visible hint if somehow a login control still slips through
-      setTimeout(() => {
-        if (document.querySelector('[data-testid="login-button"]')) {
-          document.getElementById('app').insertAdjacentHTML(
-            'beforeend',
-            '<div class="err">Login UI appeared, but token is injected. Hard-reload with cache disabled or try a fresh Private window.</div>'
-          );
-        }
-      }, 1500);
-    }catch(e){
-      document.getElementById('app').innerHTML =
-        '<div class="err">Admin boot error:\n' + (e && e.message ? e.message : e) + '</div>';
-    }
-  })();
-  </script>
-</body>
-</html>
