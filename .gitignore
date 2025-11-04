@@ -47,3 +47,6 @@ ms-playwright/
 # IDE settings
 .idea/
 .vscode/
+
+# Ignore local tarballs
+*.tgz

@@ -41,5 +41,15 @@
     "tailwindcss": "^3.4.18",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
-  }
+  },
+  "description": "[![CI](https://github.com/jp-dunlap/Palestine/actions/workflows/ci.yml/badge.svg)](https://github.com/jp-dunlap/Palestine/actions/workflows/ci.yml)",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
