@@ -34,7 +34,7 @@ function getOAuthBackend(origin: string) {
   } as const;
 }
 
-function getTokenBackend() {
+function getTokenBackend(origin: string) {
   const token = process.env.CMS_GITHUB_TOKEN;
   if (!token) {
     throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
@@ -44,8 +44,8 @@ function getTokenBackend() {
     repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
     branch: DEFAULT_BRANCH,
     auth_type: 'token',
-    token,
     use_graphql: false,
+    token_endpoint: `${origin}/api/cms/token`,
   } as const;
 }
 
@@ -92,7 +92,8 @@ export async function GET(req: Request) {
     const origin = new URL(req.url).origin;
     const mode = getMode();
 
-    const backend = mode === 'oauth' ? getOAuthBackend(origin) : getTokenBackend();
+    const backend =
+      mode === 'oauth' ? getOAuthBackend(origin) : getTokenBackend(origin);
 
     const config = {
       backend,

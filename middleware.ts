@@ -40,6 +40,11 @@ export function middleware(req: NextRequest) {
     return missingAuthConfig('CMS authentication mode is not configured');
   }
 
+  const normalizedMode = mode.toLowerCase();
+  if (normalizedMode !== 'oauth' && normalizedMode !== 'token') {
+    return missingAuthConfig('CMS authentication mode is invalid');
+  }
+
   const auth = req.headers.get('authorization') || '';
   if (!auth.startsWith('Basic ')) {
     return unauthorized();
