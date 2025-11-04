@@ -1,9 +1,9 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const REALM = 'Palestine CMS';
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/cms/:path*', '/config.yml'],
+  matcher: ['/admin/:path*', '/api/cms/:path*'],
 };
 
 function unauthorized() {
@@ -13,7 +13,15 @@ function unauthorized() {
   });
 }
 
+function missingAuthConfig(message: string) {
+  return new Response(message, { status: 500 });
+}
+
 export function middleware(req: NextRequest) {
+  if (req.method === 'OPTIONS') {
+    return NextResponse.next();
+  }
+
   const user =
     process.env.BASIC_AUTH_USER ??
     process.env.BASIC_AUTH_USERS ??
@@ -22,13 +30,14 @@ export function middleware(req: NextRequest) {
     process.env.BASIC_AUTH_PASS ??
     process.env.BASIC_AUTH_PASSWORD ??
     '';
+  const mode = process.env.CMS_MODE ?? '';
 
   if (!user || !pass) {
-    return new Response('CMS basic auth is not configured', { status: 500 });
+    return missingAuthConfig('CMS basic auth is not configured');
   }
 
-  if (req.method === 'OPTIONS') {
-    return NextResponse.next();
+  if (!mode) {
+    return missingAuthConfig('CMS authentication mode is not configured');
   }
 
   const auth = req.headers.get('authorization') || '';
@@ -37,8 +46,16 @@ export function middleware(req: NextRequest) {
   }
 
   try {
-    const [name, pwd] = atob(auth.slice(6)).split(':');
-    if (name !== user || pwd !== pass) return unauthorized();
+    const decoded = atob(auth.slice(6));
+    const separatorIndex = decoded.indexOf(':');
+    if (separatorIndex < 0) {
+      return unauthorized();
+    }
+    const name = decoded.slice(0, separatorIndex);
+    const pwd = decoded.slice(separatorIndex + 1);
+    if (name !== user || pwd !== pass) {
+      return unauthorized();
+    }
   } catch {
     return unauthorized();
   }

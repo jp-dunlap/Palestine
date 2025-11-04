@@ -4,14 +4,25 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 
+type CMSMode = 'oauth' | 'token';
+
 const DEFAULT_REPO = 'jp-dunlap/Palestine';
 const DEFAULT_BRANCH =
   process.env.CMS_GITHUB_BRANCH ?? process.env.VERCEL_GIT_COMMIT_REF ?? 'main';
 
+function getMode(): CMSMode {
+  const value = (process.env.CMS_MODE ?? '').toLowerCase();
+  if (value === 'oauth' || value === 'token') {
+    return value;
+  }
+  throw new Error('CMS_MODE must be set to "oauth" or "token"');
+}
+
 function getOAuthBackend(origin: string) {
   const clientId = process.env.GITHUB_CLIENT_ID;
-  if (!clientId) {
-    throw new Error('GITHUB_CLIENT_ID is required for GitHub OAuth backend');
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('GitHub OAuth credentials are not configured');
   }
   return {
     name: 'github',
@@ -19,6 +30,21 @@ function getOAuthBackend(origin: string) {
     branch: DEFAULT_BRANCH,
     base_url: `${origin}/api/cms/oauth`,
     auth_endpoint: 'authorize',
+    use_graphql: false,
+  } as const;
+}
+
+function getTokenBackend() {
+  const token = process.env.CMS_GITHUB_TOKEN;
+  if (!token) {
+    throw new Error('CMS_GITHUB_TOKEN is required when CMS_MODE=token');
+  }
+  return {
+    name: 'github',
+    repo: process.env.CMS_GITHUB_REPO ?? DEFAULT_REPO,
+    branch: DEFAULT_BRANCH,
+    auth_type: 'token',
+    token,
     use_graphql: false,
   } as const;
 }
@@ -64,9 +90,12 @@ function chapterFields(language: 'en' | 'ar') {
 export async function GET(req: Request) {
   try {
     const origin = new URL(req.url).origin;
+    const mode = getMode();
+
+    const backend = mode === 'oauth' ? getOAuthBackend(origin) : getTokenBackend();
 
     const config = {
-      backend: getOAuthBackend(origin),
+      backend,
       publish_mode: 'simple',
       media_folder: 'public/images/uploads',
       public_folder: '/images/uploads',
@@ -106,17 +135,35 @@ export async function GET(req: Request) {
           fields: [
             { label: 'ID', name: 'id', widget: 'string' },
             { label: 'Title', name: 'title', widget: 'string' },
-            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int', hint: 'Negative numbers represent BCE years.' },
+            {
+              label: 'Start Year',
+              name: 'start',
+              widget: 'number',
+              value_type: 'int',
+              hint: 'Negative numbers represent BCE years.',
+            },
             { label: 'End Year', name: 'end', widget: 'number', value_type: 'int', required: false },
             { label: 'Summary', name: 'summary', widget: 'text', required: false },
             { label: 'Places', name: 'places', widget: 'list', required: false },
-            { label: 'Sources', name: 'sources', widget: 'list', field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
+            {
+              label: 'Sources',
+              name: 'sources',
+              widget: 'list',
+              field: { label: 'Reference', name: 'reference', widget: 'string' },
+              required: false,
+            },
             { label: 'Tags', name: 'tags', widget: 'list', required: false },
-            { label: 'Certainty', name: 'certainty', widget: 'select', options: [
+            {
+              label: 'Certainty',
+              name: 'certainty',
+              widget: 'select',
+              options: [
                 { label: 'High confidence', value: 'high' },
                 { label: 'Medium confidence', value: 'medium' },
                 { label: 'Low confidence', value: 'low' },
-              ], required: false },
+              ],
+              required: false,
+            },
           ],
         },
         {
@@ -130,20 +177,56 @@ export async function GET(req: Request) {
           fields: [
             { label: 'ID', name: 'id', widget: 'string' },
             { label: 'Title', name: 'title', widget: 'string' },
-            { label: 'Title (Arabic)', name: 'title_ar', widget: 'string', required: false, default: '' },
-            { label: 'Start Year', name: 'start', widget: 'number', value_type: 'int', hint: 'Negative numbers represent BCE years.' },
+            {
+              label: 'Title (Arabic)',
+              name: 'title_ar',
+              widget: 'string',
+              required: false,
+              default: '',
+            },
+            {
+              label: 'Start Year',
+              name: 'start',
+              widget: 'number',
+              value_type: 'int',
+              hint: 'Negative numbers represent BCE years.',
+            },
             { label: 'End Year', name: 'end', widget: 'number', value_type: 'int', required: false },
             { label: 'Summary', name: 'summary', widget: 'text', required: false },
-            { label: 'Summary (Arabic)', name: 'summary_ar', widget: 'text', required: false, default: '' },
+            {
+              label: 'Summary (Arabic)',
+              name: 'summary_ar',
+              widget: 'text',
+              required: false,
+              default: '',
+            },
             { label: 'Places', name: 'places', widget: 'list', required: false },
-            { label: 'Sources', name: 'sources', widget: 'list', field: { label: 'Reference', name: 'reference', widget: 'string' }, required: false },
+            {
+              label: 'Sources',
+              name: 'sources',
+              widget: 'list',
+              field: { label: 'Reference', name: 'reference', widget: 'string' },
+              required: false,
+            },
             { label: 'Tags', name: 'tags', widget: 'list', required: false },
-            { label: 'Tags (Arabic)', name: 'tags_ar', widget: 'list', required: false, default: [] },
-            { label: 'Certainty', name: 'certainty', widget: 'select', options: [
+            {
+              label: 'Tags (Arabic)',
+              name: 'tags_ar',
+              widget: 'list',
+              required: false,
+              default: [],
+            },
+            {
+              label: 'Certainty',
+              name: 'certainty',
+              widget: 'select',
+              options: [
                 { label: 'High confidence', value: 'high' },
                 { label: 'Medium confidence', value: 'medium' },
                 { label: 'Low confidence', value: 'low' },
-              ], required: false },
+              ],
+              required: false,
+            },
           ],
         },
         {
@@ -157,8 +240,13 @@ export async function GET(req: Request) {
               file: 'data/bibliography.json',
               format: 'json',
               fields: [
-                { label: 'Entries', name: 'entries', widget: 'list', label_singular: 'Entry',
-                  field: { label: 'CSL JSON Entry', name: 'json', widget: 'json' } },
+                {
+                  label: 'Entries',
+                  name: 'entries',
+                  widget: 'list',
+                  label_singular: 'Entry',
+                  field: { label: 'CSL JSON Entry', name: 'json', widget: 'json' },
+                },
               ],
             },
           ],
@@ -174,8 +262,13 @@ export async function GET(req: Request) {
               file: 'data/gazetteer.json',
               format: 'json',
               fields: [
-                { label: 'Places', name: 'entries', widget: 'list', label_singular: 'Place',
-                  field: { label: 'Place JSON', name: 'json', widget: 'json' } },
+                {
+                  label: 'Places',
+                  name: 'entries',
+                  widget: 'list',
+                  label_singular: 'Place',
+                  field: { label: 'Place JSON', name: 'json', widget: 'json' },
+                },
               ],
             },
           ],
