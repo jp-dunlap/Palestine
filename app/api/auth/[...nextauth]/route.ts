@@ -109,7 +109,7 @@ const oauthCallback = async (req: NextRequest) => {
     if (!isAllowlisted(profile)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
-    const response = NextResponse.redirect('/admin')
+    const response = NextResponse.redirect(new URL('/admin', url.origin))
     const sessionToken = createSession({
       name: profile.name ?? profile.login,
       email: profile.email ?? `${profile.login}@users.noreply.github.com`,
