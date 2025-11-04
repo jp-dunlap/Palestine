@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Palestine CMS</title>
   <script>
+    // We’ll initialize Decap manually after fetching config.
     window.CMS_MANUAL_INIT = true;
     window.__DECAP_CMS_LOAD_CONFIG__ = false;
   </script>
@@ -58,8 +59,8 @@
   <script src="/admin/vendor/react-18.2.0.min.js?v=r18"></script>
   <script src="/admin/vendor/react-dom-18.2.0.min.js?v=rd18"></script>
 
-  <!-- Decap CMS app bundle pinned to 3.6.x (compatible with React 18 UMD) -->
-  <script src="/admin/decap-cms-3.6.1.js?v=local1"></script>
+  <!-- Decap CMS (browser UMD) pinned to 3.6.1; exposes window.CMS -->
+  <script src="/admin/decap-cms-3.6.1.js?v=local2"></script>
 
   <script>
     function ensureUseOpenAuthoring(payload) {
@@ -142,6 +143,7 @@
           app.innerHTML = '<div class="err">Config load failed:<br>' + txt + '</div>';
           return;
         }
+
         var config = await res.json();
         window.CMS_CONFIG = config;
 
@@ -185,7 +187,7 @@
         function ready() {
           return new Promise(function (resolve) {
             (function wait() {
-              if (window.CMS && typeof CMS.init === 'function') {
+              if (window.CMS && typeof window.CMS.init === 'function') {
                 return resolve();
               }
               setTimeout(wait, 10);
@@ -194,7 +196,7 @@
         }
 
         await ready();
-        CMS.init({ config: config, load_config_file: false });
+        window.CMS.init({ config: window.CMS_CONFIG, load_config_file: false });
       } catch (error) {
         var message = error && error.message ? error.message : error;
         app.innerHTML = '<div class="err">Admin boot error:<br>' + message + '</div>';
