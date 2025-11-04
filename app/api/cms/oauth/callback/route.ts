@@ -36,9 +36,10 @@ export async function GET(req: Request) {
   const token = data?.access_token;
   if (!token) return new Response('No access_token returned', { status: 502 });
 
+  // Post back the full shape Decap recognizes
   const html = `<!doctype html><html><body><script>
 (function(){
-  var payload = { token: ${JSON.stringify(token)}, provider: 'github' };
+  var payload = { token: ${JSON.stringify(token)}, provider: 'github', backendName: 'github', useOpenAuthoring: false };
   try { if (window.opener) window.opener.postMessage(payload, '*'); }
   finally { window.close(); }
 })();

@@ -17,22 +17,35 @@
 
   <script src="https://cdn.jsdelivr.net/npm/decap-cms@^3.8.4/dist/decap-cms.js"></script>
   <script>
-  (function installFailsafeTokenListener(){
+  (function installAuthMessageHandler(){
+    // Accept the token from the OAuth popup and persist in the shape Decap expects.
     window.addEventListener('message', function(e){
       var d = e && e.data;
-      if (d && typeof d === 'object' && d.token) {
-        try {
-          var payload = JSON.stringify({ token: d.token });
-          localStorage.setItem('decap-cms-user', payload);
-          localStorage.setItem('netlify-cms-user', payload);
-          location.reload();
-        } catch (_) {}
-      }
+      if (!d || typeof d !== 'object') return;
+      if (!d.token) return;
+
+      // Decap/Netlify CMS historically looks for these keys
+      var payload = {
+        token: d.token,
+        provider: 'github',
+        backendName: 'github',
+        useOpenAuthoring: false
+      };
+
+      try {
+        var s = JSON.stringify(payload);
+        localStorage.setItem('decap-cms-user', s);     // current
+        localStorage.setItem('netlify-cms-user', s);   // legacy
+      } catch (_) {}
+
+      // Hard reload so the app reboots into the authenticated editor
+      location.replace(location.href.split('#')[0]);
     });
   })();
 
   (async function boot(){
     try{
+      // Pull JSON config from our API (no config.yml fetch)
       const res = await fetch('/api/cms/config', { cache: 'no-store', headers: { accept: 'application/json' }});
       if (!res.ok) {
         const txt = await res.text();
@@ -42,15 +55,17 @@
       }
       const cfg = await res.json();
 
+      // Provide config to Decap explicitly; do not load a file
       window.CMS_CONFIG = cfg;
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
+      // If a token is already present (prior login), Decap should boot directly into the UI
       function ready(){return new Promise(r => (function t(){(window.CMS&&CMS.init)?r():setTimeout(t,10)})());}
       await ready();
       CMS.init({ config: cfg, load_config_file: false });
     }catch(e){
       document.getElementById('app').innerHTML =
-        '<div class="err">Admin boot error:<br>'+(e&&e.message?e.message:e)+'</div>';
+        '<div class="err">Admin boot error:<br>'+(e && e.message ? e.message : e)+'</div>';
     }
   })();
   </script>
