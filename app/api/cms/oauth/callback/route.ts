@@ -13,6 +13,8 @@ export async function GET(req: Request) {
     return new Response('Invalid OAuth state', { status: 400 });
   }
 
+  cookies().delete('cms_oauth_state');
+
   const client_id = process.env.GITHUB_CLIENT_ID;
   const client_secret = process.env.GITHUB_CLIENT_SECRET;
   if (!client_id || !client_secret) {
@@ -21,29 +23,39 @@ export async function GET(req: Request) {
 
   const redirect_uri = `${url.origin}/api/cms/oauth/callback`;
 
-  const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-    method: 'POST',
-    headers: { Accept: 'application/json' },
-    body: new URLSearchParams({ client_id, client_secret, code, redirect_uri }),
-  });
+  let tokenRes: Response;
+  try {
+    tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new URLSearchParams({ client_id, client_secret, code, redirect_uri }),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'OAuth exchange failed';
+    return new Response(message, { status: 502 });
+  }
 
   if (!tokenRes.ok) {
     const txt = await tokenRes.text();
-    return new Response(`OAuth exchange failed: ${txt}`, { status: 502 });
+    return new Response(txt, { status: 502 });
   }
 
   const data = await tokenRes.json();
   const token = data?.access_token;
-  if (!token) return new Response('No access_token returned', { status: 502 });
+  if (!token) {
+    return new Response('No access_token returned', { status: 502 });
+  }
 
-  // Post back the full shape Decap recognizes
-  const html = `<!doctype html><html><body><script>
-(function(){
-  var payload = { token: ${JSON.stringify(token)}, provider: 'github', backendName: 'github', useOpenAuthoring: false };
-  try { if (window.opener) window.opener.postMessage(payload, '*'); }
-  finally { window.close(); }
-})();
-</script></body></html>`;
+  const payload = {
+    token,
+    provider: 'github',
+    backendName: 'github',
+    useOpenAuthoring: false,
+  } as const;
+
+  const html = `<!doctype html><html><body><script>(function(){var payload=${JSON.stringify(
+    payload,
+  )};try{if(window.opener)window.opener.postMessage(payload,'*');}finally{window.close();}})();</script></body></html>`;
 
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
