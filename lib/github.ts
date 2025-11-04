@@ -213,7 +213,7 @@ export const getLatestCommitForPath = async (client: GitHubClient, path: string,
     { sha: string; commit: { committer: { date: string } } }[]
   >(
     'GET',
-    `/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&sha=${ref}&per_page=1`,
+    `/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(ref)}&per_page=1`,
   )
   return commits[0]
 }
@@ -228,7 +228,7 @@ export const findPullRequestByBranch = async (client: GitHubClient, branch: stri
   const { owner, repo } = getRepoConfig()
   const prs = await client.request<PullRequest[]>(
     'GET',
-    `/repos/${owner}/${repo}/pulls?state=open&head=${owner}:${encodeURIComponent(branch)}`,
+    `/repos/${owner}/${repo}/pulls?state=open&head=${encodeURIComponent(owner)}:${encodeURIComponent(branch)}`,
   )
   return prs.find((pr) => pr.head.ref === branch)
 }

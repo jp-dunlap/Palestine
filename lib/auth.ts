@@ -43,7 +43,16 @@ const verify = <TPayload extends Record<string, unknown>>(token: string): TPaylo
     return null
   }
   const expected = base64url(crypto.createHmac('sha256', getSecret()).update(body).digest())
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+  const actualBuffer = Buffer.from(signature)
+  const expectedBuffer = Buffer.from(expected)
+  if (actualBuffer.length !== expectedBuffer.length) {
+    return null
+  }
+  try {
+    if (!crypto.timingSafeEqual(actualBuffer, expectedBuffer)) {
+      return null
+    }
+  } catch {
     return null
   }
   try {
@@ -190,7 +199,15 @@ export const requireBasicAuth = (req: NextRequest) => {
     })
   }
   const decoded = Buffer.from(header.slice(6), 'base64').toString()
-  const [name, password] = decoded.split(':')
+  const separatorIndex = decoded.indexOf(':')
+  if (separatorIndex === -1) {
+    return new NextResponse('Unauthorized', {
+      status: 401,
+      headers: { 'WWW-Authenticate': 'Basic realm="Palestine CMS"' },
+    })
+  }
+  const name = decoded.slice(0, separatorIndex)
+  const password = decoded.slice(separatorIndex + 1)
   if (name !== user || password !== pass) {
     return new NextResponse('Unauthorized', {
       status: 401,

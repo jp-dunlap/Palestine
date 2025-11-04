@@ -124,7 +124,7 @@ export const POST = async (req: NextRequest) => {
 
   const commitMessage = typeof message === 'string' && message.trim().length > 0
     ? message
-    : `[CMS] ${branchWorkflow === 'draft' ? 'Draft' : 'Publish'} ${collection.label}: ${slug}`
+    : `[CMS] ${branchWorkflow.charAt(0).toUpperCase()}${branchWorkflow.slice(1)} ${collection.label}: ${slug}`
 
   try {
     const response = await putFile(

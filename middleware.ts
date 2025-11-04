@@ -35,7 +35,12 @@ export function middleware(req: NextRequest) {
 
   try {
     const decoded = Buffer.from(header.slice(6), 'base64').toString()
-    const [name, password] = decoded.split(':')
+    const separatorIndex = decoded.indexOf(':')
+    if (separatorIndex === -1) {
+      return unauthorized()
+    }
+    const name = decoded.slice(0, separatorIndex)
+    const password = decoded.slice(separatorIndex + 1)
     if (name !== user || password !== pass) {
       return unauthorized()
     }
