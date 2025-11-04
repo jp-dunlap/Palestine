@@ -10,7 +10,7 @@
     #app{max-width:960px;margin:0 auto}
     .card{background:#1f2937;color:#e5e7eb;padding:16px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.08);display:inline-block}
     .err{white-space:pre-wrap;background:#fff;color:#b91c1c;border:1px solid #fecaca;padding:12px;border-radius:8px;margin-top:16px}
-    /* Hide any login control if it renders for a tick */
+    /* hide any login splash if it blips */
     [data-testid="login-button"]{display:none!important}
   </style>
 </head>
@@ -22,10 +22,9 @@
   <script>
   (async function boot(){
     try{
-      // 1) Pull JSON config from our API (Basic Auth handled by browser)
+      // 1) Get config (browser sends Basic Auth)
       const res = await fetch('/api/cms/config', {
-        cache: 'no-store',
-        headers: { accept: 'application/json' }
+        cache: 'no-store', headers: { accept: 'application/json' }
       });
       if (!res.ok) {
         const txt = await res.text();
@@ -35,7 +34,7 @@
       }
       const cfg = await res.json();
 
-      // 2) Force token backend; strip any OAuth hints
+      // 2) Force token backend + disable any OAuth hints/UI
       if (cfg.backend) {
         cfg.backend.auth_type = 'token';
         delete cfg.backend.base_url;
@@ -44,17 +43,22 @@
       cfg.login = false;
       cfg.local_backend = false;
 
-      // 3) Seed token into storage (what Decap checks for “logged in”)
+      // 3) Seed token where decap looks for "already authenticated"
       try {
         const tok = cfg?.backend?.token;
         if (tok) {
           const payload = JSON.stringify({ token: tok });
-          localStorage.setItem('netlify-cms-user', payload); // legacy key
-          localStorage.setItem('decap-cms-user', payload);   // newer key
+          localStorage.setItem('netlify-cms-user', payload); // legacy
+          localStorage.setItem('decap-cms-user', payload);   // newer
+
+          // also mimic implicit OAuth callback:
+          if (!location.hash || location.hash.startsWith('#/login')) {
+            location.hash = '#access_token=' + encodeURIComponent(tok);
+          }
         }
       } catch (e) { console.warn('[admin] could not set stored token:', e); }
 
-      // 4) Expose config globally and init with options (covers version quirks)
+      // 4) Init (both global + explicit to cover version quirks)
       window.CMS_CONFIG = cfg;
       window.__DECAP_CMS_LOAD_CONFIG__ = false;
 
@@ -71,29 +75,27 @@
       console.log('[admin] using backend:', cfg.backend);
       window.CMS.init({ config: cfg, load_config_file: false });
 
-      // 5) If SPA lands on /login anyway, hard-route to first collection
+      // 5) Route straight to first collection
       const first = (cfg.collections && cfg.collections[0] && cfg.collections[0].name) || null;
-      if (first) {
-        const goCollections = () => {
-          if (location.hash.startsWith('#/login') || !location.hash || location.hash === '#/') {
+      const goto = () => {
+        if (first) {
+          const h = location.hash || '';
+          if (h.startsWith('#/login') || h === '#/' || h.indexOf('#/collections/') === -1) {
             location.hash = '#/collections/' + first;
           }
-        };
-        // Kick immediately and again shortly after init paint
-        goCollections();
-        setTimeout(goCollections, 200);
-        setTimeout(goCollections, 800);
-      }
+        }
+      };
+      goto(); setTimeout(goto, 150); setTimeout(goto, 600); setTimeout(goto, 1200);
 
-      // 6) Show a visible hint if a login button still appears
+      // 6) visible hint if somehow a login control still slips through
       setTimeout(() => {
         if (document.querySelector('[data-testid="login-button"]')) {
           document.getElementById('app').insertAdjacentHTML(
             'beforeend',
-            '<div class="err">Unexpected login UI — but token is present. Hard-reload with cache disabled or try a fresh Private window.</div>'
+            '<div class="err">Login UI appeared, but token is injected. Hard-reload with cache disabled or try a fresh Private window.</div>'
           );
         }
-      }, 1200);
+      }, 1500);
     }catch(e){
       document.getElementById('app').innerHTML =
         '<div class="err">Admin boot error:\n' + (e && e.message ? e.message : e) + '</div>';
