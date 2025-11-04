@@ -4,11 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Palestine CMS</title>
+
+  <!-- Optional but recommended: Decap CSS so the UI renders styled.
+       If you ran: npm pack decap-cms@3.6.1 && extract package/dist/cms.css to /admin/decap-cms-3.6.1.css -->
+  <link rel="stylesheet" href="/admin/decap-cms-3.6.1.css?v=local2" />
+
   <script>
-    // We’ll initialize Decap manually after fetching config.
+    // We'll initialize manually after fetching config.
     window.CMS_MANUAL_INIT = true;
     window.__DECAP_CMS_LOAD_CONFIG__ = false;
   </script>
+
   <style>
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
@@ -16,36 +22,20 @@
       margin: 0;
       padding: 40px;
     }
-    #app {
-      max-width: 960px;
-      margin: 0 auto;
-    }
+    #app { max-width: 960px; margin: 0 auto; }
     .card {
-      background: #1f2937;
-      color: #e5e7eb;
-      padding: 16px 20px;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      background: #1f2937; color: #e5e7eb;
+      padding: 16px 20px; border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.08);
       display: inline-block;
     }
     .err {
-      white-space: pre-wrap;
-      background: #fff;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 16px;
+      white-space: pre-wrap; background: #fff; color: #b91c1c;
+      border: 1px solid #fecaca; padding: 12px; border-radius: 8px; margin-top: 16px;
     }
     button.logout {
-      margin-top: 24px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #ef4444;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
+      margin-top: 24px; padding: 8px 16px; border-radius: 6px; border: none;
+      background: #ef4444; color: #fff; font-weight: 600; cursor: pointer;
     }
   </style>
 </head>
@@ -107,15 +97,33 @@
       } catch (_) {}
     }
 
+    // Accept BOTH modern object payloads and legacy string payloads
     (function installAuthMessageHandler() {
       window.addEventListener('message', function (event) {
-        var payload = event && event.data;
-        if (!payload || typeof payload !== 'object') return;
-        if (!payload.token) return;
-        if (payload.provider !== 'github' || payload.backendName !== 'github') return;
+        var data = event && event.data;
+        if (!data) return;
 
-        persistUser(payload);
-        location.replace(location.href.split('#')[0]);
+        // Case A: object payload from OAuth popup
+        if (typeof data === 'object' && data.token) {
+          if (data.provider === 'github' && data.backendName === 'github') {
+            persistUser({ token: data.token, provider: 'github', backendName: 'github', useOpenAuthoring: false });
+            location.replace(location.href.split('#')[0]);
+          }
+          return;
+        }
+
+        // Case B: legacy string payload "authorization:github:success:{...json...}"
+        if (typeof data === 'string' && data.indexOf('authorization:github:success:') === 0) {
+          try {
+            var json = data.replace('authorization:github:success:', '');
+            var parsed = JSON.parse(json);
+            if (parsed && parsed.token) {
+              persistUser({ token: parsed.token, provider: 'github', backendName: 'github', useOpenAuthoring: false });
+              location.replace(location.href.split('#')[0]);
+            }
+          } catch (_) {}
+          return;
+        }
       });
     })();
 
@@ -147,6 +155,7 @@
         var config = await res.json();
         window.CMS_CONFIG = config;
 
+        // Token flow only for token mode; oauth mode handled via popup + postMessage above
         async function ensureToken(config) {
           if (!config || !config.backend) return;
           var backend = config.backend;
@@ -167,9 +176,8 @@
             }
             var tokenData = await tokenResponse.json();
             var token = tokenData && tokenData.token;
-            if (!token) {
-              throw new Error('Token response missing token');
-            }
+            if (!token) throw new Error('Token response missing token');
+
             user = {
               token: token,
               provider: 'github',
@@ -178,18 +186,16 @@
             };
             persistUser(user);
           }
-
           backend.token = user.token;
         }
 
         await ensureToken(config);
 
+        // Wait for CMS to be present before init
         function ready() {
           return new Promise(function (resolve) {
             (function wait() {
-              if (window.CMS && typeof window.CMS.init === 'function') {
-                return resolve();
-              }
+              if (window.CMS && typeof window.CMS.init === 'function') return resolve();
               setTimeout(wait, 10);
             })();
           });
