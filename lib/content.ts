@@ -1,6 +1,25 @@
+import path from 'path'
+import YAML from 'yaml'
 import { CollectionDefinition, getEntryPath } from './collections'
 import { parseMarkdown, serializeMarkdown } from './md'
 import { getFile, getLatestCommitForPath, listDirectory, type GitHubClient } from './github'
+
+const ensureTrailingNewline = (value: string) => (value.endsWith('\n') ? value : `${value}\n`)
+
+export const resolveCollectionPath = async (
+  client: GitHubClient,
+  collection: CollectionDefinition,
+  slug: string,
+  branch?: string,
+) => {
+  if (collection.singleFile) {
+    return collection.singleFile
+  }
+  if (collection.resolvePath) {
+    return collection.resolvePath(client, slug, { branch })
+  }
+  return getEntryPath(collection, slug)
+}
 
 export type ParsedEntry = {
   frontmatter: Record<string, unknown>
@@ -31,7 +50,8 @@ export const readEntry = async (
   slug: string,
   branch?: string,
 ): Promise<ParsedEntry> => {
-  const file = await getFile(client, getEntryPath(collection, slug), branch).catch(() => null)
+  const targetPath = await resolveCollectionPath(client, collection, slug, branch)
+  const file = await getFile(client, targetPath, branch).catch(() => null)
   if (!file) {
     throw new Error('Not Found')
   }
@@ -45,7 +65,21 @@ export const readEntry = async (
     return {
       frontmatter: validation.data,
       body: parsed.body,
-      path: getEntryPath(collection, slug),
+      path: targetPath,
+      sha: file.sha,
+      raw,
+    }
+  }
+  if (collection.format === 'yaml') {
+    const data = YAML.parse(raw) ?? {}
+    const validation = collection.schema.safeParse(data)
+    if (!validation.success) {
+      throw validation.error
+    }
+    return {
+      frontmatter: {},
+      data: validation.data,
+      path: targetPath,
       sha: file.sha,
       raw,
     }
@@ -56,9 +90,9 @@ export const readEntry = async (
     throw validation.error
   }
   return {
-    frontmatter: validation.data as Record<string, unknown>,
+    frontmatter: {},
     data: validation.data,
-    path: getEntryPath(collection, slug, '.json'),
+    path: targetPath,
     sha: file.sha,
     raw,
   }
@@ -71,7 +105,11 @@ export const serializeEntry = (
   if (collection.format === 'markdown') {
     return serializeMarkdown({ frontmatter: payload.frontmatter, body: payload.body ?? '' })
   }
-  return `${JSON.stringify(payload.data ?? payload.frontmatter, null, 2)}\n`
+  if (collection.format === 'yaml') {
+    const value = payload.data ?? payload.frontmatter
+    return ensureTrailingNewline(YAML.stringify(value))
+  }
+  return ensureTrailingNewline(JSON.stringify(payload.data ?? payload.frontmatter, null, 2))
 }
 
 export const listEntries = async (
@@ -79,14 +117,40 @@ export const listEntries = async (
   collection: CollectionDefinition,
   branch?: string,
 ): Promise<EntrySummary[]> => {
+  if (collection.singleFile) {
+    const slug = path.posix.basename(collection.singleFile, collection.extension)
+    try {
+      const parsed = await readEntry(client, collection, slug, branch)
+      const commit = await getLatestCommitForPath(client, parsed.path, branch)
+      return [
+        {
+          path: parsed.path,
+          slug,
+          title: collection.label,
+          updatedAt: commit?.commit?.committer?.date ?? null,
+        },
+      ]
+    } catch {
+      return []
+    }
+  }
+
   const entries = await listDirectory(client, collection.directory, branch).catch(() => [])
-  const files = entries.filter((entry) => entry.type === 'file' && entry.name.endsWith(collection.extension))
+  const files = entries.filter((entry) => {
+    if (entry.type !== 'file') return false
+    if (!entry.name.endsWith(collection.extension)) return false
+    if (collection.filenameFilter && !collection.filenameFilter(entry.name)) {
+      return false
+    }
+    return true
+  })
   const summaries: EntrySummary[] = []
   for (const file of files) {
     const slug = file.name.slice(0, -collection.extension.length)
     try {
       const parsed = await readEntry(client, collection, slug, branch)
-      const title = (parsed.frontmatter?.title as string | undefined) ?? slug
+      const title = (parsed.frontmatter?.title as string | undefined) ??
+        (typeof (parsed.data as any)?.title === 'string' ? (parsed.data as any).title : slug)
       const commit = await getLatestCommitForPath(client, parsed.path, branch)
       summaries.push({
         path: parsed.path,
@@ -105,4 +169,12 @@ export const listEntries = async (
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   })
   return summaries
+}
+
+export const slugFromPath = (collection: CollectionDefinition, targetPath: string) => {
+  const base = path.posix.basename(targetPath)
+  if (!base.endsWith(collection.extension)) {
+    return base
+  }
+  return base.slice(0, -collection.extension.length)
 }

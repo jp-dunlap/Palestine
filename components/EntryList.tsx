@@ -56,7 +56,14 @@ const EntryList = ({ entries, selected, onSelect, onCreate, search, onSearch }: 
                     selected === entry.slug ? 'bg-black text-white' : 'hover:bg-zinc-100'
                   }`}
                 >
-                  <div className="text-sm font-medium">{entry.title}</div>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <span>{entry.title}</span>
+                    {entry.slug.endsWith('.ar') ? (
+                      <span className={`rounded px-1 text-xs font-semibold ${selected === entry.slug ? 'bg-white text-black' : 'bg-zinc-200 text-zinc-700'}`}>
+                        AR
+                      </span>
+                    ) : null}
+                  </div>
                   <div className={`text-xs ${selected === entry.slug ? 'text-zinc-200' : 'text-zinc-500'}`}>
                     {entry.slug}
                   </div>

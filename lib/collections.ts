@@ -1,169 +1,234 @@
 import path from 'path'
+import type { GitHubClient } from './github'
+import { listDirectory } from './github'
+import { slugify } from './slugs'
 import { z } from './zod'
+import type { ZodSchema } from './zod'
 
 export type Workflow = 'draft' | 'publish'
-export type CollectionFormat = 'markdown' | 'json'
+export type CollectionFormat = 'markdown' | 'json' | 'yaml'
 
 export type CollectionDefinition = {
   id: string
   label: string
+  singleFile?: string
   directory: string
-  extension: '.md' | '.json'
+  extension: '.md' | '.mdx' | '.json' | '.yml'
   format: CollectionFormat
-  schema: ReturnType<typeof z.object>
+  schema: ZodSchema<any>
   defaultWorkflow: Workflow
   slugField: string
   bodyField?: string
   fields: { name: string; type: string; required?: boolean }[]
+  filenameFilter?: (name: string) => boolean
+  resolvePath?: (client: GitHubClient, slug: string, opts?: { branch?: string }) => Promise<string>
 }
+
+const CHAPTERS_DIRECTORY = 'content/chapters'
+const CHAPTER_EXTENSION: CollectionDefinition['extension'] = '.mdx'
+
+const parsePrefix = (name: string) => {
+  const match = name.match(/^(\d{3})-/)
+  if (!match) return null
+  return Number.parseInt(match[1] ?? '', 10)
+}
+
+const nextChapterPrefix = (files: { name: string }[]) => {
+  const numbers = files
+    .map((file) => parsePrefix(file.name))
+    .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value))
+  const next = numbers.length === 0 ? 1 : Math.max(...numbers) + 1
+  return String(next).padStart(3, '0')
+}
+
+export const isArabicFilename = (name: string) => name.endsWith('.ar.mdx')
+export const addArSuffix = (base: string) => (base.endsWith('.ar') ? base : `${base}.ar`)
+
+const resolveChapterPath = (isArabic: boolean) => {
+  return async (client: GitHubClient, slug: string) => {
+    const entries = await listDirectory(client, CHAPTERS_DIRECTORY).catch(() => [])
+    const normalizedSlug = slug.trim()
+    const extension = CHAPTER_EXTENSION
+
+    const ensureEntry = (candidate: string) =>
+      entries.find((entry) => entry.type === 'file' && entry.name === `${candidate}${extension}`)
+
+    if (normalizedSlug) {
+      const existing = ensureEntry(normalizedSlug)
+      if (existing) {
+        return existing.path
+      }
+    }
+
+    const availableFiles = entries.filter((entry) => entry.type === 'file' && entry.name.endsWith(extension))
+    const englishFiles = availableFiles.filter((entry) => !isArabicFilename(entry.name))
+
+    if (!isArabic) {
+      const sanitized = slugify(normalizedSlug || '') || 'untitled'
+      const hasPrefix = /^(\d{3})-/.test(normalizedSlug)
+      if (hasPrefix && normalizedSlug) {
+        return path.posix.join(CHAPTERS_DIRECTORY, `${normalizedSlug}${extension}`)
+      }
+      const prefix = nextChapterPrefix(availableFiles)
+      return path.posix.join(CHAPTERS_DIRECTORY, `${prefix}-${sanitized}${extension}`)
+    }
+
+    const baseWithoutSuffix = normalizedSlug.replace(/\.ar$/, '')
+    const arSlug = addArSuffix(normalizedSlug || '')
+    const arExisting = ensureEntry(arSlug)
+    if (arExisting) {
+      return arExisting.path
+    }
+
+    const hasPrefix = /^(\d{3})-/.test(baseWithoutSuffix)
+    if (hasPrefix) {
+      const withPrefix = `${addArSuffix(baseWithoutSuffix)}`
+      return path.posix.join(CHAPTERS_DIRECTORY, `${withPrefix}${extension}`)
+    }
+
+    const sanitizedBase = slugify(baseWithoutSuffix) || 'untitled'
+    const paired = englishFiles.find((entry) => {
+      const base = entry.name.slice(0, -extension.length)
+      return base.replace(/^(\d{3})-/, '') === sanitizedBase
+    })
+    if (paired) {
+      const base = paired.name.slice(0, -extension.length)
+      return path.posix.join(CHAPTERS_DIRECTORY, `${addArSuffix(base)}${extension}`)
+    }
+
+    const prefix = nextChapterPrefix(availableFiles)
+    const fallbackBase = `${prefix}-${sanitizedBase}`
+    return path.posix.join(CHAPTERS_DIRECTORY, `${addArSuffix(fallbackBase)}${extension}`)
+  }
+}
+
+const timelineSchema = z.object({
+  id: z.string().nonempty(),
+  title: z.string().nonempty(),
+  start: z.number(),
+  end: z.union([z.number(), z.literal(null)]).optional(),
+  places: z.array(z.string()).default([]),
+  sources: z.array(z.string()).default([]),
+  summary: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  certainty: z.enum(['low', 'medium', 'high']).default('medium'),
+})
+
+const chapterFields = [
+  { name: 'title', type: 'string', required: true },
+  { name: 'slug', type: 'string', required: true },
+  { name: 'era', type: 'string' },
+  { name: 'authors', type: 'string[]' },
+  { name: 'language', type: 'string', required: true },
+  { name: 'summary', type: 'string' },
+  { name: 'tags', type: 'string[]' },
+  { name: 'date', type: 'string' },
+  { name: 'sources', type: 'string[]' },
+  { name: 'places', type: 'string[]' },
+  { name: 'body', type: 'markdown' },
+]
 
 export const collections: CollectionDefinition[] = [
   {
     id: 'chapters_en',
     label: 'Chapters (English)',
-    directory: 'content/chapters/en',
-    extension: '.md',
+    directory: CHAPTERS_DIRECTORY,
+    extension: CHAPTER_EXTENSION,
     format: 'markdown',
     schema: z.object({
       title: z.string().nonempty('Title is required'),
       slug: z.string().nonempty('Slug is required'),
-      date: z.string().optional(),
-      tags: z.array(z.string()).optional(),
+      era: z.string().optional(),
+      authors: z.array(z.string()).optional(),
+      language: z.literal('en'),
       summary: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      date: z.string().optional(),
+      sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
+      places: z.array(z.string()).optional(),
     }),
     defaultWorkflow: 'draft',
     slugField: 'slug',
     bodyField: 'body',
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'slug', type: 'string', required: true },
-      { name: 'date', type: 'string' },
-      { name: 'tags', type: 'string[]' },
-      { name: 'summary', type: 'string' },
-      { name: 'body', type: 'markdown' },
-    ],
+    fields: chapterFields,
+    filenameFilter: (name) => !isArabicFilename(name),
+    resolvePath: resolveChapterPath(false),
   },
   {
     id: 'chapters_ar',
     label: 'Chapters (Arabic)',
-    directory: 'content/chapters/ar',
-    extension: '.md',
+    directory: CHAPTERS_DIRECTORY,
+    extension: CHAPTER_EXTENSION,
     format: 'markdown',
     schema: z.object({
       title: z.string().nonempty('Title is required'),
       slug: z.string().nonempty('Slug is required'),
-      date: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-      summary: z.string().optional(),
-    }),
-    defaultWorkflow: 'draft',
-    slugField: 'slug',
-    bodyField: 'body',
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'slug', type: 'string', required: true },
-      { name: 'date', type: 'string' },
-      { name: 'tags', type: 'string[]' },
-      { name: 'summary', type: 'string' },
-      { name: 'body', type: 'markdown' },
-    ],
-  },
-  {
-    id: 'timeline_content',
-    label: 'Timeline Content',
-    directory: 'content/timeline/content',
-    extension: '.md',
-    format: 'markdown',
-    schema: z.object({
-      title: z.string().nonempty(),
-      slug: z.string().nonempty(),
       era: z.string().optional(),
-      featured: z.boolean().optional(),
+      authors: z.array(z.string()).optional(),
+      language: z.literal('ar'),
+      summary: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      date: z.string().optional(),
+      sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
+      places: z.array(z.string()).optional(),
     }),
     defaultWorkflow: 'draft',
     slugField: 'slug',
     bodyField: 'body',
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'slug', type: 'string', required: true },
-      { name: 'era', type: 'string' },
-      { name: 'featured', type: 'boolean' },
-      { name: 'body', type: 'markdown' },
-    ],
+    fields: chapterFields,
+    filenameFilter: (name) => isArabicFilename(name),
+    resolvePath: resolveChapterPath(true),
   },
   {
-    id: 'timeline_data',
-    label: 'Timeline Data',
-    directory: 'content/timeline/data',
-    extension: '.json',
-    format: 'json',
-    schema: z.object({
-      slug: z.string().nonempty(),
-      title: z.string().nonempty(),
-      date: z.string().optional(),
-      events: z.array(
-        z.object({
-          id: z.string().nonempty(),
-          label: z.string().nonempty(),
-          description: z.string().optional(),
-          date: z.string().optional(),
-        }),
-      ),
-    }),
+    id: 'timeline',
+    label: 'Timeline',
+    directory: 'content/timeline',
+    extension: '.yml',
+    format: 'yaml',
+    schema: timelineSchema,
     defaultWorkflow: 'publish',
-    slugField: 'slug',
+    slugField: 'id',
     fields: [
-      { name: 'slug', type: 'string', required: true },
+      { name: 'id', type: 'string', required: true },
       { name: 'title', type: 'string', required: true },
-      { name: 'date', type: 'string' },
-      { name: 'events', type: 'Event[]' },
+      { name: 'start', type: 'string', required: true },
+      { name: 'end', type: 'string' },
+      { name: 'places', type: 'string[]' },
+      { name: 'sources', type: 'string[]' },
+      { name: 'summary', type: 'string' },
+      { name: 'tags', type: 'string[]' },
+      { name: 'certainty', type: 'string' },
     ],
+    resolvePath: async (_client, slug) => {
+      const normalized = slug.trim()
+      return path.posix.join('content/timeline', `${normalized}.yml`)
+    },
   },
   {
     id: 'bibliography',
     label: 'Bibliography',
-    directory: 'content/bibliography',
-    extension: '.md',
-    format: 'markdown',
-    schema: z.object({
-      title: z.string().nonempty(),
-      slug: z.string().nonempty(),
-      authors: z.array(z.string()).optional(),
-      year: z.string().optional(),
-    }),
+    singleFile: 'data/bibliography.json',
+    directory: 'data',
+    extension: '.json',
+    format: 'json',
+    schema: z.array(z.any()),
     defaultWorkflow: 'publish',
     slugField: 'slug',
-    bodyField: 'body',
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'slug', type: 'string', required: true },
-      { name: 'authors', type: 'string[]' },
-      { name: 'year', type: 'string' },
-      { name: 'body', type: 'markdown' },
-    ],
+    fields: [],
+    resolvePath: async () => 'data/bibliography.json',
   },
   {
     id: 'gazetteer',
     label: 'Gazetteer',
-    directory: 'content/gazetteer',
-    extension: '.md',
-    format: 'markdown',
-    schema: z.object({
-      title: z.string().nonempty(),
-      slug: z.string().nonempty(),
-      region: z.string().optional(),
-      coordinates: z.array(z.number()).optional(),
-    }),
+    singleFile: 'data/gazetteer.json',
+    directory: 'data',
+    extension: '.json',
+    format: 'json',
+    schema: z.array(z.any()),
     defaultWorkflow: 'publish',
     slugField: 'slug',
-    bodyField: 'body',
-    fields: [
-      { name: 'title', type: 'string', required: true },
-      { name: 'slug', type: 'string', required: true },
-      { name: 'region', type: 'string' },
-      { name: 'coordinates', type: 'number[]' },
-      { name: 'body', type: 'markdown' },
-    ],
+    fields: [],
+    resolvePath: async () => 'data/gazetteer.json',
   },
 ]
 

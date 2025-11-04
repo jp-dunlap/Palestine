@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureAuth } from '@/lib/api/auth'
 import { requireCsrfToken } from '@/lib/api/csrf'
-import { getCollection, getEntryPath } from '@/lib/collections'
-import { serializeEntry } from '@/lib/content'
+import { getCollection } from '@/lib/collections'
+import { resolveCollectionPath, serializeEntry, slugFromPath } from '@/lib/content'
 import {
   createPullRequest,
   ensureBranch,
@@ -15,7 +15,7 @@ import {
   updatePullRequestBody,
 } from '@/lib/github'
 import { rateLimit } from '@/lib/rate-limit'
-import { slugify } from '@/lib/slugs'
+import { sanitizeFilename, slugify } from '@/lib/slugs'
 
 const parseBody = async (req: NextRequest) => {
   try {
@@ -27,7 +27,12 @@ const parseBody = async (req: NextRequest) => {
 
 const toSlug = (value?: string | null) => {
   if (!value) return ''
-  return slugify(value)
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (trimmed.includes('.')) {
+    return sanitizeFilename(trimmed.toLowerCase())
+  }
+  return slugify(trimmed)
 }
 
 const rateLimitKey = (req: NextRequest) => {
@@ -64,7 +69,16 @@ export const POST = async (req: NextRequest) => {
   if (!body) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
-  const { collection: collectionId, slug: inputSlug, frontmatter = {}, data, body: markdownBody, workflow, message } = body
+  const {
+    collection: collectionId,
+    slug: inputSlug,
+    originalSlug,
+    frontmatter = {},
+    data,
+    body: markdownBody,
+    workflow,
+    message,
+  } = body
   if (typeof collectionId !== 'string') {
     return NextResponse.json({ error: 'collection is required' }, { status: 400 })
   }
@@ -72,24 +86,28 @@ export const POST = async (req: NextRequest) => {
   if (!collection) {
     return NextResponse.json({ error: 'Collection not found' }, { status: 404 })
   }
-  const candidateData = collection.format === 'markdown' ? (frontmatter as Record<string, unknown>) : (data ?? frontmatter)
-  if (!candidateData || typeof candidateData !== 'object') {
-    return NextResponse.json({ error: 'frontmatter/data must be an object' }, { status: 400 })
+  const candidateData = collection.format === 'markdown' ? frontmatter : data ?? frontmatter
+  if (collection.format === 'markdown') {
+    if (!candidateData || typeof candidateData !== 'object' || Array.isArray(candidateData)) {
+      return NextResponse.json({ error: 'frontmatter must be an object' }, { status: 400 })
+    }
+  } else if (candidateData === undefined) {
+    return NextResponse.json({ error: 'data is required for this collection' }, { status: 400 })
   }
   const parsed = collection.schema.safeParse(candidateData)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Validation failed', issues: parsed.error.issues }, { status: 422 })
   }
-  const validated = parsed.data as Record<string, unknown>
+  const validated = parsed.data
   let slug = typeof inputSlug === 'string' && inputSlug.length > 0 ? toSlug(inputSlug) : ''
-  if (!slug) {
-    const slugSource = validated[collection.slugField]
+  if (!slug && typeof validated === 'object' && validated !== null && !Array.isArray(validated)) {
+    const slugSource = (validated as Record<string, unknown>)[collection.slugField]
     if (typeof slugSource === 'string' && slugSource) {
       slug = toSlug(slugSource)
     }
   }
-  if (!slug) {
-    const title = validated.title
+  if (!slug && typeof validated === 'object' && validated !== null && !Array.isArray(validated)) {
+    const title = (validated as Record<string, unknown>).title
     if (typeof title === 'string') {
       slug = toSlug(title)
     }
@@ -97,21 +115,25 @@ export const POST = async (req: NextRequest) => {
   if (!slug) {
     return NextResponse.json({ error: 'Unable to determine slug' }, { status: 400 })
   }
-  validated[collection.slugField] = slug
+
+  if (collection.format === 'markdown') {
+    const fm = validated as Record<string, unknown>
+    const existingSlug = fm[collection.slugField]
+    if (typeof existingSlug !== 'string' || existingSlug.trim().length === 0) {
+      const derived = slug.replace(/\.ar$/, '').replace(/^(\d{3})-/, '')
+      fm[collection.slugField] = derived
+    }
+  } else if (typeof validated === 'object' && validated !== null && !Array.isArray(validated)) {
+    const container = validated as Record<string, unknown>
+    if (typeof container[collection.slugField] !== 'string') {
+      container[collection.slugField] = slug
+    }
+  }
 
   const branchWorkflow: 'draft' | 'publish' = workflow === 'draft' ? 'draft' : workflow === 'publish' ? 'publish' : collection.defaultWorkflow
   const branchName = branchWorkflow === 'draft' ? `cms/${slug}` : undefined
 
-  const payload = collection.format === 'markdown'
-    ? { frontmatter: validated, body: typeof markdownBody === 'string' ? markdownBody : '' }
-    : { frontmatter: validated, data: validated }
-
-  const content = serializeEntry(collection, payload)
-
   const client = getOctokitForRequest(req)
-  const path = getEntryPath(collection, slug)
-  const author = resolveCommitAuthor(auth.mode === 'oauth' ? auth.session : undefined)
-
   try {
     if (branchName) {
       await ensureBranch(client, branchName)
@@ -120,11 +142,29 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 
+  const lookupSlug = typeof originalSlug === 'string' && originalSlug.trim().length > 0 ? originalSlug.trim() : slug
+  const path = await resolveCollectionPath(client, collection, lookupSlug, branchName)
+
+  const payload = collection.format === 'markdown'
+    ? {
+        frontmatter: validated as Record<string, unknown>,
+        body: typeof markdownBody === 'string' ? markdownBody : '',
+      }
+    : {
+        frontmatter: {},
+        data: validated,
+      }
+
+  const content = serializeEntry(collection, payload)
+
+  const author = resolveCommitAuthor(auth.mode === 'oauth' ? auth.session : undefined)
+
   const existing = await getFile(client, path, branchName).catch(() => null)
+  const pathSlug = slugFromPath(collection, path)
 
   const commitMessage = typeof message === 'string' && message.trim().length > 0
     ? message
-    : `[CMS] ${branchWorkflow.charAt(0).toUpperCase()}${branchWorkflow.slice(1)} ${collection.label}: ${slug}`
+    : `[CMS] ${branchWorkflow.charAt(0).toUpperCase()}${branchWorkflow.slice(1)} ${collection.label}: ${pathSlug}`
 
   try {
     const response = await putFile(
@@ -138,10 +178,13 @@ export const POST = async (req: NextRequest) => {
     )
 
     if (branchWorkflow === 'draft' && branchName) {
-      const summary = { ...validated }
+      const summary =
+        collection.format === 'markdown' && typeof validated === 'object' && !Array.isArray(validated)
+          ? { ...(validated as Record<string, unknown>) }
+          : { [collection.slugField]: pathSlug }
       const existingPr = await findPullRequestByBranch(client, branchName)
-      const prTitle = `[CMS] ${slug}`
-      const prBody = buildPrBody(collection.label, slug, summary)
+      const prTitle = `[CMS] ${pathSlug}`
+      const prBody = buildPrBody(collection.label, pathSlug, summary)
       if (existingPr) {
         await updatePullRequestBody(client, existingPr.number, prBody)
         return NextResponse.json({ prUrl: existingPr.html_url, workflow: 'draft' })
@@ -151,7 +194,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     const commitSha = (response as any)?.commit?.sha ?? null
-    return NextResponse.json({ commitSha, urlToRaw: getRawFileUrl(path), workflow: 'publish' })
+    return NextResponse.json({ commitSha, urlToRaw: getRawFileUrl(path), workflow: 'publish', slug: pathSlug })
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }

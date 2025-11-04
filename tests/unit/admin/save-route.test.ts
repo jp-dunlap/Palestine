@@ -13,6 +13,23 @@ const csrfMock = vi.hoisted(() => ({
 
 vi.mock('@/lib/api/csrf', () => csrfMock)
 
+const contentMocks = vi.hoisted(() => ({
+  resolveCollectionPath: vi.fn((_, __, slug: string) => Promise.resolve(`content/chapters/${slug}.mdx`)),
+  slugFromPath: vi.fn((_, path: string) => {
+    const base = path.split('/').pop() ?? ''
+    return base.replace(/\.mdx$/, '')
+  }),
+}))
+
+vi.mock('@/lib/content', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/content')>('@/lib/content')
+  return {
+    ...actual,
+    resolveCollectionPath: contentMocks.resolveCollectionPath,
+    slugFromPath: contentMocks.slugFromPath,
+  }
+})
+
 const githubMocks = vi.hoisted(() => ({
   getOctokitForRequest: vi.fn(() => ({})),
   ensureBranch: vi.fn(),
@@ -46,7 +63,7 @@ describe('POST /api/admin/save', () => {
   it('publishes markdown entry to main branch', async () => {
     const body = {
       collection: 'chapters_en',
-      frontmatter: { title: 'Hello', slug: 'hello' },
+      frontmatter: { title: 'Hello', slug: 'hello', language: 'en' },
       body: 'Body',
       workflow: 'publish',
       message: '',
@@ -61,9 +78,37 @@ describe('POST /api/admin/save', () => {
     const json = await response.json()
     expect(json.commitSha).toBe('abc123')
     expect(json.urlToRaw).toBe('https://raw.githubusercontent.com/test/repo/file')
+    expect(json.slug).toBe('hello')
     expect(githubMocks.putFile).toHaveBeenCalled()
+    expect(contentMocks.resolveCollectionPath).toHaveBeenCalledWith(expect.any(Object), expect.any(Object), 'hello', undefined)
+    const [, pathArg] = (githubMocks.putFile as any).mock.calls[0]
+    expect(pathArg).toBe('content/chapters/hello.mdx')
     expect(csrfMock.requireCsrfToken).toHaveBeenCalled()
     const [, , , commitMessage] = (githubMocks.putFile as any).mock.calls[0]
     expect(commitMessage).toContain('Publish')
+  })
+
+  it('preserves existing filename when originalSlug is provided', async () => {
+    const body = {
+      collection: 'chapters_en',
+      slug: 'prologue',
+      originalSlug: '001-prologue',
+      frontmatter: { title: 'Hello', slug: 'prologue', language: 'en' },
+      body: 'Body',
+      workflow: 'publish',
+      message: '',
+    }
+    const request = new NextRequest('http://localhost/api/admin/save', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    await POST(request)
+    expect(contentMocks.resolveCollectionPath).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(Object),
+      '001-prologue',
+      undefined,
+    )
   })
 })
