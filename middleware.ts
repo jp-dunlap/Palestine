@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from 'next/server';
 const REALM = 'Palestine CMS';
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/cms/:path*'],
+  matcher: ['/admin/:path*', '/api/cms/:path*', '/config.yml'],
 };
 
 function unauthorized() {
@@ -13,38 +13,7 @@ function unauthorized() {
   });
 }
 
-function missingConfig(message: string) {
-  return new Response(`CMS authentication is not configured: ${message}`, {
-    status: 500,
-  });
-}
-
-function decodeCredentials(raw: string) {
-  try {
-    const value = atob(raw);
-    const idx = value.indexOf(':');
-    if (idx === -1) {
-      return null;
-    }
-    return { user: value.slice(0, idx), pass: value.slice(idx + 1) };
-  } catch {
-    return null;
-  }
-}
-
 export function middleware(req: NextRequest) {
-  if (req.method === 'OPTIONS') {
-    return NextResponse.next();
-  }
-
-  const cmsMode = process.env.CMS_MODE?.toLowerCase();
-  if (!cmsMode) {
-    return missingConfig('CMS_MODE is missing');
-  }
-  if (cmsMode !== 'oauth' && cmsMode !== 'token') {
-    return missingConfig(`CMS_MODE must be "oauth" or "token" (received "${cmsMode}")`);
-  }
-
   const user =
     process.env.BASIC_AUTH_USER ??
     process.env.BASIC_AUTH_USERS ??
@@ -55,16 +24,22 @@ export function middleware(req: NextRequest) {
     '';
 
   if (!user || !pass) {
-    return missingConfig('BASIC_AUTH_USER/BASIC_AUTH_PASS are missing');
+    return new Response('CMS basic auth is not configured', { status: 500 });
   }
 
-  const auth = req.headers.get('authorization');
-  if (!auth?.startsWith('Basic ')) {
+  if (req.method === 'OPTIONS') {
+    return NextResponse.next();
+  }
+
+  const auth = req.headers.get('authorization') || '';
+  if (!auth.startsWith('Basic ')) {
     return unauthorized();
   }
 
-  const creds = decodeCredentials(auth.slice(6));
-  if (!creds || creds.user !== user || creds.pass !== pass) {
+  try {
+    const [name, pwd] = atob(auth.slice(6)).split(':');
+    if (name !== user || pwd !== pass) return unauthorized();
+  } catch {
     return unauthorized();
   }
 
