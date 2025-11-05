@@ -91,7 +91,9 @@ export const DELETE = async (req: NextRequest) => {
   const branchName = branchWorkflow === 'draft' ? `cms/${slug}` : undefined
   const client = getOctokitForRequest(req)
   const author = resolveCommitAuthor(auth.mode === 'oauth' ? auth.session : undefined)
-  const path = getEntryPath(collection, slug)
+  const path =
+    (await collection.resolvePath?.(client, slug, { branch: branchName })) ??
+    (collection.singleFile ?? getEntryPath(collection, slug))
   try {
     if (branchName) {
       await ensureBranch(client, branchName)

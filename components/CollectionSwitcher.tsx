@@ -3,7 +3,7 @@
 export type CollectionSummary = {
   id: string
   label: string
-  format: 'markdown' | 'json'
+  format: 'markdown' | 'json' | 'yaml'
   defaultWorkflow: 'draft' | 'publish'
   slugField: string
   fields: { name: string; type: string; required?: boolean }[]

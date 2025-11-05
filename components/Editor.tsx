@@ -8,14 +8,16 @@ export type MarkdownEditorState = {
   format: 'markdown'
   frontmatter: Record<string, unknown>
   body: string
+  path: string | null
 }
 
-export type JsonEditorState = {
-  format: 'json'
-  json: string
+export type StructuredEditorState = {
+  format: 'json' | 'yaml'
+  text: string
+  path: string | null
 }
 
-export type EditorState = MarkdownEditorState | JsonEditorState
+export type EditorState = MarkdownEditorState | StructuredEditorState
 
 type Props = {
   collection: CollectionSummary | null
@@ -31,6 +33,9 @@ type Props = {
   onMessageChange: (value: string) => void
   onError: (message: string) => void
   csrfToken: string | null
+  canTranslate?: boolean
+  translating?: boolean
+  onTranslate?: () => void
 }
 
 const fieldValue = (frontmatter: Record<string, unknown>, key: string) => {
@@ -52,6 +57,9 @@ const Editor = ({
   onMessageChange,
   onError,
   csrfToken,
+  canTranslate = false,
+  translating = false,
+  onTranslate,
 }: Props) => {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -187,6 +195,11 @@ const Editor = ({
         {unsaved ? <span className="text-xs font-medium uppercase tracking-wide text-amber-600">Unsaved changes</span> : null}
       </div>
 
+      <div className="rounded border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+        <span className="font-medium text-zinc-700">Path:</span>{' '}
+        {state.path ?? 'Not saved yet'}
+      </div>
+
       {state.format === 'markdown' ? (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex flex-col gap-3">
@@ -219,10 +232,10 @@ const Editor = ({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-zinc-700">JSON</span>
+          <span className="text-sm font-medium text-zinc-700">{state.format.toUpperCase()}</span>
           <textarea
-            value={state.json}
-            onChange={(event) => onChange({ ...state, json: event.target.value })}
+            value={state.text}
+            onChange={(event) => onChange({ ...state, text: event.target.value })}
             className="h-72 w-full rounded border border-zinc-300 px-3 py-2 text-sm font-mono focus:border-black focus:outline-none"
           />
         </div>
@@ -239,6 +252,18 @@ const Editor = ({
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
+        {canTranslate ? (
+          <button
+            type="button"
+            onClick={onTranslate}
+            disabled={translating}
+            className={`rounded border border-emerald-600 px-4 py-2 text-sm font-medium transition ${
+              translating ? 'bg-emerald-100 text-emerald-500' : 'text-emerald-700 hover:bg-emerald-600 hover:text-white'
+            }`}
+          >
+            {translating ? 'Translating…' : 'Translate to Arabic'}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onDelete}

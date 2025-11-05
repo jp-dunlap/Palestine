@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import YAML from 'yaml'
 import CollectionSwitcher, { type CollectionSummary } from '@/components/CollectionSwitcher'
 import EntryList, { type Entry } from '@/components/EntryList'
-import Editor, { type EditorState, type JsonEditorState, type MarkdownEditorState } from '@/components/Editor'
+import Editor, { type EditorState, type MarkdownEditorState, type StructuredEditorState } from '@/components/Editor'
 
 type Session = {
   name?: string
@@ -26,6 +27,8 @@ const fetchJSON = async <T,>(url: string, init?: RequestInit): Promise<T> => {
   return response.json() as Promise<T>
 }
 
+const addArabicSuffix = (value: string) => (value.endsWith('.ar') ? value : `${value}.ar`)
+
 const AdminPage = () => {
   const [authMode, setAuthMode] = useState<'oauth' | 'token' | null>(null)
   const [requiresLogin, setRequiresLogin] = useState(false)
@@ -44,6 +47,7 @@ const AdminPage = () => {
   const [unsaved, setUnsaved] = useState(false)
   const [isNew, setIsNew] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [translating, setTranslating] = useState(false)
   const slugRef = useRef<string | null>(null)
 
   const pushToast = (type: 'success' | 'error', messageText: string) => {
@@ -140,20 +144,26 @@ const AdminPage = () => {
       const data = await fetchJSON<{
         frontmatter?: Record<string, unknown>
         body?: string
-        data?: Record<string, unknown>
+        data?: unknown
+        path?: string
       }>(`/api/admin/item?${query.toString()}`)
       const collection = collections.find((item) => item.id === selectedCollection)
-      if (collection?.format === 'json') {
-        const jsonState: JsonEditorState = {
-          format: 'json',
-          json: JSON.stringify(data.data ?? data.frontmatter ?? {}, null, 2),
+      if (collection?.format === 'json' || collection?.format === 'yaml') {
+        const textValue = collection.format === 'json'
+          ? JSON.stringify(data.data ?? data.frontmatter ?? {}, null, 2)
+          : YAML.stringify(data.data ?? data.frontmatter ?? {})
+        const structuredState: StructuredEditorState = {
+          format: collection.format,
+          text: textValue,
+          path: data.path ?? null,
         }
-        setEditorState(jsonState)
+        setEditorState(structuredState)
       } else {
         const mdState: MarkdownEditorState = {
           format: 'markdown',
           frontmatter: data.frontmatter ?? {},
           body: data.body ?? '',
+          path: data.path ?? null,
         }
         setEditorState(mdState)
       }
@@ -188,16 +198,21 @@ const AdminPage = () => {
     setWorkflow(collection.defaultWorkflow)
     setMessage('')
     slugRef.current = null
-    if (collection.format === 'json') {
+    if (collection.format === 'json' || collection.format === 'yaml') {
+      const initialText = collection.format === 'json'
+        ? JSON.stringify({ slug: '', title: '' }, null, 2)
+        : `id: ""\ntitle: ""\n`
       setEditorState({
-        format: 'json',
-        json: JSON.stringify({ slug: '', title: '' }, null, 2),
+        format: collection.format,
+        text: initialText,
+        path: null,
       })
     } else {
       setEditorState({
         format: 'markdown',
         frontmatter: { title: '', [collection.slugField]: '' },
         body: '',
+        path: null,
       })
     }
     setUnsaved(false)
@@ -243,23 +258,31 @@ const AdminPage = () => {
   const resolveSlug = (state: EditorState, collection: CollectionSummary) => {
     if (state.format === 'markdown') {
       const value = state.frontmatter[collection.slugField]
-      if (typeof value === 'string' && value) {
-        return value
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim()
       }
       const title = state.frontmatter.title
-      return typeof title === 'string' ? title : ''
-    }
-    try {
-      const parsed = JSON.parse(state.json)
-      const value = parsed?.[collection.slugField]
-      if (typeof value === 'string') {
-        return value
+      if (typeof title === 'string' && title.trim()) {
+        return title.trim()
       }
-      const title = parsed?.title
-      return typeof title === 'string' ? title : ''
-    } catch {
-      return ''
+    } else {
+      try {
+        const parsed = state.format === 'json' ? JSON.parse(state.text) : YAML.parse(state.text)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const slugField = (parsed as Record<string, unknown>)[collection.slugField]
+          if (typeof slugField === 'string' && slugField.trim()) {
+            return slugField.trim()
+          }
+          const title = (parsed as Record<string, unknown>).title
+          if (typeof title === 'string' && title.trim()) {
+            return title.trim()
+          }
+        }
+      } catch {
+        // ignore parsing errors and fall back to existing slug references
+      }
     }
+    return selectedSlug ?? slugRef.current ?? ''
   }
 
   const handleSave = async () => {
@@ -272,15 +295,22 @@ const AdminPage = () => {
     }
     let frontmatter: Record<string, unknown> | undefined
     let body: string | undefined
-    let data: Record<string, unknown> | undefined
+    let data: unknown
     if (editorState.format === 'markdown') {
       frontmatter = editorState.frontmatter
       body = editorState.body
-    } else {
+    } else if (editorState.format === 'json') {
       try {
-        data = JSON.parse(editorState.json)
+        data = JSON.parse(editorState.text)
       } catch {
         pushToast('error', 'Invalid JSON payload')
+        return
+      }
+    } else {
+      try {
+        data = YAML.parse(editorState.text) ?? {}
+      } catch {
+        pushToast('error', 'Invalid YAML payload')
         return
       }
     }
@@ -293,9 +323,10 @@ const AdminPage = () => {
         workflow,
         message: message.trim(),
       }
+      payload.originalSlug = slugRef.current ?? selectedSlug ?? ''
       if (frontmatter) payload.frontmatter = frontmatter
       if (body !== undefined) payload.body = body
-      if (data) payload.data = data
+      if (data !== undefined) payload.data = data
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (csrfToken) {
         headers['x-csrf-token'] = csrfToken
@@ -315,7 +346,9 @@ const AdminPage = () => {
       } else {
         pushToast('success', 'Entry saved to main branch')
       }
-      const nextSlug = slugValue || slugRef.current
+      const nextSlug = typeof json.slug === 'string' && json.slug.length > 0
+        ? json.slug
+        : slugValue || slugRef.current
       if (nextSlug) {
         setSelectedSlug(nextSlug)
         slugRef.current = nextSlug
@@ -331,6 +364,109 @@ const AdminPage = () => {
       pushToast('error', (error as Error).message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleTranslate = async () => {
+    if (!editorState || editorState.format !== 'markdown') {
+      return
+    }
+    const collection = collections.find((item) => item.id === selectedCollection)
+    if (collection?.id !== 'chapters_en') {
+      return
+    }
+    const englishSlug = selectedSlug ?? slugRef.current
+    if (!englishSlug) {
+      pushToast('error', 'Save the English chapter before translating.')
+      return
+    }
+    const translateValue = async (text: string) => {
+      if (!text.trim()) {
+        return text
+      }
+      const response = await fetch('/api/admin/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source: 'en', target: 'ar' }),
+      })
+      if (!response.ok) {
+        throw new Error('Translate failed')
+      }
+      const result = await response.json()
+      return typeof result.translated === 'string' ? result.translated : text
+    }
+    setTranslating(true)
+    try {
+      let translationErrored = false
+      const safeTranslate = async (input: string) => {
+        if (!input.trim()) return input
+        try {
+          return await translateValue(input)
+        } catch {
+          if (!translationErrored) {
+            pushToast('error', 'Translation service unavailable; some fields may use original text.')
+            translationErrored = true
+          }
+          return input
+        }
+      }
+
+      const originalFrontmatter = editorState.frontmatter
+      const translatedTitle = typeof originalFrontmatter.title === 'string'
+        ? await safeTranslate(originalFrontmatter.title)
+        : ''
+      const translatedSummary = typeof originalFrontmatter.summary === 'string'
+        ? await safeTranslate(originalFrontmatter.summary)
+        : undefined
+      const translatedBody = await safeTranslate(editorState.body)
+
+      const translatedFrontmatter: Record<string, unknown> = {
+        ...originalFrontmatter,
+        title: translatedTitle,
+        language: 'ar',
+      }
+      if (translatedSummary !== undefined) {
+        translatedFrontmatter.summary = translatedSummary
+      }
+
+      const arabicSlug = addArabicSuffix(englishSlug)
+      const payload: Record<string, unknown> = {
+        collection: 'chapters_ar',
+        slug: arabicSlug,
+        originalSlug: arabicSlug,
+        workflow: 'draft',
+        frontmatter: translatedFrontmatter,
+        body: translatedBody,
+      }
+      if (translationErrored) {
+        payload.message = 'Translated with partial results'
+      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken
+      }
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unable to save Arabic translation' }))
+        throw new Error(error.error ?? 'Unable to save Arabic translation')
+      }
+      const result = await response.json()
+      if (result.prUrl) {
+        pushToast('success', `Arabic draft ready: ${result.prUrl}`)
+      } else {
+        pushToast('success', 'Arabic translation saved')
+      }
+      if (selectedCollection === 'chapters_ar') {
+        await loadEntries('chapters_ar')
+      }
+    } catch (error) {
+      pushToast('error', (error as Error).message)
+    } finally {
+      setTranslating(false)
     }
   }
 
@@ -478,6 +614,9 @@ const AdminPage = () => {
               onMessageChange={setMessage}
               onError={(text) => pushToast('error', text)}
               csrfToken={csrfToken}
+              canTranslate={collection?.id === 'chapters_en' && editorState?.format === 'markdown'}
+              translating={translating}
+              onTranslate={handleTranslate}
             />
           </div>
         </section>

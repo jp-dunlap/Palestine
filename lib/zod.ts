@@ -254,6 +254,12 @@ class ZodEffects<I, O> extends BaseSchema<O> {
   }
 }
 
+class ZodAny extends BaseSchema<any> {
+  _parse(input: unknown): any {
+    return input
+  }
+}
+
 const string = () => new ZodString()
 const boolean = () => new ZodBoolean()
 const number = () => new ZodNumber()
@@ -265,6 +271,7 @@ const object = <T extends Record<string, any>>(shape: { [K in keyof T]: BaseSche
   new ZodObject(shape)
 const union = <T>(options: BaseSchema<any>[]) => new ZodUnion<T>(options)
 const effects = <I, O>(schema: BaseSchema<I>, transform: (input: I) => O) => new ZodEffects(schema, transform)
+const anyValue = () => new ZodAny()
 
 export const z = {
   string,
@@ -277,6 +284,7 @@ export const z = {
   record,
   union,
   effects,
+  any: anyValue,
   ZodError,
 }
 
