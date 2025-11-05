@@ -17,8 +17,17 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
+  const pathname = req.nextUrl.pathname
   const mode = (process.env.CMS_AUTH_MODE ?? 'oauth').toLowerCase()
   if (mode !== 'token') {
+    const isAdminApi = pathname.startsWith('/api/admin')
+    const isAdminPage = pathname.startsWith('/admin')
+    if (isAdminPage && !isAdminApi) {
+      const session = req.cookies.get('cms_session')?.value
+      if (!session) {
+        return NextResponse.redirect(new URL('/api/auth/signin', req.url), 302)
+      }
+    }
     return NextResponse.next()
   }
 
