@@ -134,12 +134,23 @@ export const POST = async (req: NextRequest) => {
 
   let markdownBodyContent = typeof markdownBody === 'string' ? markdownBody : ''
 
+  let translationPending = false
+  const translationPendingFields: ('title' | 'summary' | 'body')[] = []
+
+  const markTranslationPending = (field: 'title' | 'summary' | 'body') => {
+    translationPending = true
+    if (!translationPendingFields.includes(field)) {
+      translationPendingFields.push(field)
+    }
+  }
+
   if (collection.format === 'markdown' && collection.id === 'chapters_ar') {
     const frontmatterRecord = validated as Record<string, unknown>
     frontmatterRecord.language = 'ar'
 
     const ensureArabic = async (
       value: string,
+      field: 'title' | 'summary',
       translator: (input: string, source?: string, target?: string) => Promise<string>,
     ) => {
       if (!value.trim()) {
@@ -148,31 +159,47 @@ export const POST = async (req: NextRequest) => {
       if (hasEnoughArabic(value)) {
         return value
       }
-      return translator(value, 'en', 'ar')
+      try {
+        return await translator(value, 'en', 'ar')
+      } catch (error) {
+        markTranslationPending(field)
+        return value
+      }
     }
 
-    try {
-      if (typeof frontmatterRecord.title === 'string') {
-        frontmatterRecord.title = await ensureArabic(frontmatterRecord.title, translatePlain)
-      }
-      if (typeof frontmatterRecord.summary === 'string') {
-        frontmatterRecord.summary = await ensureArabic(frontmatterRecord.summary, translatePlain)
-      }
-      if (markdownBodyContent) {
-        if (!hasEnoughArabic(markdownBodyContent)) {
-          markdownBodyContent = await translateMdxPreserving(markdownBodyContent, 'en', 'ar')
-        }
-      }
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Arabic translation failed; nothing was saved.' },
-        { status: 502 },
-      )
+    if (typeof frontmatterRecord.title === 'string') {
+      frontmatterRecord.title = await ensureArabic(frontmatterRecord.title, 'title', translatePlain)
+    }
+    if (typeof frontmatterRecord.summary === 'string') {
+      frontmatterRecord.summary = await ensureArabic(frontmatterRecord.summary, 'summary', translatePlain)
     }
 
+    const placeholderComment = '<!-- translation pending: body -->'
+    const ensurePlaceholder = (body: string) => {
+      if (!body.trim()) {
+        return placeholderComment
+      }
+      if (body.trimStart().startsWith(placeholderComment)) {
+        return body
+      }
+      return `${placeholderComment}\n\n${body}`
+    }
+
+    if (markdownBodyContent && !hasEnoughArabic(markdownBodyContent)) {
+      try {
+        markdownBodyContent = await translateMdxPreserving(markdownBodyContent, 'en', 'ar')
+      } catch (error) {
+        markTranslationPending('body')
+        markdownBodyContent = ensurePlaceholder(markdownBodyContent)
+      }
+    }
   }
 
-  const branchWorkflow: 'draft' | 'publish' = workflow === 'draft' ? 'draft' : workflow === 'publish' ? 'publish' : collection.defaultWorkflow
+  let branchWorkflow: 'draft' | 'publish' =
+    workflow === 'draft' ? 'draft' : workflow === 'publish' ? 'publish' : collection.defaultWorkflow
+  if (translationPending && branchWorkflow !== 'draft') {
+    branchWorkflow = 'draft'
+  }
   const branchName = branchWorkflow === 'draft' ? `cms/${slug}` : undefined
 
   const client = getOctokitForRequest(req)
@@ -231,14 +258,31 @@ export const POST = async (req: NextRequest) => {
       const prBody = buildPrBody(collection.label, pathSlug, summary)
       if (existingPr) {
         await updatePullRequestBody(client, existingPr.number, prBody)
-        return NextResponse.json({ prUrl: existingPr.html_url, workflow: 'draft' })
+        return NextResponse.json({
+          prUrl: existingPr.html_url,
+          workflow: 'draft',
+          translationPending,
+          translationPendingFields,
+        })
       }
       const pr = await createPullRequest(client, branchName, prTitle, prBody)
-      return NextResponse.json({ prUrl: pr.html_url, workflow: 'draft' })
+      return NextResponse.json({
+        prUrl: pr.html_url,
+        workflow: 'draft',
+        translationPending,
+        translationPendingFields,
+      })
     }
 
     const commitSha = (response as any)?.commit?.sha ?? null
-    return NextResponse.json({ commitSha, urlToRaw: getRawFileUrl(path), workflow: 'publish', slug: pathSlug })
+    return NextResponse.json({
+      commitSha,
+      urlToRaw: getRawFileUrl(path),
+      workflow: 'publish',
+      slug: pathSlug,
+      translationPending,
+      translationPendingFields,
+    })
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }

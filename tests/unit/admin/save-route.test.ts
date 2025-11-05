@@ -75,11 +75,16 @@ describe('POST /api/admin/save', () => {
     Object.values(authMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(csrfMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(githubMocks).forEach((mock) => (mock as any).mock?.clear?.())
+    githubMocks.findPullRequestByBranch.mockImplementation(() => Promise.resolve(undefined))
     translatePlainSpy.mockClear()
     translateMdxPreservingSpy.mockClear()
     githubMocks.putFile.mockClear()
     githubMocks.listDirectory.mockClear()
     githubMocks.getFile.mockClear()
+    githubMocks.createPullRequest.mockResolvedValue({
+      html_url: 'https://example.com/pr',
+      number: 42,
+    } as any)
     for (const key of Object.keys(branchState)) {
       delete branchState[key]
     }
@@ -334,12 +339,12 @@ describe('POST /api/admin/save', () => {
     expect(translateMdxPreservingSpy).toHaveBeenCalledTimes(1)
     const fetchMock = global.fetch as unknown as ReturnType<typeof vi.fn>
     const fetchCalls = fetchMock.mock.calls
-    expect(fetchCalls.length).toBeGreaterThanOrEqual(5)
-    expect(fetchCalls[0]?.[1]?.headers?.['Content-Type']).toBe('application/json')
-    expect(fetchCalls[1]?.[1]?.headers?.['Content-Type']).toBe('application/x-www-form-urlencoded')
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(3)
+    const contentTypes = fetchCalls.map((call) => call?.[1]?.headers?.['Content-Type'])
+    expect(contentTypes[0]).toBe('application/json')
   })
 
-  it('returns 502 when translation fails for an Arabic chapter', async () => {
+  it('saves a draft when translation fails for an Arabic chapter', async () => {
     translatePlainSpy.mockImplementationOnce(async () => {
       throw new Error('Service down')
     })
@@ -360,11 +365,16 @@ describe('POST /api/admin/save', () => {
     })
 
     const response = await POST(request)
-    expect(response.status).toBe(502)
-    expect(githubMocks.putFile).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
+    const json = await response.json()
+    expect(json.workflow).toBe('draft')
+    expect(json.translationPending).toBe(true)
+    expect(json.translationPendingFields).toContain('title')
+    expect(json.prUrl).toBe('https://example.com/pr')
+    expect(githubMocks.putFile).toHaveBeenCalled()
   })
 
-  it('returns 502 and skips saving when every provider fails', async () => {
+  it('returns draft details when every provider fails', async () => {
     global.fetch = vi.fn(async () => ({
       ok: false,
       status: 503,
@@ -387,7 +397,15 @@ describe('POST /api/admin/save', () => {
     })
 
     const response = await POST(request)
-    expect(response.status).toBe(502)
-    expect(githubMocks.putFile).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
+    const json = await response.json()
+    expect(json.workflow).toBe('draft')
+    expect(json.translationPending).toBe(true)
+    expect(json.translationPendingFields.sort()).toEqual(['body', 'summary', 'title'])
+    expect(json.prUrl).toBe('https://example.com/pr')
+    expect(githubMocks.putFile).toHaveBeenCalled()
+    const savedContent = (githubMocks.putFile as any).mock.calls.at(-1)?.[2] as string
+    expect(savedContent.startsWith('---')).toBe(true)
+    expect(savedContent).toContain('<!-- translation pending: body -->')
   })
 })

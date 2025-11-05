@@ -23,6 +23,38 @@ const buildProviderList = () => {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+const DEFAULT_TIMEOUT_MS = 15_000
+
+const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS) => {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+const buildEndpointVariants = (url: string) => {
+  const variants = [url]
+  try {
+    const parsed = new URL(url)
+    if (!parsed.pathname.endsWith('/translate')) {
+      return variants
+    }
+    const normalize = (path: string) => {
+      const next = new URL(url)
+      next.pathname = path
+      return next.toString()
+    }
+    variants.push(normalize('/api/translate'))
+    variants.push(normalize('/v1/translate'))
+  } catch {
+    // ignore URL parse issues and fall back to original URL only
+  }
+  return variants
+}
+
 const buildPayload = (input: string, source: string, target: string, apiKey?: string) => {
   const payload: Record<string, string> = {
     q: input,
@@ -188,54 +220,75 @@ export const callProvider = async (input: string, source: string, target: string
       continue
     }
 
-    let shouldRetryWithForm = false
+    const endpoints = buildEndpointVariants(provider.url)
 
-    for (const mode of ['json', 'form'] as const) {
-      if (mode === 'form' && !shouldRetryWithForm) {
-        break
-      }
-      try {
-        const response = await fetch(provider.url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': mode === 'json' ? 'application/json' : 'application/x-www-form-urlencoded',
-          },
-          body: encodeBody(payload, mode),
-        })
+    for (const endpoint of endpoints) {
+      let shouldRetryWithForm = false
+      let advanceEndpoint = false
 
-        if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            if (!apiKey && provider.requiresKey) {
-              errors.push(`${provider.url} requires an API key`)
-              shouldRetryWithForm = false
+      for (const mode of ['json', 'form'] as const) {
+        if (mode === 'form' && !shouldRetryWithForm) {
+          continue
+        }
+        try {
+          const response = await fetchWithTimeout(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                mode === 'json' ? 'application/json' : 'application/x-www-form-urlencoded',
+            },
+            body: encodeBody(payload, mode),
+          })
+
+          if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+              if (!apiKey && provider.requiresKey) {
+                errors.push(`${endpoint} requires an API key`)
+                shouldRetryWithForm = false
+                advanceEndpoint = true
+                break
+              }
+
+              if (mode === 'json') {
+                shouldRetryWithForm = true
+                errors.push(`${endpoint} responded with ${response.status}`)
+                continue
+              }
+
+              errors.push(`${endpoint} responded with ${response.status}`)
+              advanceEndpoint = true
               break
             }
 
-            if (mode === 'json') {
+            if (response.status === 404) {
+              errors.push(`${endpoint} responded with ${response.status}`)
+              advanceEndpoint = true
+              break
+            }
+
+            if (mode === 'json' && [406, 415].includes(response.status)) {
               shouldRetryWithForm = true
-              errors.push(`${provider.url} responded with ${response.status}`)
+              errors.push(`${endpoint} responded with ${response.status}`)
               continue
             }
 
-            errors.push(`${provider.url} responded with ${response.status}`)
+            errors.push(`${endpoint} responded with ${response.status}`)
+            advanceEndpoint = true
             break
           }
 
-          if (mode === 'json' && [404, 406, 415].includes(response.status)) {
-            shouldRetryWithForm = true
-            errors.push(`${provider.url} responded with ${response.status}`)
-            continue
-          }
-
-          errors.push(`${provider.url} responded with ${response.status}`)
+          return await extractTranslation(response)
+        } catch (error) {
+          errors.push(`${endpoint} failed: ${(error as Error).message}`)
+          advanceEndpoint = true
           break
         }
-
-        return await extractTranslation(response)
-      } catch (error) {
-        errors.push(`${provider.url} failed: ${(error as Error).message}`)
-        break
       }
+
+      if (advanceEndpoint) {
+        continue
+      }
+      break
     }
 
     await delay(100 + Math.floor(Math.random() * 200))
