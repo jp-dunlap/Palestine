@@ -285,7 +285,7 @@ const AdminPage = () => {
     return selectedSlug ?? slugRef.current ?? ''
   }
 
-  const handleSave = async () => {
+  const handleSave = async (options?: { autosave?: boolean }) => {
     if (!selectedCollection || !editorState) {
       return
     }
@@ -321,8 +321,12 @@ const AdminPage = () => {
         collection: selectedCollection,
         slug: slugValue,
         workflow,
-        message: message.trim(),
       }
+      const trimmedMessage = message.trim()
+      const commitMessage = options?.autosave
+        ? [trimmedMessage, '[autosave]'].filter(Boolean).join(' ')
+        : trimmedMessage
+      payload.message = commitMessage
       payload.originalSlug = slugRef.current ?? selectedSlug ?? ''
       if (frontmatter) payload.frontmatter = frontmatter
       if (body !== undefined) payload.body = body
@@ -341,7 +345,13 @@ const AdminPage = () => {
         throw new Error(error.error ?? 'Unable to save entry')
       }
       const json = await response.json()
-      if (json.prUrl) {
+      if (options?.autosave) {
+        if (json.prUrl) {
+          pushToast('success', 'Draft auto-saved')
+        } else {
+          pushToast('success', 'Changes auto-saved')
+        }
+      } else if (json.prUrl) {
         pushToast('success', `Draft updated: ${json.prUrl}`)
       } else {
         pushToast('success', 'Entry saved to main branch')
@@ -353,7 +363,9 @@ const AdminPage = () => {
         setSelectedSlug(nextSlug)
         slugRef.current = nextSlug
       }
-      setMessage('')
+      if (!options?.autosave) {
+        setMessage('')
+      }
       setUnsaved(false)
       setIsNew(false)
       await loadEntries(selectedCollection)

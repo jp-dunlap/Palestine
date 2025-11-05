@@ -29,7 +29,7 @@ describe('lib/content', () => {
       { name: '001-prologue.ar.mdx', path: 'content/chapters/001-prologue.ar.mdx', sha: 'def', type: 'file' },
     ])
     const markdown = Buffer.from(
-      `---\ntitle: Prologue\nslug: prologue\nlanguage: en\n---\nBody text.\n`,
+      `---\ntitle: Prologue\nslug: prologue\nlanguage: en\ndate: '2024-01-01'\n---\nBody text.\n`,
       'utf-8',
     ).toString('base64')
     githubMocks.getFile.mockImplementation(async (_client, path: string) => ({
@@ -48,6 +48,64 @@ describe('lib/content', () => {
     expect(entries[0].slug).toBe('001-prologue')
     expect(entries[0].title).toBe('Prologue')
     expect(entries[0].path).toBe('content/chapters/001-prologue.mdx')
+  })
+
+  it('coerces chapter frontmatter date when parsed as Date', async () => {
+    const collection = collections.find((item) => item.id === 'chapters_en')!
+    const client = {} as any
+    githubMocks.listDirectory.mockResolvedValue([
+      { name: '001-prologue.mdx', path: 'content/chapters/001-prologue.mdx', sha: 'abc', type: 'file' },
+    ])
+    const markdown = Buffer.from(
+      `---\ntitle: Prologue\nslug: prologue\nlanguage: en\ndate: 2025-10-29\n---\nBody text.\n`,
+      'utf-8',
+    ).toString('base64')
+    githubMocks.getFile.mockResolvedValue({
+      sha: 'abc',
+      content: markdown,
+      encoding: 'base64',
+      path: 'content/chapters/001-prologue.mdx',
+    })
+    githubMocks.getLatestCommitForPath.mockResolvedValue({
+      sha: 'commit',
+      commit: { committer: { date: '2024-01-01T00:00:00Z' } },
+    })
+
+    const entries = await listEntries(client, collection)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].slug).toBe('001-prologue')
+
+    const parsed = await readEntry(client, collection, '001-prologue')
+    expect(parsed.frontmatter.date).toBe('2025-10-29')
+  })
+
+  it('lists arabic chapters when frontmatter date is parsed as Date', async () => {
+    const collection = collections.find((item) => item.id === 'chapters_ar')!
+    const client = {} as any
+    githubMocks.listDirectory.mockResolvedValue([
+      { name: '001-prologue.ar.mdx', path: 'content/chapters/001-prologue.ar.mdx', sha: 'def', type: 'file' },
+    ])
+    const markdown = Buffer.from(
+      `---\ntitle: المقدمة\nslug: prologue\nlanguage: ar\ndate: 2025-11-05\n---\nBody text.\n`,
+      'utf-8',
+    ).toString('base64')
+    githubMocks.getFile.mockResolvedValue({
+      sha: 'def',
+      content: markdown,
+      encoding: 'base64',
+      path: 'content/chapters/001-prologue.ar.mdx',
+    })
+    githubMocks.getLatestCommitForPath.mockResolvedValue({
+      sha: 'commit',
+      commit: { committer: { date: '2024-01-01T00:00:00Z' } },
+    })
+
+    const entries = await listEntries(client, collection)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].slug).toBe('001-prologue.ar')
+
+    const parsed = await readEntry(client, collection, '001-prologue.ar')
+    expect(parsed.frontmatter.date).toBe('2025-11-05')
   })
 
   it('serializes yaml entries with newline termination', () => {

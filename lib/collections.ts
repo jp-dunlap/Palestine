@@ -12,6 +12,20 @@ import {
 import { z } from './zod'
 import type { ZodSchema } from './zod'
 
+const asDateString = z.effects(z.any(), (value) => {
+  if (typeof value === 'string') {
+    return value
+  }
+  if (value && typeof (value as { toISOString?: unknown }).toISOString === 'function') {
+    try {
+      return ((value as { toISOString: () => string }).toISOString() ?? '').slice(0, 10)
+    } catch {
+      return ''
+    }
+  }
+  return ''
+})
+
 export type Workflow = 'draft' | 'publish'
 export type CollectionFormat = 'markdown' | 'json' | 'yaml'
 
@@ -150,7 +164,7 @@ export const collections: CollectionDefinition[] = [
       language: z.literal('en'),
       summary: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      date: z.string().optional(),
+      date: asDateString.optional(),
       sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
       places: z.array(z.string()).optional(),
     }),
@@ -175,7 +189,7 @@ export const collections: CollectionDefinition[] = [
       language: z.literal('ar'),
       summary: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      date: z.string().optional(),
+      date: asDateString.optional(),
       sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
       places: z.array(z.string()).optional(),
     }),
