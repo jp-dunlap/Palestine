@@ -14,8 +14,12 @@ const csrfMock = vi.hoisted(() => ({
 vi.mock('@/lib/api/csrf', () => csrfMock)
 
 const translateMock = vi.hoisted(() => ({
-  translatePlain: vi.fn(async () => 'عنوان عربي'),
-  translateMdxPreserving: vi.fn(async () => 'مرحبا بالعالم'),
+  translatePlain: vi.fn<
+    (text: string, source?: string, target?: string) => Promise<string>
+  >(async () => 'عنوان عربي'),
+  translateMdxPreserving: vi.fn<
+    (mdx: string, source?: string, target?: string) => Promise<string>
+  >(async () => 'مرحبا بالعالم'),
 }))
 
 vi.mock('@/lib/translate', () => translateMock)
