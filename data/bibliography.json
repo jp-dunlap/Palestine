@@ -68,7 +68,7 @@
         ]
       ]
     },
-    "URL": "https://avalon.law.yale.edu/21st_century/isrplo.asp",
+    "URL": "https://avalon.law.yale.edu/20th_century/isrplo.asp",
     "language": "en"
   },
   {
@@ -94,16 +94,7 @@
     "title": "Occupied Palestinian Territory: Situation Reports",
     "authority": "United Nations OCHA oPt",
     "URL": "https://www.ochaopt.org/",
-    "language": "en",
-    "accessed": {
-      "date-parts": [
-        [
-          2025,
-          11,
-          5
-        ]
-      ]
-    }
+    "language": "en"
   },
   {
     "id": "masalha2018-4000-year-history",
@@ -122,9 +113,8 @@
         ]
       ]
     },
-    "publisher": "Zed Books",
-    "publisher-place": "London",
-    "URL": "https://www.bloomsbury.com/uk/palestine-9781786992741/",
+    "publisher": "Zed Books (Bloomsbury)",
+    "URL": "https://www.bloomsbury.com/uk/palestine-9781786992737/",
     "language": "en"
   },
   {
@@ -134,8 +124,7 @@
     "author": [
       {
         "family": "Khalidi",
-        "given": "Walid",
-        "literal": "Walid Khalidi (ed.)"
+        "given": "Walid"
       }
     ],
     "issued": {
@@ -147,13 +136,18 @@
     },
     "publisher": "Institute for Palestine Studies",
     "publisher-place": "Washington, D.C.",
+    "URL": "https://www.palestine-studies.org/en/node/1651379",
     "language": "en"
   },
   {
-    "id": "btselem-2021-this-is-apartheid",
+    "id": "btselem-2021-apartheid",
     "type": "report",
     "title": "A regime of Jewish supremacy from the Jordan River to the Mediterranean Sea: This is apartheid",
-    "authority": "B'Tselem – The Israeli Information Center for Human Rights in the Occupied Territories",
+    "author": [
+      {
+        "literal": "B’Tselem – The Israeli Information Center for Human Rights in the Occupied Territories"
+      }
+    ],
     "issued": {
       "date-parts": [
         [
@@ -169,7 +163,7 @@
   {
     "id": "nabulsi2006-great-catastrophe",
     "type": "article-newspaper",
-    "title": "The Great Catastrophe",
+    "title": "The great catastrophe",
     "author": [
       {
         "family": "Nabulsi",
@@ -192,7 +186,7 @@
   {
     "id": "icrc-2010-gaza-blockade",
     "type": "webpage",
-    "title": "Gaza closure: “strangling” civilian population – ICRC statement (14 June 2010)",
+    "title": "Gaza closure: \"strangling\" civilian population – ICRC statement (14 June 2010)",
     "authority": "International Committee of the Red Cross",
     "issued": {
       "date-parts": [
@@ -203,7 +197,7 @@
         ]
       ]
     },
-    "URL": "https://casebook.icrc.org/case-study/israelgaza-closure",
+    "URL": "https://www.icrc.org/en/doc/resources/documents/update/palestine-update-140610.htm",
     "language": "en"
   },
   {
@@ -224,14 +218,13 @@
       ]
     },
     "publisher": "Palestine Land Society",
-    "publisher-place": "London",
-    "URL": "https://www.plands.org/en/books-reports/atlas-of-palestine-1917-1966",
+    "URL": "https://www.plands.org/books-reports/atlas-of-palestine-1917-1966",
     "language": "en"
   },
   {
     "id": "veracini-2022-logic-of-elimination",
     "type": "article-magazine",
-    "title": "A Logic of Elimination: Settler Colonialism in Palestine",
+    "title": "A Logic of Elimination",
     "author": [
       {
         "family": "Veracini",
@@ -248,7 +241,7 @@
       ]
     },
     "container-title": "Jewish Currents",
-    "URL": "https://jewishcurrents.org/settler-colonialism-in-palestine",
+    "URL": "https://jewishcurrents.org/a-logic-of-elimination",
     "language": "en"
   },
   {
@@ -264,20 +257,18 @@
     "issued": {
       "date-parts": [
         [
-          2004,
-          3,
-          31
+          2004
         ]
       ]
     },
     "container-title": "Haaretz",
-    "URL": "https://www.haaretz.com/1.4769964",
+    "URL": "https://web.archive.org/web/20040403133529/http://www.haaretz.com/hasen/spages/410906.html",
     "language": "en"
   },
   {
     "id": "un-ga-194-1948",
     "type": "legislation",
-    "title": "Resolution 194 (III): Palestine — Conciliation Commission",
+    "title": "Resolution 194 (III): Palestine – Progress Report of the United Nations Mediator",
     "authority": "United Nations General Assembly",
     "issued": {
       "date-parts": [
@@ -293,8 +284,8 @@
   },
   {
     "id": "icc-2021-palestine-investigation",
-    "type": "report",
-    "title": "Statement of ICC Prosecutor, Fatou Bensouda, respecting an investigation of the Situation in Palestine",
+    "type": "press_release",
+    "title": "Statement of the Prosecutor of the International Criminal Court, Fatou Bensouda, on the opening of an investigation into the Situation in Palestine",
     "authority": "International Criminal Court",
     "issued": {
       "date-parts": [
@@ -305,12 +296,12 @@
         ]
       ]
     },
-    "URL": "https://www.icc-cpi.int/news/statement-icc-prosecutor-fatou-bensouda-respecting-investigation-situation-palestine",
+    "URL": "https://www.icc-cpi.int/news/statement-prosecutor-icc-opening-investigation-situation-palestine",
     "language": "en"
   },
   {
     "id": "britannica-palestine",
-    "type": "encyclopedia-article",
+    "type": "entry-encyclopedia",
     "title": "Palestine",
     "authority": "Encyclopaedia Britannica",
     "URL": "https://www.britannica.com/place/Palestine",
@@ -327,7 +318,7 @@
   },
   {
     "id": "britannica-jaffa",
-    "type": "encyclopedia-article",
+    "type": "entry-encyclopedia",
     "title": "Jaffa",
     "authority": "Encyclopaedia Britannica",
     "URL": "https://www.britannica.com/place/Jaffa",
