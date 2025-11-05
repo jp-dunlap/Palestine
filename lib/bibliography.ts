@@ -5,6 +5,18 @@ import type { CSL } from '@/lib/types';
 
 let _cache: Record<string, CSL> | null = null;
 
+export type SourceRef = string | { id?: string; url?: string };
+
+function normalizeSourceRef(source: SourceRef | null | undefined): {
+  id?: string;
+  url?: string;
+} {
+  if (typeof source === 'string') {
+    return { id: source };
+  }
+  return source ?? {};
+}
+
 function loadAll(): Record<string, CSL> {
   if (_cache) return _cache;
   const p = path.join(process.cwd(), 'data', 'bibliography.json');
@@ -51,10 +63,26 @@ export function shortCiteById(id: string): string {
   return [who, year].filter(Boolean).join(' ');
 }
 
-export function formatSources(sources: Array<{ id?: string; url?: string }>): string[] {
-  return sources.map((s) => {
-    if (s.id) return citeById(s.id);
-    if (s.url) return s.url;
+export function formatSources(sources: SourceRef[]): string[] {
+  return sources.map(source => {
+    const ref = normalizeSourceRef(source);
+    if (ref.id) return citeById(ref.id);
+    if (ref.url) return ref.url;
     return '[unrecognized source]';
+  });
+}
+
+export function formatSourceIds(sources: SourceRef[]): string[] {
+  return sources.map(source => {
+    const ref = normalizeSourceRef(source);
+    if (ref.id) return ref.id.trim();
+    if (ref.url) {
+      try {
+        return new URL(ref.url).host;
+      } catch {
+        return ref.url;
+      }
+    }
+    return 'unknown';
   });
 }

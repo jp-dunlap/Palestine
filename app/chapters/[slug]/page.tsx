@@ -7,7 +7,7 @@ import {
   hasEnChapter,
 } from '@/lib/loaders.chapters';
 import { compileMDX } from 'next-mdx-remote/rsc';
-import { formatSources } from '@/lib/bibliography';
+import { formatSources, formatSourceIds, type SourceRef } from '@/lib/bibliography';
 import { createMdxComponents } from '@/mdx-components';
 import JsonLd from '@/components/JsonLd';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
@@ -75,11 +75,13 @@ export default async function Page({ params }: Props) {
     summary?: string;
     places?: string[];
     tags?: string[];
-    sources?: Array<{ id?: string; url?: string }>;
+    sources?: SourceRef[];
     date?: string;
   };
 
-  const renderedSources = meta.sources ? formatSources(meta.sources) : [];
+  const sourceIds = Array.isArray(meta.sources) ? formatSourceIds(meta.sources) : [];
+  const renderedSources = Array.isArray(meta.sources) ? formatSources(meta.sources) : [];
+  const hasManualSources = /^\s*#{2,3}\s+Sources\b/im.test(source);
   const hasArabic = hasArChapter(params.slug);
   const arabicHref = hasArabic
     ? buildLanguageToggleHref(`/chapters/${params.slug}`, undefined, 'ar')
@@ -130,6 +132,11 @@ export default async function Page({ params }: Props) {
         {meta.tags?.length ? (
           <p className="mt-1 text-xs text-gray-500">Tags: {meta.tags.join(', ')}</p>
         ) : null}
+        {sourceIds.length ? (
+          <p className="mt-1 text-xs text-gray-500">
+            <a href="#sources" className="underline hover:no-underline">Sources</a>: {sourceIds.join(' · ')}
+          </p>
+        ) : null}
 
         <article className="mt-8 space-y-4">
           {content}
@@ -137,8 +144,8 @@ export default async function Page({ params }: Props) {
 
         <FootnotesSection />
 
-        {renderedSources.length > 0 && (
-          <section className="mt-10">
+        {!hasManualSources && renderedSources.length > 0 && (
+          <section id="sources" className="mt-10">
             <h2 className="text-sm font-semibold text-gray-700">Sources</h2>
             <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
               {renderedSources.map((s, i) => (
