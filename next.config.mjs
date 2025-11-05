@@ -6,6 +6,8 @@ const nextConfig = {
 
   async headers() {
     const connectSrcHosts = [
+      'ws:',
+      'wss:',
       'https://tile.openstreetmap.org',
       'https://a.tile.openstreetmap.org',
       'https://b.tile.openstreetmap.org',
