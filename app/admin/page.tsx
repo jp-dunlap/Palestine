@@ -420,6 +420,44 @@ const AdminPage = () => {
       }
       return translated
     }
+
+    const saveArabicDraft = async (frontmatter: Record<string, unknown>, body: string) => {
+      const arabicSlug = addArabicSuffix(englishSlug)
+      const payload: Record<string, unknown> = {
+        collection: 'chapters_ar',
+        slug: arabicSlug,
+        originalSlug: arabicSlug,
+        workflow: 'draft',
+        frontmatter,
+        body,
+      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken
+      }
+      const response = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unable to save Arabic translation' }))
+        throw new Error(error.error ?? 'Unable to save Arabic translation')
+      }
+      return response.json()
+    }
+
+    const handleSaveSuccess = async (result: Record<string, unknown>, fallback = false) => {
+      if (typeof result.prUrl === 'string' && result.prUrl) {
+        pushToast('success', `Arabic draft ready: ${result.prUrl}`)
+      } else {
+        pushToast('success', fallback ? 'Arabic translation saved via server translation' : 'Arabic translation saved')
+      }
+      if (selectedCollection === 'chapters_ar') {
+        await loadEntries('chapters_ar')
+      }
+    }
+
     setTranslating(true)
     try {
       const originalFrontmatter = editorState.frontmatter
@@ -454,43 +492,27 @@ const AdminPage = () => {
         translatedFrontmatter.summary = translatedSummary
       }
 
-      const arabicSlug = addArabicSuffix(englishSlug)
-      const payload: Record<string, unknown> = {
-        collection: 'chapters_ar',
-        slug: arabicSlug,
-        originalSlug: arabicSlug,
-        workflow: 'draft',
-        frontmatter: translatedFrontmatter,
-        body: translatedBody,
-      }
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (csrfToken) {
-        headers['x-csrf-token'] = csrfToken
-      }
-      const response = await fetch('/api/admin/save', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      })
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unable to save Arabic translation' }))
-        throw new Error(error.error ?? 'Unable to save Arabic translation')
-      }
-      const result = await response.json()
-      if (result.prUrl) {
-        pushToast('success', `Arabic draft ready: ${result.prUrl}`)
-      } else {
-        pushToast('success', 'Arabic translation saved')
-      }
-      if (selectedCollection === 'chapters_ar') {
-        await loadEntries('chapters_ar')
-      }
+      const result = await saveArabicDraft(translatedFrontmatter, translatedBody)
+      await handleSaveSuccess(result)
+      return
     } catch (error) {
-      const rawMessage = (error as Error).message
-      const displayMessage = rawMessage && rawMessage !== 'Failed to fetch'
-        ? rawMessage
-        : translationErrorMessage
-      pushToast('error', displayMessage)
+      console.warn('Client-side translation failed, falling back to server translation', error)
+      const fallbackFrontmatter: Record<string, unknown> = {
+        ...editorState.frontmatter,
+        language: 'ar',
+      }
+      try {
+        const result = await saveArabicDraft(fallbackFrontmatter, editorState.body)
+        await handleSaveSuccess(result, true)
+        return
+      } catch (fallbackError) {
+        const rawMessage = (fallbackError as Error).message
+        const displayMessage =
+          rawMessage && rawMessage !== 'Failed to fetch'
+            ? rawMessage
+            : translationErrorMessage
+        pushToast('error', displayMessage)
+      }
     } finally {
       setTranslating(false)
     }

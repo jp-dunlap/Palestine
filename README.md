@@ -56,6 +56,8 @@ Create an `.env.local` (for local dev) or configure the variables on Vercel:
 | `CMS_AUTH_MODE` | `oauth` (default) or `token` |
 | `CMS_GITHUB_REPO` | `owner/name` of the content repo |
 | `CMS_GITHUB_BRANCH` | Default branch, usually `main` |
+| `CMS_TRANSLATE_URL` | Optional translation endpoint override (falls back to public mirrors) |
+| `CMS_TRANSLATE_API_KEY` | Optional API key passed to providers that require it |
 | `ALLOWED_EMAILS` | Comma separated allowlist (optional) |
 | `ALLOWED_GITHUB_LOGINS` | Comma separated allowlist (optional) |
 | `BASIC_AUTH_USER` / `BASIC_AUTH_PASS` | Optional basic auth for token mode |

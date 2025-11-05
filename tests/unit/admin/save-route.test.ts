@@ -13,17 +13,24 @@ const csrfMock = vi.hoisted(() => ({
 
 vi.mock('@/lib/api/csrf', () => csrfMock)
 
-const translateMock = vi.hoisted(() => ({
-  translatePlain: vi.fn<[text: string, source?: string, target?: string], Promise<string>>(
-    async () => 'عنوان عربي',
-  ),
-  translateMdxPreserving: vi.fn<
-    [mdx: string, source?: string, target?: string],
-    Promise<string>
-  >(async () => 'مرحبا بالعالم'),
+const translateSpies = vi.hoisted(() => ({
+  translatePlain: vi.fn(),
+  translateMdxPreserving: vi.fn(),
 }))
 
-vi.mock('@/lib/translate', () => translateMock)
+vi.mock('@/lib/translate', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/translate')>('@/lib/translate')
+  translateSpies.translatePlain.mockImplementation(actual.translatePlain)
+  translateSpies.translateMdxPreserving.mockImplementation(actual.translateMdxPreserving)
+  return {
+    ...actual,
+    translatePlain: translateSpies.translatePlain,
+    translateMdxPreserving: translateSpies.translateMdxPreserving,
+  }
+})
+
+const translatePlainSpy = translateSpies.translatePlain
+const translateMdxPreservingSpy = translateSpies.translateMdxPreserving
 
 type DirectoryEntry = { name: string; path: string; sha: string; type: 'file' }
 
@@ -58,18 +65,18 @@ describe('POST /api/admin/save', () => {
     return branchState[key]
   }
 
+  const originalFetch = global.fetch
+  const originalEnv = { ...process.env }
+
   beforeEach(() => {
+    process.env = { ...originalEnv }
     process.env.CMS_GITHUB_REPO = 'owner/repo'
     process.env.CMS_GITHUB_BRANCH = 'main'
     Object.values(authMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(csrfMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(githubMocks).forEach((mock) => (mock as any).mock?.clear?.())
-    translateMock.translatePlain.mockReset()
-    translateMock.translateMdxPreserving.mockReset()
-    translateMock.translatePlain.mockImplementation(async (input: string) =>
-      input.includes('Summary') ? 'ملخص عربي' : 'عنوان عربي',
-    )
-    translateMock.translateMdxPreserving.mockResolvedValue('مرحبا بالعالم')
+    translatePlainSpy.mockClear()
+    translateMdxPreservingSpy.mockClear()
     githubMocks.putFile.mockClear()
     githubMocks.listDirectory.mockClear()
     githubMocks.getFile.mockClear()
@@ -91,6 +98,30 @@ describe('POST /api/admin/save', () => {
       },
     ])
     commitCounter = 0
+
+    global.fetch = vi.fn(async (_input, init?: RequestInit) => {
+      const bodyValue = typeof init?.body === 'string' ? init.body : ''
+      let payload: Record<string, string> = {}
+      if (bodyValue) {
+        try {
+          payload = JSON.parse(bodyValue)
+        } catch {
+          payload = Object.fromEntries(new URLSearchParams(bodyValue)) as Record<string, string>
+        }
+      }
+      const text = payload.q ?? ''
+      let translated = 'مرحبا بالعالم'
+      if (text.includes('Title')) {
+        translated = 'عنوان عربي'
+      } else if (text.includes('Summary')) {
+        translated = 'ملخص عربي'
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ translatedText: translated }),
+      } as any
+    })
 
     githubMocks.listDirectory.mockImplementation(async (_client, directory: string, branch?: string) => {
       if (directory !== 'content/chapters') {
@@ -126,8 +157,8 @@ describe('POST /api/admin/save', () => {
   })
 
   afterEach(() => {
-    delete process.env.CMS_GITHUB_REPO
-    delete process.env.CMS_GITHUB_BRANCH
+    process.env = { ...originalEnv }
+    global.fetch = originalFetch
   })
 
   it('publishes markdown entry to main branch', async () => {
@@ -258,16 +289,87 @@ describe('POST /api/admin/save', () => {
 
     const response = await POST(request)
     expect(response.status).toBe(200)
-    expect(translateMock.translatePlain).toHaveBeenCalledTimes(2)
-    expect(translateMock.translateMdxPreserving).toHaveBeenCalledTimes(1)
+    expect(translatePlainSpy).toHaveBeenCalledTimes(2)
+    expect(translateMdxPreservingSpy).toHaveBeenCalledTimes(1)
     const putCall = githubMocks.putFile.mock.calls.at(-1)
     expect(putCall?.[2]).toContain('عنوان عربي')
     expect(putCall?.[2]).toContain('ملخص عربي')
     expect(putCall?.[2]).toContain('مرحبا بالعالم')
   })
 
+  it('translates Arabic draft when initial provider fails with 404', async () => {
+    const responses = [
+      { ok: false, status: 404, json: async () => ({}) },
+      { ok: false, status: 404, json: async () => ({}) },
+      { ok: true, status: 200, json: async () => ({ translatedText: 'عنوان عربي' }) },
+      { ok: true, status: 200, json: async () => ({ translatedText: 'ملخص عربي' }) },
+      { ok: true, status: 200, json: async () => ({ translatedText: 'مرحبا بالعالم' }) },
+    ]
+    global.fetch = vi.fn(async () => {
+      const next = responses.shift()
+      if (!next) {
+        throw new Error('No response available')
+      }
+      return next as any
+    }) as any
+
+    const body = {
+      collection: 'chapters_ar',
+      slug: 'hello.ar',
+      frontmatter: { title: 'English Title', summary: 'English Summary', slug: 'hello', language: 'ar' },
+      body: 'English body',
+      workflow: 'publish',
+      message: '',
+    }
+
+    const request = new NextRequest('http://localhost/api/admin/save', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const response = await POST(request)
+    expect(response.status).toBe(200)
+    expect(translatePlainSpy).toHaveBeenCalledTimes(2)
+    expect(translateMdxPreservingSpy).toHaveBeenCalledTimes(1)
+    const fetchMock = global.fetch as unknown as ReturnType<typeof vi.fn>
+    const fetchCalls = fetchMock.mock.calls
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(5)
+    expect(fetchCalls[0]?.[1]?.headers?.['Content-Type']).toBe('application/json')
+    expect(fetchCalls[1]?.[1]?.headers?.['Content-Type']).toBe('application/x-www-form-urlencoded')
+  })
+
   it('returns 502 when translation fails for an Arabic chapter', async () => {
-    translateMock.translatePlain.mockRejectedValueOnce(new Error('Service down'))
+    translatePlainSpy.mockImplementationOnce(async () => {
+      throw new Error('Service down')
+    })
+
+    const body = {
+      collection: 'chapters_ar',
+      slug: 'hello.ar',
+      frontmatter: { title: 'English Title', summary: 'English Summary', slug: 'hello', language: 'ar' },
+      body: 'English body',
+      workflow: 'publish',
+      message: '',
+    }
+
+    const request = new NextRequest('http://localhost/api/admin/save', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const response = await POST(request)
+    expect(response.status).toBe(502)
+    expect(githubMocks.putFile).not.toHaveBeenCalled()
+  })
+
+  it('returns 502 and skips saving when every provider fails', async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 503,
+      json: async () => ({})
+    })) as any
 
     const body = {
       collection: 'chapters_ar',
