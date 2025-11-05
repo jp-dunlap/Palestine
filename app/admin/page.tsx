@@ -256,34 +256,33 @@ const AdminPage = () => {
   }
 
   const resolveSlug = (state: EditorState, collection: CollectionSummary) => {
-    const existing = selectedSlug ?? slugRef.current
-    if (existing) {
-      return existing
-    }
     if (state.format === 'markdown') {
       const value = state.frontmatter[collection.slugField]
-      if (typeof value === 'string' && value) {
-        return value
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim()
       }
       const title = state.frontmatter.title
-      return typeof title === 'string' ? title : ''
-    }
-    try {
-      const parsed = state.format === 'json' ? JSON.parse(state.text) : YAML.parse(state.text)
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        const value = (parsed as Record<string, unknown>)[collection.slugField]
-        if (typeof value === 'string' && value) {
-          return value
-        }
-        const title = (parsed as Record<string, unknown>).title
-        if (typeof title === 'string' && title) {
-          return title
-        }
+      if (typeof title === 'string' && title.trim()) {
+        return title.trim()
       }
-      return ''
-    } catch {
-      return ''
+    } else {
+      try {
+        const parsed = state.format === 'json' ? JSON.parse(state.text) : YAML.parse(state.text)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const slugField = (parsed as Record<string, unknown>)[collection.slugField]
+          if (typeof slugField === 'string' && slugField.trim()) {
+            return slugField.trim()
+          }
+          const title = (parsed as Record<string, unknown>).title
+          if (typeof title === 'string' && title.trim()) {
+            return title.trim()
+          }
+        }
+      } catch {
+        // ignore parsing errors and fall back to existing slug references
+      }
     }
+    return selectedSlug ?? slugRef.current ?? ''
   }
 
   const handleSave = async () => {
@@ -324,10 +323,7 @@ const AdminPage = () => {
         workflow,
         message: message.trim(),
       }
-      const originalSlugValue = selectedSlug ?? slugRef.current
-      if (originalSlugValue) {
-        payload.originalSlug = originalSlugValue
-      }
+      payload.originalSlug = slugRef.current ?? selectedSlug ?? ''
       if (frontmatter) payload.frontmatter = frontmatter
       if (body !== undefined) payload.body = body
       if (data !== undefined) payload.data = data
@@ -408,7 +404,7 @@ const AdminPage = () => {
           return await translateValue(input)
         } catch {
           if (!translationErrored) {
-            pushToast('error', 'Translation service unavailable; using original text.')
+            pushToast('error', 'Translation service unavailable; some fields may use original text.')
             translationErrored = true
           }
           return input

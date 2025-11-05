@@ -1,6 +1,6 @@
 import { describe, expect, beforeEach, it, vi } from 'vitest'
 import { collections } from '@/lib/collections'
-import { listEntries, serializeEntry } from '@/lib/content'
+import { listEntries, readEntry, serializeEntry } from '@/lib/content'
 
 const githubMocks = vi.hoisted(() => ({
   listDirectory: vi.fn(),
@@ -87,5 +87,29 @@ describe('lib/content', () => {
     expect(entries[0].slug).toBe('bibliography')
     expect(entries[0].title).toBe('Bibliography')
     expect(entries[0].path).toBe('data/bibliography.json')
+  })
+
+  it('reads entries using resolvePath with branch awareness', async () => {
+    const baseCollection = collections.find((item) => item.id === 'chapters_en')!
+    const collection = { ...baseCollection, resolvePath: vi.fn(baseCollection.resolvePath) }
+    const client = {} as any
+    const markdown = Buffer.from(
+      `---\ntitle: Prologue\nslug: prologue\nlanguage: en\n---\nBody text.\n`,
+      'utf-8',
+    ).toString('base64')
+    githubMocks.listDirectory.mockResolvedValue([
+      { name: '001-prologue.mdx', path: 'content/chapters/001-prologue.mdx', sha: 'sha', type: 'file' },
+    ])
+    githubMocks.getFile.mockResolvedValue({
+      sha: 'branch-sha',
+      content: markdown,
+      encoding: 'base64',
+      path: 'content/chapters/001-prologue.mdx',
+    })
+
+    await readEntry(client, collection, '001-prologue', 'cms/001-prologue')
+
+    expect(collection.resolvePath).toHaveBeenCalledWith(client, '001-prologue', { branch: 'cms/001-prologue' })
+    expect(githubMocks.getFile).toHaveBeenCalledWith(client, 'content/chapters/001-prologue.mdx', 'cms/001-prologue')
   })
 })

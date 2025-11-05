@@ -1,12 +1,21 @@
 import path from 'path'
 import type { GitHubClient } from './github'
 import { listDirectory } from './github'
-import { slugify } from './slugs'
+import {
+  ensureArabicSuffix,
+  extractNumericPrefix,
+  hasNumericPrefix,
+  slugify,
+  stripArabicSuffix,
+  stripNumericPrefix,
+} from './slugs'
 import { z } from './zod'
 import type { ZodSchema } from './zod'
 
 export type Workflow = 'draft' | 'publish'
 export type CollectionFormat = 'markdown' | 'json' | 'yaml'
+
+export type ResolveOpts = { branch?: string }
 
 export type CollectionDefinition = {
   id: string
@@ -21,34 +30,33 @@ export type CollectionDefinition = {
   bodyField?: string
   fields: { name: string; type: string; required?: boolean }[]
   filenameFilter?: (name: string) => boolean
-  resolvePath?: (client: GitHubClient, slug: string, opts?: { branch?: string }) => Promise<string>
+  resolvePath?: (client: GitHubClient, slug: string, opts?: ResolveOpts) => Promise<string>
 }
 
 const CHAPTERS_DIRECTORY = 'content/chapters'
 const CHAPTER_EXTENSION: CollectionDefinition['extension'] = '.mdx'
 
-const parsePrefix = (name: string) => {
-  const match = name.match(/^(\d{3})-/)
-  if (!match) return null
-  return Number.parseInt(match[1] ?? '', 10)
-}
-
 const nextChapterPrefix = (files: { name: string }[]) => {
   const numbers = files
-    .map((file) => parsePrefix(file.name))
+    .map((file) => extractNumericPrefix(file.name))
     .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value))
   const next = numbers.length === 0 ? 1 : Math.max(...numbers) + 1
   return String(next).padStart(3, '0')
 }
 
 export const isArabicFilename = (name: string) => name.endsWith('.ar.mdx')
-export const addArSuffix = (base: string) => (base.endsWith('.ar') ? base : `${base}.ar`)
 
 const resolveChapterPath = (isArabic: boolean) => {
-  return async (client: GitHubClient, slug: string) => {
-    const entries = await listDirectory(client, CHAPTERS_DIRECTORY).catch(() => [])
-    const normalizedSlug = slug.trim()
+  return async (client: GitHubClient, slug: string, opts?: ResolveOpts) => {
+    const branch = opts?.branch
+    const entries = await listDirectory(client, CHAPTERS_DIRECTORY, branch).catch(async () => {
+      if (!branch) {
+        return [] as Awaited<ReturnType<typeof listDirectory>>
+      }
+      return listDirectory(client, CHAPTERS_DIRECTORY).catch(() => [])
+    })
     const extension = CHAPTER_EXTENSION
+    const normalizedSlug = path.posix.basename(slug.trim(), extension)
 
     const ensureEntry = (candidate: string) =>
       entries.find((entry) => entry.type === 'file' && entry.name === `${candidate}${extension}`)
@@ -64,41 +72,40 @@ const resolveChapterPath = (isArabic: boolean) => {
     const englishFiles = availableFiles.filter((entry) => !isArabicFilename(entry.name))
 
     if (!isArabic) {
-      const sanitized = slugify(normalizedSlug || '') || 'untitled'
-      const hasPrefix = /^(\d{3})-/.test(normalizedSlug)
-      if (hasPrefix && normalizedSlug) {
+      const sanitizedBase = stripArabicSuffix(stripNumericPrefix(normalizedSlug)) || normalizedSlug
+      const sanitized = slugify(sanitizedBase) || 'untitled'
+      if (hasNumericPrefix(normalizedSlug) && normalizedSlug) {
         return path.posix.join(CHAPTERS_DIRECTORY, `${normalizedSlug}${extension}`)
       }
       const prefix = nextChapterPrefix(availableFiles)
       return path.posix.join(CHAPTERS_DIRECTORY, `${prefix}-${sanitized}${extension}`)
     }
 
-    const baseWithoutSuffix = normalizedSlug.replace(/\.ar$/, '')
-    const arSlug = addArSuffix(normalizedSlug || '')
+    const baseWithoutSuffix = stripArabicSuffix(normalizedSlug)
+    const arSlug = ensureArabicSuffix(normalizedSlug || '')
     const arExisting = ensureEntry(arSlug)
     if (arExisting) {
       return arExisting.path
     }
 
-    const hasPrefix = /^(\d{3})-/.test(baseWithoutSuffix)
-    if (hasPrefix) {
-      const withPrefix = `${addArSuffix(baseWithoutSuffix)}`
+    if (hasNumericPrefix(baseWithoutSuffix)) {
+      const withPrefix = ensureArabicSuffix(baseWithoutSuffix)
       return path.posix.join(CHAPTERS_DIRECTORY, `${withPrefix}${extension}`)
     }
 
-    const sanitizedBase = slugify(baseWithoutSuffix) || 'untitled'
+    const sanitizedBase = slugify(stripNumericPrefix(baseWithoutSuffix) || baseWithoutSuffix) || 'untitled'
     const paired = englishFiles.find((entry) => {
       const base = entry.name.slice(0, -extension.length)
-      return base.replace(/^(\d{3})-/, '') === sanitizedBase
+      return stripNumericPrefix(base) === sanitizedBase
     })
     if (paired) {
       const base = paired.name.slice(0, -extension.length)
-      return path.posix.join(CHAPTERS_DIRECTORY, `${addArSuffix(base)}${extension}`)
+      return path.posix.join(CHAPTERS_DIRECTORY, `${ensureArabicSuffix(base)}${extension}`)
     }
 
     const prefix = nextChapterPrefix(availableFiles)
     const fallbackBase = `${prefix}-${sanitizedBase}`
-    return path.posix.join(CHAPTERS_DIRECTORY, `${addArSuffix(fallbackBase)}${extension}`)
+    return path.posix.join(CHAPTERS_DIRECTORY, `${ensureArabicSuffix(fallbackBase)}${extension}`)
   }
 }
 

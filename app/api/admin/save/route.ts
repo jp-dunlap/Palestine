@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureAuth } from '@/lib/api/auth'
 import { requireCsrfToken } from '@/lib/api/csrf'
-import { getCollection } from '@/lib/collections'
-import { resolveCollectionPath, serializeEntry, slugFromPath } from '@/lib/content'
+import { getCollection, getEntryPath } from '@/lib/collections'
+import { serializeEntry, slugFromPath } from '@/lib/content'
 import {
   createPullRequest,
   ensureBranch,
@@ -15,7 +15,7 @@ import {
   updatePullRequestBody,
 } from '@/lib/github'
 import { rateLimit } from '@/lib/rate-limit'
-import { sanitizeFilename, slugify } from '@/lib/slugs'
+import { sanitizeFilename, slugify, stripArabicSuffix, stripNumericPrefix } from '@/lib/slugs'
 
 const parseBody = async (req: NextRequest) => {
   try {
@@ -120,7 +120,7 @@ export const POST = async (req: NextRequest) => {
     const fm = validated as Record<string, unknown>
     const existingSlug = fm[collection.slugField]
     if (typeof existingSlug !== 'string' || existingSlug.trim().length === 0) {
-      const derived = slug.replace(/\.ar$/, '').replace(/^(\d{3})-/, '')
+      const derived = stripNumericPrefix(stripArabicSuffix(slug))
       fm[collection.slugField] = derived
     }
   } else if (typeof validated === 'object' && validated !== null && !Array.isArray(validated)) {
@@ -142,8 +142,10 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 
-  const lookupSlug = typeof originalSlug === 'string' && originalSlug.trim().length > 0 ? originalSlug.trim() : slug
-  const path = await resolveCollectionPath(client, collection, lookupSlug, branchName)
+  const basisSlug = typeof originalSlug === 'string' && originalSlug.trim().length > 0 ? originalSlug.trim() : slug
+  const path =
+    (await collection.resolvePath?.(client, basisSlug, { branch: branchName })) ??
+    (collection.singleFile ?? getEntryPath(collection, slug))
 
   const payload = collection.format === 'markdown'
     ? {

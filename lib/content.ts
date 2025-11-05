@@ -16,9 +16,22 @@ export const resolveCollectionPath = async (
     return collection.singleFile
   }
   if (collection.resolvePath) {
-    return collection.resolvePath(client, slug, { branch })
+    const resolved = await collection.resolvePath(client, slug, { branch })
+    if (resolved) {
+      return resolved
+    }
   }
   return getEntryPath(collection, slug)
+}
+
+const extractTitle = (candidate: unknown, fallback: string) => {
+  if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+    const value = (candidate as Record<string, unknown>).title
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value
+    }
+  }
+  return fallback
 }
 
 export type ParsedEntry = {
@@ -149,8 +162,7 @@ export const listEntries = async (
     const slug = file.name.slice(0, -collection.extension.length)
     try {
       const parsed = await readEntry(client, collection, slug, branch)
-      const title = (parsed.frontmatter?.title as string | undefined) ??
-        (typeof (parsed.data as any)?.title === 'string' ? (parsed.data as any).title : slug)
+      const title = extractTitle(parsed.frontmatter, extractTitle(parsed.data, slug))
       const commit = await getLatestCommitForPath(client, parsed.path, branch)
       summaries.push({
         path: parsed.path,

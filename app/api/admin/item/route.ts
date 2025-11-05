@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureAuth } from '@/lib/api/auth'
 import { requireCsrfToken } from '@/lib/api/csrf'
-import { getCollection } from '@/lib/collections'
-import { readEntry, resolveCollectionPath } from '@/lib/content'
+import { getCollection, getEntryPath } from '@/lib/collections'
+import { readEntry } from '@/lib/content'
 import {
   createPullRequest,
   deleteFile,
@@ -91,7 +91,9 @@ export const DELETE = async (req: NextRequest) => {
   const branchName = branchWorkflow === 'draft' ? `cms/${slug}` : undefined
   const client = getOctokitForRequest(req)
   const author = resolveCommitAuthor(auth.mode === 'oauth' ? auth.session : undefined)
-  const path = await resolveCollectionPath(client, collection, slug, branchName)
+  const path =
+    (await collection.resolvePath?.(client, slug, { branch: branchName })) ??
+    (collection.singleFile ?? getEntryPath(collection, slug))
   try {
     if (branchName) {
       await ensureBranch(client, branchName)
