@@ -13,6 +13,8 @@ const nextConfig = {
       'https://b.tile.openstreetmap.org',
       'https://c.tile.openstreetmap.org',
     ];
+    const openGraphCacheControl =
+      'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800';
     const csp = [
       "default-src 'self'",
       "base-uri 'none'",
@@ -56,7 +58,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -65,7 +67,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -74,7 +76,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -83,7 +85,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -92,7 +94,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -101,7 +103,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
@@ -110,7 +112,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800',
+            value: openGraphCacheControl,
           },
         ],
       },
