@@ -204,9 +204,20 @@ export const callProvider = async (input: string, source: string, target: string
         })
 
         if (!response.ok) {
-          if ((response.status === 401 || response.status === 403) && !apiKey) {
-            errors.push(`${provider.url} requires an API key`)
-            shouldRetryWithForm = false
+          if (response.status === 401 || response.status === 403) {
+            if (!apiKey && provider.requiresKey) {
+              errors.push(`${provider.url} requires an API key`)
+              shouldRetryWithForm = false
+              break
+            }
+
+            if (mode === 'json') {
+              shouldRetryWithForm = true
+              errors.push(`${provider.url} responded with ${response.status}`)
+              continue
+            }
+
+            errors.push(`${provider.url} responded with ${response.status}`)
             break
           }
 

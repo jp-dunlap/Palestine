@@ -507,9 +507,10 @@ const AdminPage = () => {
         return
       } catch (fallbackError) {
         const rawMessage = (fallbackError as Error).message
-        const displayMessage = rawMessage && rawMessage !== 'Failed to fetch'
-          ? rawMessage
-          : translationErrorMessage
+        const displayMessage =
+          rawMessage && rawMessage !== 'Failed to fetch'
+            ? rawMessage
+            : translationErrorMessage
         pushToast('error', displayMessage)
       }
     } finally {
