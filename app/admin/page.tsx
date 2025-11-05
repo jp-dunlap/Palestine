@@ -448,7 +448,9 @@ const AdminPage = () => {
     }
 
     const handleSaveSuccess = async (result: Record<string, unknown>, fallback = false) => {
-      if (typeof result.prUrl === 'string' && result.prUrl) {
+      if (result.translationPending === true) {
+        pushToast('success', 'Arabic draft saved (translation pending).')
+      } else if (typeof result.prUrl === 'string' && result.prUrl) {
         pushToast('success', `Arabic draft ready: ${result.prUrl}`)
       } else {
         pushToast('success', fallback ? 'Arabic translation saved via server translation' : 'Arabic translation saved')
