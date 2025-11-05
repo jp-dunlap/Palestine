@@ -4,7 +4,11 @@ import robots from '@/app/robots';
 describe('robots.txt configuration', () => {
   it('disallows admin surfaces and omits legacy cms api', () => {
     const result = robots();
-    const rules = result.rules ?? [];
+    const rules = Array.isArray(result.rules)
+      ? result.rules
+      : result.rules
+        ? [result.rules]
+        : [];
     const disallowEntries = rules
       .map((rule: { disallow?: string | string[] }) =>
         Array.isArray(rule.disallow)
