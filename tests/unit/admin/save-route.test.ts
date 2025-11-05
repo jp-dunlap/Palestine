@@ -13,6 +13,13 @@ const csrfMock = vi.hoisted(() => ({
 
 vi.mock('@/lib/api/csrf', () => csrfMock)
 
+const translateMock = vi.hoisted(() => ({
+  translatePlain: vi.fn(async () => 'عنوان عربي'),
+  translateMdxPreserving: vi.fn(async () => 'مرحبا بالعالم'),
+}))
+
+vi.mock('@/lib/translate', () => translateMock)
+
 type DirectoryEntry = { name: string; path: string; sha: string; type: 'file' }
 
 const cloneEntries = (entries: DirectoryEntry[]) => entries.map((entry) => ({ ...entry }))
@@ -52,6 +59,12 @@ describe('POST /api/admin/save', () => {
     Object.values(authMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(csrfMock).forEach((mock) => (mock as any).mock?.clear?.())
     Object.values(githubMocks).forEach((mock) => (mock as any).mock?.clear?.())
+    translateMock.translatePlain.mockReset()
+    translateMock.translateMdxPreserving.mockReset()
+    translateMock.translatePlain.mockImplementation(async (input: string) =>
+      input.includes('Summary') ? 'ملخص عربي' : 'عنوان عربي',
+    )
+    translateMock.translateMdxPreserving.mockResolvedValue('مرحبا بالعالم')
     githubMocks.putFile.mockClear()
     githubMocks.listDirectory.mockClear()
     githubMocks.getFile.mockClear()
@@ -221,5 +234,53 @@ describe('POST /api/admin/save', () => {
     expect(githubMocks.putFile.mock.calls.length).toBe(initialCallCount + 1)
     const secondCall = githubMocks.putFile.mock.calls.at(-1)
     expect(secondCall?.[1]).toBe('content/chapters/001-prologue.ar.mdx')
+  })
+
+  it('translates English fields before saving an Arabic chapter', async () => {
+    const body = {
+      collection: 'chapters_ar',
+      slug: 'hello.ar',
+      frontmatter: { title: 'English Title', summary: 'English Summary', slug: 'hello', language: 'ar' },
+      body: 'English body',
+      workflow: 'publish',
+      message: '',
+    }
+    const request = new NextRequest('http://localhost/api/admin/save', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const response = await POST(request)
+    expect(response.status).toBe(200)
+    expect(translateMock.translatePlain).toHaveBeenCalledTimes(2)
+    expect(translateMock.translateMdxPreserving).toHaveBeenCalledTimes(1)
+    const putCall = githubMocks.putFile.mock.calls.at(-1)
+    expect(putCall?.[2]).toContain('عنوان عربي')
+    expect(putCall?.[2]).toContain('ملخص عربي')
+    expect(putCall?.[2]).toContain('مرحبا بالعالم')
+  })
+
+  it('returns 502 when translation fails for an Arabic chapter', async () => {
+    translateMock.translatePlain.mockRejectedValueOnce(new Error('Service down'))
+
+    const body = {
+      collection: 'chapters_ar',
+      slug: 'hello.ar',
+      frontmatter: { title: 'English Title', summary: 'English Summary', slug: 'hello', language: 'ar' },
+      body: 'English body',
+      workflow: 'publish',
+      message: '',
+    }
+
+    const request = new NextRequest('http://localhost/api/admin/save', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const response = await POST(request)
+    expect(response.status).toBe(502)
+    expect(githubMocks.putFile).not.toHaveBeenCalled()
   })
 })

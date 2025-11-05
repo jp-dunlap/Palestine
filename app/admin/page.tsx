@@ -5,6 +5,7 @@ import YAML from 'yaml'
 import CollectionSwitcher, { type CollectionSummary } from '@/components/CollectionSwitcher'
 import EntryList, { type Entry } from '@/components/EntryList'
 import Editor, { type EditorState, type MarkdownEditorState, type StructuredEditorState } from '@/components/Editor'
+import { hasEnoughArabic } from '@/lib/arabic'
 
 type Session = {
   name?: string
@@ -394,45 +395,55 @@ const AdminPage = () => {
       pushToast('error', 'Save the English chapter before translating.')
       return
     }
-    const translateValue = async (text: string) => {
+    const translationErrorMessage = 'Translation service unavailable; nothing was saved.'
+    const validationErrorMessage = 'Arabic translation validation failed; nothing was saved.'
+
+    const requestTranslation = async (text: string, mode: 'plain' | 'mdx') => {
       if (!text.trim()) {
         return text
       }
       const response = await fetch('/api/admin/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source: 'en', target: 'ar' }),
+        body: JSON.stringify({ text, source: 'en', target: 'ar', mode }),
       })
+      const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>
       if (!response.ok) {
-        throw new Error('Translate failed')
+        const message = typeof payload.error === 'string' ? (payload.error as string) : translationErrorMessage
+        throw new Error(message)
       }
-      const result = await response.json()
-      return typeof result.translated === 'string' ? result.translated : text
+      const translated = typeof payload.translated === 'string'
+        ? (payload.translated as string)
+        : ''
+      if (!translated.trim()) {
+        throw new Error(validationErrorMessage)
+      }
+      return translated
     }
     setTranslating(true)
     try {
-      let translationErrored = false
-      const safeTranslate = async (input: string) => {
-        if (!input.trim()) return input
-        try {
-          return await translateValue(input)
-        } catch {
-          if (!translationErrored) {
-            pushToast('error', 'Translation service unavailable; some fields may use original text.')
-            translationErrored = true
-          }
-          return input
-        }
-      }
-
       const originalFrontmatter = editorState.frontmatter
-      const translatedTitle = typeof originalFrontmatter.title === 'string'
-        ? await safeTranslate(originalFrontmatter.title)
-        : ''
-      const translatedSummary = typeof originalFrontmatter.summary === 'string'
-        ? await safeTranslate(originalFrontmatter.summary)
+      const originalTitle = typeof originalFrontmatter.title === 'string' ? originalFrontmatter.title : ''
+      const originalSummary = typeof originalFrontmatter.summary === 'string'
+        ? originalFrontmatter.summary
         : undefined
-      const translatedBody = await safeTranslate(editorState.body)
+      const translatedTitle = originalTitle ? await requestTranslation(originalTitle, 'plain') : ''
+      if (translatedTitle.trim() && !hasEnoughArabic(translatedTitle)) {
+        throw new Error(validationErrorMessage)
+      }
+      const translatedSummary =
+        originalSummary && originalSummary.trim()
+          ? await requestTranslation(originalSummary, 'plain')
+          : originalSummary
+      if (translatedSummary && translatedSummary.trim() && !hasEnoughArabic(translatedSummary)) {
+        throw new Error(validationErrorMessage)
+      }
+      const translatedBody = editorState.body.trim()
+        ? await requestTranslation(editorState.body, 'mdx')
+        : editorState.body
+      if (translatedBody.trim() && !hasEnoughArabic(translatedBody)) {
+        throw new Error(validationErrorMessage)
+      }
 
       const translatedFrontmatter: Record<string, unknown> = {
         ...originalFrontmatter,
@@ -451,9 +462,6 @@ const AdminPage = () => {
         workflow: 'draft',
         frontmatter: translatedFrontmatter,
         body: translatedBody,
-      }
-      if (translationErrored) {
-        payload.message = 'Translated with partial results'
       }
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (csrfToken) {
@@ -478,7 +486,11 @@ const AdminPage = () => {
         await loadEntries('chapters_ar')
       }
     } catch (error) {
-      pushToast('error', (error as Error).message)
+      const rawMessage = (error as Error).message
+      const displayMessage = rawMessage && rawMessage !== 'Failed to fetch'
+        ? rawMessage
+        : translationErrorMessage
+      pushToast('error', displayMessage)
     } finally {
       setTranslating(false)
     }
