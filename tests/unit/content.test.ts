@@ -91,7 +91,11 @@ describe('lib/content', () => {
 
   it('reads entries using resolvePath with branch awareness', async () => {
     const baseCollection = collections.find((item) => item.id === 'chapters_en')!
-    const collection = { ...baseCollection, resolvePath: vi.fn(baseCollection.resolvePath) }
+    const baseResolvePath = baseCollection.resolvePath
+    if (!baseResolvePath) {
+      throw new Error('chapters_en collection must define resolvePath')
+    }
+    const collection = { ...baseCollection, resolvePath: vi.fn(baseResolvePath) }
     const client = {} as any
     const markdown = Buffer.from(
       `---\ntitle: Prologue\nslug: prologue\nlanguage: en\n---\nBody text.\n`,
