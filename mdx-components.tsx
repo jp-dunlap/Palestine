@@ -18,12 +18,32 @@ function Cite({ id, children }: { id?: string; children?: React.ReactNode }) {
   );
 }
 
+function Anchor(props: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const { href = '', rel, target, ...rest } = props;
+  const isExternal = /^https?:\/\//i.test(href);
+  const relTokens = new Set<string>(
+    String(rel ?? '')
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+
+  if (isExternal || target === '_blank') {
+    relTokens.add('noopener');
+    relTokens.add('noreferrer');
+  }
+
+  const finalRel = [...relTokens].join(' ');
+
+  return <a href={href} rel={finalRel || undefined} target={target} {...rest} />;
+}
+
 export function createMdxComponents(locale: 'en' | 'ar' = 'en') {
   const { Footnote, FootnotesSection } = createFootnotesManager(locale);
   return {
     components: {
       Cite,
       Footnote,
+      a: Anchor,
     },
     FootnotesSection,
   } as const;
