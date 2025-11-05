@@ -13,6 +13,7 @@ type Props = {
   onCreate: () => void
   search: string
   onSearch: (value: string) => void
+  disabled?: boolean
 }
 
 const formatDate = (value: string | null) => {
@@ -24,7 +25,7 @@ const formatDate = (value: string | null) => {
   return date.toLocaleString()
 }
 
-const EntryList = ({ entries, selected, onSelect, onCreate, search, onSearch }: Props) => {
+const EntryList = ({ entries, selected, onSelect, onCreate, search, onSearch, disabled = false }: Props) => {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 pb-3">
@@ -34,13 +35,16 @@ const EntryList = ({ entries, selected, onSelect, onCreate, search, onSearch }: 
           className="w-full rounded border border-zinc-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           placeholder="Search entries"
         />
-        <button
-          type="button"
-          onClick={onCreate}
-          className="rounded border border-black px-3 py-2 text-sm font-medium text-black transition hover:bg-black hover:text-white"
-        >
-          New
-        </button>
+        {disabled ? null : (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="rounded border border-black px-3 py-2 text-sm font-medium text-black transition hover:bg-black hover:text-white"
+            data-testid="new-button"
+          >
+            New
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto rounded border border-zinc-200 bg-white">
         {entries.length === 0 ? (

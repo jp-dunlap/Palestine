@@ -577,42 +577,68 @@ const AdminPage = () => {
   }
 
   const collection = collections.find((item) => item.id === selectedCollection) ?? null
+  const shouldGateAdmin = authMode === 'oauth' && requiresLogin
+  const header = (
+    <header className="border-b border-zinc-200 bg-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div>
+          <h1 className="text-lg font-semibold text-zinc-900">Palestine CMS Admin</h1>
+          {session ? (
+            <p className="text-xs text-zinc-500">
+              Signed in as {session.name ?? session.login}
+            </p>
+          ) : authMode === 'token' ? (
+            <p className="text-xs text-zinc-500">Token mode</p>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          {authMode === 'oauth' && !requiresLogin ? (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition hover:border-black hover:text-black"
+            >
+              Sign out
+            </button>
+          ) : null}
+          {authMode === 'oauth' && requiresLogin ? (
+            <a
+              href="/api/auth/signin"
+              className="rounded border border-black px-3 py-1.5 text-sm font-medium text-black transition hover:bg-black hover:text-white"
+            >
+              Sign in with GitHub
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  )
+
+  if (shouldGateAdmin) {
+    return (
+      <div className="flex min-h-screen flex-col bg-zinc-100">
+        {header}
+        <main className="flex flex-1 items-center justify-center px-6 py-12">
+          <div className="w-full max-w-sm rounded border border-zinc-200 bg-white p-6 text-center shadow-sm">
+            <h2 className="text-lg font-semibold text-zinc-900">Sign in required</h2>
+            <p className="mt-2 text-sm text-zinc-600">
+              Sign in with GitHub to manage the Palestine CMS content.
+            </p>
+            <a
+              href="/api/auth/signin"
+              className="mt-4 inline-flex items-center justify-center rounded border border-black px-3 py-2 text-sm font-medium text-black transition hover:bg-black hover:text-white"
+            >
+              Sign in with GitHub
+            </a>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-100">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-900">Palestine CMS Admin</h1>
-            {session ? (
-              <p className="text-xs text-zinc-500">
-                Signed in as {session.name ?? session.login}
-              </p>
-            ) : authMode === 'token' ? (
-              <p className="text-xs text-zinc-500">Token mode</p>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            {authMode === 'oauth' && !requiresLogin ? (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition hover:border-black hover:text-black"
-              >
-                Sign out
-              </button>
-            ) : null}
-            {authMode === 'oauth' && requiresLogin ? (
-              <a
-                href="/api/auth/signin"
-                className="rounded border border-black px-3 py-1.5 text-sm font-medium text-black transition hover:bg-black hover:text-white"
-              >
-                Sign in with GitHub
-              </a>
-            ) : null}
-          </div>
-        </div>
-      </header>
+      {header}
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 gap-6 px-6 py-6">
         <aside className="w-56">
@@ -645,6 +671,7 @@ const AdminPage = () => {
               onCreate={handleCreate}
               search={search}
               onSearch={setSearch}
+              disabled={requiresLogin}
             />
           )}
         </section>
