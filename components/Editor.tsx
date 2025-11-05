@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ImageUploader from './ImageUploader'
 import type { CollectionSummary } from './CollectionSwitcher'
+import RichMarkdown, { type RichMarkdownHandle } from './RichMarkdown'
+import MarkdownPreview from './MarkdownPreview'
+import PromptDialog from './PromptDialog'
 
 export type MarkdownEditorState = {
   format: 'markdown'
@@ -23,7 +26,7 @@ type Props = {
   collection: CollectionSummary | null
   state: EditorState | null
   onChange: (state: EditorState) => void
-  onSave: () => void
+  onSave: (options?: { autosave?: boolean }) => void
   onDelete: () => void
   saving: boolean
   unsaved: boolean
@@ -61,6 +64,13 @@ const Editor = ({
   translating = false,
   onTranslate,
 }: Props) => {
+  const [bodyMode, setBodyMode] = useState<'rich' | 'raw'>('rich')
+  const [showPreview, setShowPreview] = useState(false)
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false)
+  const autoSaveTimer = useRef<number | null>(null)
+  const richEditorRef = useRef<RichMarkdownHandle | null>(null)
+  const [rawImagePrompt, setRawImagePrompt] = useState<{ url: string } | null>(null)
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
@@ -76,6 +86,90 @@ const Editor = ({
     if (!collection) return []
     return collection.fields.filter((field) => field.name !== 'body')
   }, [collection])
+
+  useEffect(() => {
+    if (state?.format !== 'markdown') {
+      setBodyMode('rich')
+      setShowPreview(false)
+      setAutoSaveEnabled(false)
+      setRawImagePrompt(null)
+    }
+  }, [state?.format])
+
+  useEffect(() => {
+    if (workflow !== 'draft' && autoSaveEnabled) {
+      setAutoSaveEnabled(false)
+    }
+  }, [autoSaveEnabled, workflow])
+
+  useEffect(() => {
+    if (bodyMode !== 'raw') {
+      setRawImagePrompt(null)
+    }
+  }, [bodyMode])
+
+  useEffect(() => {
+    if (!autoSaveEnabled || !state || state.format !== 'markdown') {
+      return
+    }
+    if (workflow !== 'draft' || !unsaved || saving) {
+      return
+    }
+    if (autoSaveTimer.current) {
+      window.clearTimeout(autoSaveTimer.current)
+    }
+    autoSaveTimer.current = window.setTimeout(() => {
+      onSave({ autosave: true })
+      autoSaveTimer.current = null
+    }, 2500)
+    return () => {
+      if (autoSaveTimer.current) {
+        window.clearTimeout(autoSaveTimer.current)
+        autoSaveTimer.current = null
+      }
+    }
+  }, [autoSaveEnabled, onSave, saving, state, unsaved, workflow])
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) {
+        window.clearTimeout(autoSaveTimer.current)
+      }
+    }
+  }, [])
+
+  const handleRawImageCancel = useCallback(() => {
+    setRawImagePrompt(null)
+  }, [])
+
+  const handleRawImageSubmit = useCallback(
+    (value: string) => {
+      if (!state || state.format !== 'markdown' || !rawImagePrompt) {
+        setRawImagePrompt(null)
+        return
+      }
+      const trimmed = value.trim().replace(/\]/g, '\\]')
+      const alt = trimmed.length > 0 ? trimmed : 'image'
+      const prefix = state.body.trim().length > 0 ? '\n\n' : ''
+      onChange({ ...state, body: `${state.body}${prefix}![${alt}](${rawImagePrompt.url})` })
+      setRawImagePrompt(null)
+    },
+    [onChange, rawImagePrompt, state],
+  )
+
+  const handleInsertImage = useCallback(
+    (url: string) => {
+      if (!state || state.format !== 'markdown') {
+        return
+      }
+      if (bodyMode === 'rich') {
+        richEditorRef.current?.insertImage(url)
+        return
+      }
+      setRawImagePrompt({ url })
+    },
+    [bodyMode, state],
+  )
 
   if (!collection) {
     return <div className="flex h-full items-center justify-center text-sm text-zinc-500">Select a collection.</div>
@@ -192,6 +286,15 @@ const Editor = ({
             placeholder="Optional"
           />
         </div>
+        <label className="flex items-center gap-2 text-xs font-medium text-zinc-600">
+          <input
+            type="checkbox"
+            checked={autoSaveEnabled}
+            onChange={(event) => setAutoSaveEnabled(event.target.checked)}
+            disabled={workflow !== 'draft'}
+          />
+          Auto-save drafts
+        </label>
         {unsaved ? <span className="text-xs font-medium uppercase tracking-wide text-amber-600">Unsaved changes</span> : null}
       </div>
 
@@ -201,33 +304,68 @@ const Editor = ({
       </div>
 
       {state.format === 'markdown' ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-3">
-            {frontmatterFields.length === 0 ? (
-              <p className="text-sm text-zinc-500">No frontmatter fields configured.</p>
-            ) : (
-              frontmatterFields.map((field) => renderField(field))
-            )}
-          </div>
-          <div className="flex flex-col gap-2 md:col-span-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-zinc-700">Body</span>
-              <ImageUploader
-                csrfToken={csrfToken}
-                onUploaded={(url) =>
-                  onChange({
-                    ...state,
-                    body: `${state.body}\n\n![image](${url})`,
-                  })
-                }
-                onError={onError}
-              />
+        <div className="flex flex-col gap-6 md:flex-row">
+          <div className="md:w-72 md:flex-shrink-0">
+            <div className="flex flex-col gap-3">
+              {frontmatterFields.length === 0 ? (
+                <p className="text-sm text-zinc-500">No frontmatter fields configured.</p>
+              ) : (
+                frontmatterFields.map((field) => renderField(field))
+              )}
             </div>
-            <textarea
-              value={state.body}
-              onChange={(event) => onChange({ ...state, body: event.target.value })}
-              className="h-64 w-full rounded border border-zinc-300 px-3 py-2 text-sm font-mono focus:border-black focus:outline-none"
-            />
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-zinc-600">
+                <span>Editor</span>
+                <div className="inline-flex overflow-hidden rounded border border-zinc-300">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 ${bodyMode === 'rich' ? 'bg-black text-white' : 'bg-white text-zinc-700'}`}
+                    onClick={() => setBodyMode('rich')}
+                  >
+                    Rich
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 border-l border-zinc-300 ${bodyMode === 'raw' ? 'bg-black text-white' : 'bg-white text-zinc-700'}`}
+                    onClick={() => setBodyMode('raw')}
+                  >
+                    Raw
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className={`rounded border px-2 py-1 ${
+                    showPreview ? 'border-black bg-black text-white' : 'border-zinc-300 text-zinc-700'
+                  }`}
+                  onClick={() => setShowPreview((prev) => !prev)}
+                >
+                  {showPreview ? 'Hide preview' : 'Preview'}
+                </button>
+              </div>
+              <ImageUploader csrfToken={csrfToken} onUploaded={handleInsertImage} onError={onError} />
+            </div>
+            <div className={`flex flex-col gap-4 ${showPreview ? 'md:flex-row' : ''}`}>
+              <div className={showPreview ? 'md:w-1/2 space-y-2' : 'w-full space-y-2'}>
+                <span className="text-sm font-medium text-zinc-700">Body</span>
+                {bodyMode === 'rich' ? (
+                  <RichMarkdown ref={richEditorRef} value={state.body} onChange={(body) => onChange({ ...state, body })} />
+                ) : (
+                  <textarea
+                    value={state.body}
+                    onChange={(event) => onChange({ ...state, body: event.target.value })}
+                    className="h-72 w-full rounded border border-zinc-300 px-3 py-2 text-sm font-mono focus:border-black focus:outline-none"
+                  />
+                )}
+              </div>
+              {showPreview ? (
+                <div className="md:w-1/2 space-y-2">
+                  <span className="text-sm font-medium text-zinc-700">Preview</span>
+                  <MarkdownPreview value={state.body} />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : (
@@ -241,10 +379,21 @@ const Editor = ({
         </div>
       )}
 
+      <PromptDialog
+        open={bodyMode === 'raw' && rawImagePrompt !== null}
+        title="Image description"
+        description="Provide alt text so the image remains accessible."
+        placeholder="Describe the image"
+        confirmLabel="Insert image"
+        cancelLabel="Cancel"
+        onCancel={handleRawImageCancel}
+        onSubmit={handleRawImageSubmit}
+      />
+
       <div className="flex items-center gap-3 pt-4">
         <button
           type="button"
-          onClick={onSave}
+          onClick={() => onSave()}
           disabled={saving}
           className={`rounded border border-black px-4 py-2 text-sm font-medium transition ${
             saving ? 'bg-zinc-200 text-zinc-500' : 'text-black hover:bg-black hover:text-white'

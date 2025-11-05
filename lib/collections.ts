@@ -12,6 +12,29 @@ import {
 import { z } from './zod'
 import type { ZodSchema } from './zod'
 
+const asDateString = z.effects(z.any(), (value) => {
+  if (value == null) {
+    return undefined
+  }
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new z.ZodError([{ path: [], message: 'Invalid Date frontmatter value' }])
+    }
+    return value.toISOString().slice(0, 10)
+  }
+  if (value && typeof (value as { toISOString?: unknown }).toISOString === 'function') {
+    const isoValue = (value as { toISOString: () => string }).toISOString()
+    if (typeof isoValue !== 'string' || isoValue.length === 0) {
+      throw new z.ZodError([{ path: [], message: 'Invalid date frontmatter value' }])
+    }
+    return isoValue.slice(0, 10)
+  }
+  throw new z.ZodError([{ path: [], message: `Invalid date frontmatter value: ${typeof value}` }])
+})
+
 export type Workflow = 'draft' | 'publish'
 export type CollectionFormat = 'markdown' | 'json' | 'yaml'
 
@@ -150,7 +173,7 @@ export const collections: CollectionDefinition[] = [
       language: z.literal('en'),
       summary: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      date: z.string().optional(),
+      date: asDateString.optional(),
       sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
       places: z.array(z.string()).optional(),
     }),
@@ -175,7 +198,7 @@ export const collections: CollectionDefinition[] = [
       language: z.literal('ar'),
       summary: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      date: z.string().optional(),
+      date: asDateString.optional(),
       sources: z.array(z.union([z.object({ id: z.string().optional(), url: z.string().optional() }), z.string()])).optional(),
       places: z.array(z.string()).optional(),
     }),
