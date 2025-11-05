@@ -4,9 +4,18 @@
     "type": "book",
     "title": "Palestinians: From Peasants to Revolutionaries",
     "author": [
-      { "family": "Sayigh", "given": "Rosemary" }
+      {
+        "family": "Sayigh",
+        "given": "Rosemary"
+      }
     ],
-    "issued": { "date-parts": [[1997]] },
+    "issued": {
+      "date-parts": [
+        [
+          1997
+        ]
+      ]
+    },
     "publisher": "Zed Books",
     "publisher-place": "London",
     "language": "en"
@@ -16,7 +25,15 @@
     "type": "legal_case",
     "title": "Legal Consequences of the Construction of a Wall in the Occupied Palestinian Territory (Advisory Opinion)",
     "authority": "International Court of Justice",
-    "issued": { "date-parts": [[2004, 7, 9]] },
+    "issued": {
+      "date-parts": [
+        [
+          2004,
+          7,
+          9
+        ]
+      ]
+    },
     "URL": "https://www.icj-cij.org/case/131",
     "language": "en"
   },
@@ -25,7 +42,16 @@
     "type": "legislation",
     "title": "Resolution 181 (II): Future Government of Palestine",
     "authority": "United Nations General Assembly",
-    "issued": { "date-parts": [[1947, 11, 29]] },
+    "issued": {
+      "date-parts": [
+        [
+          1947,
+          11,
+          29
+        ]
+      ]
+    },
+    "URL": "https://undocs.org/en/A/RES/181(II)",
     "language": "en"
   },
   {
@@ -33,7 +59,16 @@
     "type": "treaty",
     "title": "Declaration of Principles on Interim Self-Government Arrangements (Oslo I)",
     "authority": "Government of Israel; Palestine Liberation Organization",
-    "issued": { "date-parts": [[1993, 9, 13]] },
+    "issued": {
+      "date-parts": [
+        [
+          1993,
+          9,
+          13
+        ]
+      ]
+    },
+    "URL": "https://avalon.law.yale.edu/20th_century/isrplo.asp",
     "language": "en"
   },
   {
@@ -41,7 +76,15 @@
     "type": "legal_case",
     "title": "Application of the Convention on the Prevention and Punishment of the Crime of Genocide in the Gaza Strip (Provisional Measures)",
     "authority": "International Court of Justice",
-    "issued": { "date-parts": [[2024, 1, 26]] },
+    "issued": {
+      "date-parts": [
+        [
+          2024,
+          1,
+          26
+        ]
+      ]
+    },
     "URL": "https://www.icj-cij.org/case/192",
     "language": "en"
   },
@@ -52,5 +95,242 @@
     "authority": "United Nations OCHA oPt",
     "URL": "https://www.ochaopt.org/",
     "language": "en"
+  },
+  {
+    "id": "masalha2018-4000-year-history",
+    "type": "book",
+    "title": "Palestine: A Four Thousand Year History",
+    "author": [
+      {
+        "family": "Masalha",
+        "given": "Nur"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2018
+        ]
+      ]
+    },
+    "publisher": "Zed Books (Bloomsbury)",
+    "URL": "https://www.bloomsbury.com/uk/palestine-9781786992737/",
+    "language": "en"
+  },
+  {
+    "id": "khalidi1992-all-that-remains",
+    "type": "book",
+    "title": "All That Remains: The Palestinian Villages Occupied and Depopulated by Israel in 1948",
+    "author": [
+      {
+        "family": "Khalidi",
+        "given": "Walid"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          1992
+        ]
+      ]
+    },
+    "publisher": "Institute for Palestine Studies",
+    "publisher-place": "Washington, D.C.",
+    "URL": "https://www.palestine-studies.org/en/node/1651379",
+    "language": "en"
+  },
+  {
+    "id": "btselem-2021-apartheid",
+    "type": "report",
+    "title": "A regime of Jewish supremacy from the Jordan River to the Mediterranean Sea: This is apartheid",
+    "author": [
+      {
+        "literal": "B’Tselem – The Israeli Information Center for Human Rights in the Occupied Territories"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2021,
+          1,
+          12
+        ]
+      ]
+    },
+    "URL": "https://www.btselem.org/publications/fulltext/202101_this_is_apartheid",
+    "language": "en"
+  },
+  {
+    "id": "nabulsi2006-great-catastrophe",
+    "type": "article-newspaper",
+    "title": "The great catastrophe",
+    "author": [
+      {
+        "family": "Nabulsi",
+        "given": "Karma"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2006,
+          5,
+          12
+        ]
+      ]
+    },
+    "container-title": "The Guardian",
+    "URL": "https://www.theguardian.com/world/2006/may/12/israel1",
+    "language": "en"
+  },
+  {
+    "id": "icrc-2010-gaza-blockade",
+    "type": "webpage",
+    "title": "Gaza closure: \"strangling\" civilian population – ICRC statement (14 June 2010)",
+    "authority": "International Committee of the Red Cross",
+    "issued": {
+      "date-parts": [
+        [
+          2010,
+          6,
+          14
+        ]
+      ]
+    },
+    "URL": "https://www.icrc.org/en/doc/resources/documents/update/palestine-update-140610.htm",
+    "language": "en"
+  },
+  {
+    "id": "abu-sitta-2010-atlas",
+    "type": "book",
+    "title": "Atlas of Palestine 1917–1966",
+    "author": [
+      {
+        "family": "Abu Sitta",
+        "given": "Salman"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2010
+        ]
+      ]
+    },
+    "publisher": "Palestine Land Society",
+    "URL": "https://www.plands.org/books-reports/atlas-of-palestine-1917-1966",
+    "language": "en"
+  },
+  {
+    "id": "veracini-2022-logic-of-elimination",
+    "type": "article-magazine",
+    "title": "A Logic of Elimination",
+    "author": [
+      {
+        "family": "Veracini",
+        "given": "Lorenzo"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2022,
+          1,
+          11
+        ]
+      ]
+    },
+    "container-title": "Jewish Currents",
+    "URL": "https://jewishcurrents.org/a-logic-of-elimination",
+    "language": "en"
+  },
+  {
+    "id": "levy2004-jnf-forests",
+    "type": "article-newspaper",
+    "title": "Twilight Zone / Social Studies Lesson",
+    "author": [
+      {
+        "family": "Levy",
+        "given": "Gideon"
+      }
+    ],
+    "issued": {
+      "date-parts": [
+        [
+          2004
+        ]
+      ]
+    },
+    "container-title": "Haaretz",
+    "URL": "https://web.archive.org/web/20040403133529/http://www.haaretz.com/hasen/spages/410906.html",
+    "language": "en"
+  },
+  {
+    "id": "un-ga-194-1948",
+    "type": "legislation",
+    "title": "Resolution 194 (III): Palestine – Progress Report of the United Nations Mediator",
+    "authority": "United Nations General Assembly",
+    "issued": {
+      "date-parts": [
+        [
+          1948,
+          12,
+          11
+        ]
+      ]
+    },
+    "URL": "https://undocs.org/en/A/RES/194(III)",
+    "language": "en"
+  },
+  {
+    "id": "icc-2021-palestine-investigation",
+    "type": "press_release",
+    "title": "Statement of the Prosecutor of the International Criminal Court, Fatou Bensouda, on the opening of an investigation into the Situation in Palestine",
+    "authority": "International Criminal Court",
+    "issued": {
+      "date-parts": [
+        [
+          2021,
+          3,
+          3
+        ]
+      ]
+    },
+    "URL": "https://www.icc-cpi.int/news/statement-prosecutor-icc-opening-investigation-situation-palestine",
+    "language": "en"
+  },
+  {
+    "id": "britannica-palestine",
+    "type": "entry-encyclopedia",
+    "title": "Palestine",
+    "authority": "Encyclopaedia Britannica",
+    "URL": "https://www.britannica.com/place/Palestine",
+    "language": "en",
+    "accessed": {
+      "date-parts": [
+        [
+          2025,
+          11,
+          5
+        ]
+      ]
+    }
+  },
+  {
+    "id": "britannica-jaffa",
+    "type": "entry-encyclopedia",
+    "title": "Jaffa",
+    "authority": "Encyclopaedia Britannica",
+    "URL": "https://www.britannica.com/place/Jaffa",
+    "language": "en",
+    "accessed": {
+      "date-parts": [
+        [
+          2025,
+          11,
+          5
+        ]
+      ]
+    }
   }
 ]
