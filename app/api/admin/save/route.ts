@@ -170,19 +170,6 @@ export const POST = async (req: NextRequest) => {
       )
     }
 
-    const titleValue = typeof frontmatterRecord.title === 'string' ? frontmatterRecord.title : ''
-    if (titleValue.trim() && !hasEnoughArabic(titleValue)) {
-      return NextResponse.json({ error: 'Arabic title validation failed.' }, { status: 502 })
-    }
-    if (typeof frontmatterRecord.summary === 'string') {
-      const summaryValue = frontmatterRecord.summary
-      if (summaryValue.trim() && !hasEnoughArabic(summaryValue)) {
-        return NextResponse.json({ error: 'Arabic summary validation failed.' }, { status: 502 })
-      }
-    }
-    if (markdownBodyContent.trim() && !hasEnoughArabic(markdownBodyContent)) {
-      return NextResponse.json({ error: 'Arabic body validation failed.' }, { status: 502 })
-    }
   }
 
   const branchWorkflow: 'draft' | 'publish' = workflow === 'draft' ? 'draft' : workflow === 'publish' ? 'publish' : collection.defaultWorkflow

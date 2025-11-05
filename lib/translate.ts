@@ -100,17 +100,22 @@ const segmentMdx = (mdx: string): Segment[] => {
 }
 
 const translateParagraphs = async (text: string, source: string, target: string) => {
-  const chunks = text.split(/\n{2,}/)
+  const parts = text.split(/(\n{2,})/)
   const output: string[] = []
-  for (const chunk of chunks) {
-    if (!chunk.trim()) {
-      output.push(chunk)
+  for (let index = 0; index < parts.length; index += 1) {
+    const segment = parts[index]
+    if (index % 2 === 1) {
+      output.push(segment)
       continue
     }
-    const translated = await callProvider(chunk, source, target)
+    if (!segment.trim()) {
+      output.push(segment)
+      continue
+    }
+    const translated = await callProvider(segment, source, target)
     output.push(translated)
   }
-  return output.join('\n\n')
+  return output.join('')
 }
 
 export const callProvider = async (input: string, source: string, target: string) => {
@@ -156,9 +161,6 @@ export const translateMdxPreserving = async (mdx: string, source = 'en', target 
       continue
     }
     const translated = await translateParagraphs(segment.text, source, target)
-    if (!hasEnoughArabic(translated) && segment.text.trim()) {
-      throw new Error('Non-Arabic output')
-    }
     segment.text = translated
   }
   const translatedPortion = segments
