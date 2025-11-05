@@ -13,17 +13,26 @@ import { z } from './zod'
 import type { ZodSchema } from './zod'
 
 const asDateString = z.effects(z.any(), (value) => {
+  if (value == null) {
+    return undefined
+  }
   if (typeof value === 'string') {
-    return value
+    return value.trim()
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new z.ZodError([{ path: [], message: 'Invalid Date frontmatter value' }])
+    }
+    return value.toISOString().slice(0, 10)
   }
   if (value && typeof (value as { toISOString?: unknown }).toISOString === 'function') {
-    try {
-      return ((value as { toISOString: () => string }).toISOString() ?? '').slice(0, 10)
-    } catch {
-      return ''
+    const isoValue = (value as { toISOString: () => string }).toISOString()
+    if (typeof isoValue !== 'string' || isoValue.length === 0) {
+      throw new z.ZodError([{ path: [], message: 'Invalid date frontmatter value' }])
     }
+    return isoValue.slice(0, 10)
   }
-  return ''
+  throw new z.ZodError([{ path: [], message: `Invalid date frontmatter value: ${typeof value}` }])
 })
 
 export type Workflow = 'draft' | 'publish'

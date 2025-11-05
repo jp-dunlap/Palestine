@@ -76,8 +76,24 @@ const renderInline = (value: string, placeholders: PlaceholderMap) => {
   return restored
 }
 
-const isUnorderedList = (line: string) => /^ {0,3}[-*+]\s+/.test(line)
-const isOrderedList = (line: string) => /^ {0,3}\d+\.\s+/.test(line)
+const leadingSpaces = (line: string) => {
+  const match = line.match(/^ */)
+  return match ? match[0].length : 0
+}
+
+type ListLine = { type: 'ul' | 'ol'; indent: number; content: string }
+
+const matchListLine = (line: string): ListLine | null => {
+  const ordered = line.match(/^(\s*)(\d+)\.\s+(.*)$/)
+  if (ordered) {
+    return { type: 'ol', indent: ordered[1].length, content: ordered[3] }
+  }
+  const unordered = line.match(/^(\s*)([-*+])\s+(.*)$/)
+  if (unordered) {
+    return { type: 'ul', indent: unordered[1].length, content: unordered[3] }
+  }
+  return null
+}
 const isHeading = (line: string) => /^ {0,3}#{1,6}\s+/.test(line)
 const isBlockquote = (line: string) => /^ {0,3}>\s?/.test(line)
 const isCodeFence = (line: string) => /^ {0,3}```/.test(line)
@@ -97,6 +113,106 @@ const splitTableRow = (line: string) => {
   const withoutEdges = trimmed.replace(/^\|/, '').replace(/\|$/, '')
   if (!withoutEdges) return []
   return withoutEdges.split('|').map((cell) => cell.trim())
+}
+
+const parseList = (
+  lines: string[],
+  startIndex: number,
+  placeholders: PlaceholderMap,
+): { html: string; index: number } => {
+  const first = matchListLine(lines[startIndex])
+  if (!first) {
+    return { html: '', index: startIndex }
+  }
+  const listType = first.type
+  const baseIndent = first.indent
+  const items: string[] = []
+  let index = startIndex
+
+  while (index < lines.length) {
+    const info = matchListLine(lines[index])
+    if (!info) {
+      break
+    }
+    if (info.indent < baseIndent) {
+      break
+    }
+    if (info.indent > baseIndent) {
+      if (items.length === 0) {
+        break
+      }
+      const nested = parseList(lines, index, placeholders)
+      items[items.length - 1] = `${items[items.length - 1]}${nested.html}`
+      index = nested.index
+      continue
+    }
+    if (info.type !== listType && info.indent <= baseIndent) {
+      break
+    }
+
+    index += 1
+    const paragraphs: string[][] = [[info.content]]
+    const childBlocks: string[] = []
+
+    while (index < lines.length) {
+      const line = lines[index]
+
+      if (/^\s*$/.test(line)) {
+        const nextLine = lines[index + 1]
+        const nextInfo = nextLine ? matchListLine(nextLine) : null
+        if (nextInfo && nextInfo.indent > baseIndent) {
+          index += 1
+          continue
+        }
+        if (nextLine) {
+          const nextIndent = leadingSpaces(nextLine)
+          if (!nextInfo && nextIndent >= baseIndent + 2) {
+            paragraphs.push([])
+            index += 1
+            continue
+          }
+        }
+        break
+      }
+
+      const nestedInfo = matchListLine(line)
+      if (nestedInfo) {
+        if (nestedInfo.indent > baseIndent) {
+          const nested = parseList(lines, index, placeholders)
+          childBlocks.push(nested.html)
+          index = nested.index
+          continue
+        }
+        if (nestedInfo.indent < baseIndent || (nestedInfo.indent === baseIndent && nestedInfo.type === listType)) {
+          break
+        }
+      }
+
+      const continuationIndent = leadingSpaces(line)
+      if (continuationIndent >= baseIndent + 2) {
+        paragraphs[paragraphs.length - 1].push(line.slice(baseIndent + 2))
+        index += 1
+        continue
+      }
+
+      break
+    }
+
+    const paragraphHtml = paragraphs
+      .map((segment) => renderInline(segment.join(' ').trim(), placeholders))
+      .filter((content) => content.length > 0)
+
+    let itemContent = ''
+    if (paragraphHtml.length === 1) {
+      itemContent = paragraphHtml[0]
+    } else if (paragraphHtml.length > 1) {
+      itemContent = paragraphHtml.map((content) => `<p>${content}</p>`).join('')
+    }
+    itemContent += childBlocks.join('')
+    items.push(`<li>${itemContent}</li>`)
+  }
+
+  return { html: `<${listType}>${items.join('')}</${listType}>`, index }
 }
 
 const renderMarkdownBlock = (markdown: string, placeholders: PlaceholderMap): string => {
@@ -187,24 +303,10 @@ const renderMarkdownBlock = (markdown: string, placeholders: PlaceholderMap): st
       continue
     }
 
-    if (isUnorderedList(lines[i]) || isOrderedList(lines[i])) {
-      const ordered = isOrderedList(lines[i])
-      const items: string[] = []
-      const pattern = ordered ? /^ {0,3}\d+\.\s+/ : /^ {0,3}[-*+]\s+/
-      while (i < lines.length && pattern.test(lines[i])) {
-        const match = lines[i].match(pattern)
-        if (!match) break
-        const base = lines[i].slice(match[0].length)
-        i += 1
-        const continuation: string[] = []
-        while (i < lines.length && /^ {2,}\S/.test(lines[i]) && !pattern.test(lines[i])) {
-          continuation.push(lines[i].trim())
-          i += 1
-        }
-        const text = [base, ...continuation].join(' ').trim()
-        items.push(`<li>${renderInline(text, placeholders)}</li>`)
-      }
-      parts.push(`<${ordered ? 'ol' : 'ul'}>${items.join('')}</${ordered ? 'ol' : 'ul'}>`)
+    if (matchListLine(lines[i])) {
+      const result = parseList(lines, i, placeholders)
+      parts.push(result.html)
+      i = result.index
       consumeBlank()
       continue
     }
@@ -218,8 +320,7 @@ const renderMarkdownBlock = (markdown: string, placeholders: PlaceholderMap): st
       if (
         isHeading(current) ||
         isBlockquote(current) ||
-        isUnorderedList(current) ||
-        isOrderedList(current) ||
+        matchListLine(current) ||
         isCodeFence(current) ||
         isHorizontalRule(current) ||
         isTableStart(lines, i)

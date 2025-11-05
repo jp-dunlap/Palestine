@@ -324,7 +324,9 @@ const AdminPage = () => {
       }
       const trimmedMessage = message.trim()
       const commitMessage = options?.autosave
-        ? [trimmedMessage, '[autosave]'].filter(Boolean).join(' ')
+        ? trimmedMessage
+          ? `${trimmedMessage} [autosave]`
+          : 'Autosave changes [autosave]'
         : trimmedMessage
       payload.message = commitMessage
       payload.originalSlug = slugRef.current ?? selectedSlug ?? ''

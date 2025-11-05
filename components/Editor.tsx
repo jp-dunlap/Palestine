@@ -5,6 +5,7 @@ import ImageUploader from './ImageUploader'
 import type { CollectionSummary } from './CollectionSwitcher'
 import RichMarkdown, { type RichMarkdownHandle } from './RichMarkdown'
 import MarkdownPreview from './MarkdownPreview'
+import PromptDialog from './PromptDialog'
 
 export type MarkdownEditorState = {
   format: 'markdown'
@@ -68,6 +69,7 @@ const Editor = ({
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false)
   const autoSaveTimer = useRef<number | null>(null)
   const richEditorRef = useRef<RichMarkdownHandle | null>(null)
+  const [rawImagePrompt, setRawImagePrompt] = useState<{ url: string } | null>(null)
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -90,6 +92,7 @@ const Editor = ({
       setBodyMode('rich')
       setShowPreview(false)
       setAutoSaveEnabled(false)
+      setRawImagePrompt(null)
     }
   }, [state?.format])
 
@@ -98,6 +101,12 @@ const Editor = ({
       setAutoSaveEnabled(false)
     }
   }, [autoSaveEnabled, workflow])
+
+  useEffect(() => {
+    if (bodyMode !== 'raw') {
+      setRawImagePrompt(null)
+    }
+  }, [bodyMode])
 
   useEffect(() => {
     if (!autoSaveEnabled || !state || state.format !== 'markdown') {
@@ -129,6 +138,25 @@ const Editor = ({
     }
   }, [])
 
+  const handleRawImageCancel = useCallback(() => {
+    setRawImagePrompt(null)
+  }, [])
+
+  const handleRawImageSubmit = useCallback(
+    (value: string) => {
+      if (!state || state.format !== 'markdown' || !rawImagePrompt) {
+        setRawImagePrompt(null)
+        return
+      }
+      const trimmed = value.trim().replace(/\]/g, '\\]')
+      const alt = trimmed.length > 0 ? trimmed : 'image'
+      const prefix = state.body.trim().length > 0 ? '\n\n' : ''
+      onChange({ ...state, body: `${state.body}${prefix}![${alt}](${rawImagePrompt.url})` })
+      setRawImagePrompt(null)
+    },
+    [onChange, rawImagePrompt, state],
+  )
+
   const handleInsertImage = useCallback(
     (url: string) => {
       if (!state || state.format !== 'markdown') {
@@ -138,12 +166,9 @@ const Editor = ({
         richEditorRef.current?.insertImage(url)
         return
       }
-      const alt = window.prompt('Image description (alt text)') ?? 'image'
-      const safeAlt = alt.trim().replace(/\]/g, '\\]') || 'image'
-      const prefix = state.body.trim().length > 0 ? '\n\n' : ''
-      onChange({ ...state, body: `${state.body}${prefix}![${safeAlt}](${url})` })
+      setRawImagePrompt({ url })
     },
-    [bodyMode, onChange, state],
+    [bodyMode, state],
   )
 
   if (!collection) {
@@ -353,6 +378,17 @@ const Editor = ({
           />
         </div>
       )}
+
+      <PromptDialog
+        open={bodyMode === 'raw' && rawImagePrompt !== null}
+        title="Image description"
+        description="Provide alt text so the image remains accessible."
+        placeholder="Describe the image"
+        confirmLabel="Insert image"
+        cancelLabel="Cancel"
+        onCancel={handleRawImageCancel}
+        onSubmit={handleRawImageSubmit}
+      />
 
       <div className="flex items-center gap-3 pt-4">
         <button
