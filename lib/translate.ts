@@ -288,6 +288,7 @@ export const callProvider = async (input: string, source: string, target: string
       if (advanceEndpoint) {
         continue
       }
+      break
     }
 
     await delay(100 + Math.floor(Math.random() * 200))

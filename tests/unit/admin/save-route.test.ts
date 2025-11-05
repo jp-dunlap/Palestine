@@ -405,7 +405,7 @@ describe('POST /api/admin/save', () => {
     expect(json.prUrl).toBe('https://example.com/pr')
     expect(githubMocks.putFile).toHaveBeenCalled()
     const savedContent = (githubMocks.putFile as any).mock.calls.at(-1)?.[2] as string
-    expect(savedContent.startsWith('---'))
+    expect(savedContent.startsWith('---')).toBe(true)
     expect(savedContent).toContain('<!-- translation pending: body -->')
   })
 })
