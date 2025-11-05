@@ -1,6 +1,65 @@
 import { hasEnoughArabic } from './arabic'
 
-const TRANSLATE_URL = 'https://libretranslate.com/translate'
+type Provider = {
+  url: string
+  requiresKey?: boolean
+}
+
+const DEFAULT_PROVIDERS: Provider[] = [
+  { url: 'https://libretranslate.com/translate', requiresKey: true },
+  { url: 'https://lt.blitzw.in/translate' },
+  { url: 'https://translate.flossboxin.org.in/translate' },
+]
+
+const buildProviderList = () => {
+  const providers: Provider[] = []
+  const customUrl = process.env.CMS_TRANSLATE_URL?.trim()
+  if (customUrl) {
+    providers.push({ url: customUrl })
+  }
+  providers.push(...DEFAULT_PROVIDERS)
+  return providers
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const buildPayload = (input: string, source: string, target: string, apiKey?: string) => {
+  const payload: Record<string, string> = {
+    q: input,
+    source,
+    target,
+    format: 'text',
+  }
+  if (apiKey) {
+    payload.api_key = apiKey
+  }
+  return payload
+}
+
+const encodeBody = (payload: Record<string, string>, mode: 'json' | 'form') => {
+  if (mode === 'json') {
+    return JSON.stringify(payload)
+  }
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(payload)) {
+    params.append(key, value)
+  }
+  return params.toString()
+}
+
+const extractTranslation = async (response: Response) => {
+  const json = await response.json().catch(() => ({} as Record<string, unknown>))
+  const output =
+    typeof json.translatedText === 'string'
+      ? json.translatedText
+      : typeof json.translated === 'string'
+        ? json.translated
+        : ''
+  if (!output) {
+    throw new Error('Empty translation')
+  }
+  return output
+}
 
 type Segment = {
   text: string
@@ -119,25 +178,59 @@ const translateParagraphs = async (text: string, source: string, target: string)
 }
 
 export const callProvider = async (input: string, source: string, target: string) => {
-  const response = await fetch(TRANSLATE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: input, source, target, format: 'text' }),
-  })
-  if (!response.ok) {
-    throw new Error(`Translation provider error: ${response.status}`)
+  const providers = buildProviderList()
+  const apiKey = process.env.CMS_TRANSLATE_API_KEY?.trim()
+  const payload = buildPayload(input, source, target, apiKey)
+  const errors: string[] = []
+
+  for (const provider of providers) {
+    if (provider.requiresKey && !apiKey) {
+      continue
+    }
+
+    let shouldRetryWithForm = false
+
+    for (const mode of ['json', 'form'] as const) {
+      if (mode === 'form' && !shouldRetryWithForm) {
+        break
+      }
+      try {
+        const response = await fetch(provider.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': mode === 'json' ? 'application/json' : 'application/x-www-form-urlencoded',
+          },
+          body: encodeBody(payload, mode),
+        })
+
+        if (!response.ok) {
+          if ((response.status === 401 || response.status === 403) && !apiKey) {
+            errors.push(`${provider.url} requires an API key`)
+            shouldRetryWithForm = false
+            break
+          }
+
+          if (mode === 'json' && [404, 406, 415].includes(response.status)) {
+            shouldRetryWithForm = true
+            errors.push(`${provider.url} responded with ${response.status}`)
+            continue
+          }
+
+          errors.push(`${provider.url} responded with ${response.status}`)
+          break
+        }
+
+        return await extractTranslation(response)
+      } catch (error) {
+        errors.push(`${provider.url} failed: ${(error as Error).message}`)
+        break
+      }
+    }
+
+    await delay(100 + Math.floor(Math.random() * 200))
   }
-  const json = await response.json()
-  const output =
-    typeof json.translatedText === 'string'
-      ? json.translatedText
-      : typeof json.translated === 'string'
-        ? json.translated
-        : ''
-  if (!output) {
-    throw new Error('Empty translation')
-  }
-  return output
+
+  throw new Error(`All translation providers failed${errors.length ? `: ${errors.join('; ')}` : ''}`)
 }
 
 export const translatePlain = async (text: string, source = 'en', target = 'ar') => {
