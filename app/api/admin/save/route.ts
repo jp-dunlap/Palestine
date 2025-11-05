@@ -14,6 +14,8 @@ import {
   resolveCommitAuthor,
   updatePullRequestBody,
 } from '@/lib/github'
+import { hasEnoughArabic } from '@/lib/arabic'
+import { translateMdxPreserving, translatePlain } from '@/lib/translate'
 import { rateLimit } from '@/lib/rate-limit'
 import { sanitizeFilename, slugify, stripArabicSuffix, stripNumericPrefix } from '@/lib/slugs'
 
@@ -130,6 +132,46 @@ export const POST = async (req: NextRequest) => {
     }
   }
 
+  let markdownBodyContent = typeof markdownBody === 'string' ? markdownBody : ''
+
+  if (collection.format === 'markdown' && collection.id === 'chapters_ar') {
+    const frontmatterRecord = validated as Record<string, unknown>
+    frontmatterRecord.language = 'ar'
+
+    const ensureArabic = async (
+      value: string,
+      translator: (input: string, source?: string, target?: string) => Promise<string>,
+    ) => {
+      if (!value.trim()) {
+        return value
+      }
+      if (hasEnoughArabic(value)) {
+        return value
+      }
+      return translator(value, 'en', 'ar')
+    }
+
+    try {
+      if (typeof frontmatterRecord.title === 'string') {
+        frontmatterRecord.title = await ensureArabic(frontmatterRecord.title, translatePlain)
+      }
+      if (typeof frontmatterRecord.summary === 'string') {
+        frontmatterRecord.summary = await ensureArabic(frontmatterRecord.summary, translatePlain)
+      }
+      if (markdownBodyContent) {
+        if (!hasEnoughArabic(markdownBodyContent)) {
+          markdownBodyContent = await translateMdxPreserving(markdownBodyContent, 'en', 'ar')
+        }
+      }
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Arabic translation failed; nothing was saved.' },
+        { status: 502 },
+      )
+    }
+
+  }
+
   const branchWorkflow: 'draft' | 'publish' = workflow === 'draft' ? 'draft' : workflow === 'publish' ? 'publish' : collection.defaultWorkflow
   const branchName = branchWorkflow === 'draft' ? `cms/${slug}` : undefined
 
@@ -150,7 +192,7 @@ export const POST = async (req: NextRequest) => {
   const payload = collection.format === 'markdown'
     ? {
         frontmatter: validated as Record<string, unknown>,
-        body: typeof markdownBody === 'string' ? markdownBody : '',
+        body: markdownBodyContent,
       }
     : {
         frontmatter: {},

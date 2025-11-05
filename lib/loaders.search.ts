@@ -2,8 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import { loadTimelineEvents } from '@/lib/loaders.timeline';
-import { translateText } from '@/lib/translate';
 import type { SearchDoc } from '@/lib/search.types';
+import { translatePlain } from '@/lib/translate';
+
+async function translateWithFallback(input: string, fallback = ''): Promise<string> {
+  if (!input) return fallback;
+  try {
+    return await translatePlain(input, 'en', 'ar');
+  } catch {
+    return fallback;
+  }
+}
 
 const ROOT = process.cwd();
 const CHAPTERS_DIR = path.join(ROOT, 'content', 'chapters');
@@ -66,8 +75,7 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
 
     let titleAr = nativeTitle ? String(nativeTitle) : '';
     if (!titleAr) {
-      const t = await translateText(englishDoc.title, { source: 'en', target: 'ar', fallback: '' });
-      titleAr = t;
+      titleAr = await translateWithFallback(englishDoc.title);
     }
     if (!hasArabic(titleAr)) {
       continue;
@@ -75,7 +83,7 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
 
     let summaryAr = nativeSummary ? String(nativeSummary) : '';
     if (!summaryAr && englishDoc.summary) {
-      const s = await translateText(englishDoc.summary, { source: 'en', target: 'ar', fallback: '' });
+      const s = await translateWithFallback(englishDoc.summary);
       summaryAr = hasArabic(s) ? s : '';
     }
 
@@ -87,7 +95,7 @@ async function loadChapterDocs(): Promise<SearchDoc[]> {
       const enTags = Array.isArray(englishDoc.tags) ? englishDoc.tags : [];
       if (enTags.length > 0) {
         const translated = await Promise.all(
-          enTags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
+          enTags.map((tag: string) => translateWithFallback(tag))
         );
         tags = translated.filter((t) => t && typeof t === 'string');
       }
@@ -131,14 +139,13 @@ async function loadTimelineDocs(): Promise<SearchDoc[]> {
     const arTitleNative = event.title_ar ? String(event.title_ar) : '';
     let arTitle = arTitleNative;
     if (!arTitle) {
-      const t = await translateText(english.title, { source: 'en', target: 'ar', fallback: '' });
-      arTitle = t;
+      arTitle = await translateWithFallback(english.title);
     }
 
     const arSummaryNative = event.summary_ar ? String(event.summary_ar) : '';
     let arSummary = arSummaryNative;
     if (!arSummary && english.summary) {
-      const s = await translateText(english.summary, { source: 'en', target: 'ar', fallback: '' });
+      const s = await translateWithFallback(english.summary);
       arSummary = hasArabic(s) ? s : '';
     }
 
@@ -147,7 +154,7 @@ async function loadTimelineDocs(): Promise<SearchDoc[]> {
       arTags = event.tags_ar.map(String);
     } else if (english.tags.length > 0) {
       const translated = await Promise.all(
-        english.tags.map((tag) => translateText(tag, { source: 'en', target: 'ar', fallback: '' }))
+        english.tags.map((tag: string) => translateWithFallback(tag))
       );
       arTags = translated.filter((t) => t && typeof t === 'string');
     }

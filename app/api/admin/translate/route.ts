@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ensureAuth } from '@/lib/api/auth'
-
-const TRANSLATE_URL = 'https://libretranslate.com/translate'
+import { translateMdxPreserving, translatePlain } from '@/lib/translate'
 
 type TranslateBody = {
   text?: string
   source?: string
   target?: string
+  mode?: 'plain' | 'mdx'
 }
 
 export const POST = async (req: NextRequest) => {
@@ -26,25 +26,15 @@ export const POST = async (req: NextRequest) => {
   }
   const source = typeof payload.source === 'string' && payload.source ? payload.source : 'en'
   const target = typeof payload.target === 'string' && payload.target ? payload.target : 'ar'
+  const mode = payload.mode === 'mdx' ? 'mdx' : 'plain'
   try {
-    const response = await fetch(TRANSLATE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q: text, source, target, format: 'text' }),
-    })
-    if (!response.ok) {
-      throw new Error('Translation provider error')
-    }
-    const result = await response.json()
-    const translated =
-      typeof result.translatedText === 'string'
-        ? result.translatedText
-        : typeof result.translated === 'string'
-          ? result.translated
-          : text
+    const translated = mode === 'mdx'
+      ? await translateMdxPreserving(text, source, target)
+      : await translatePlain(text, source, target)
     return NextResponse.json({ translated })
   } catch (error) {
-    console.error('Translation fallback', error)
-    return NextResponse.json({ translated: text })
+    console.error('Translation error', error)
+    const message = (error as Error).message || 'Translation failed'
+    return NextResponse.json({ error: message }, { status: 502 })
   }
 }
