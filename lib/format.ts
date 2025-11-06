@@ -1,5 +1,8 @@
 type NumberFormatOptions = Intl.NumberFormatOptions & { numberingSystem?: string };
 type DateFormatOptions = Intl.DateTimeFormatOptions & { numberingSystem?: string };
+type FormatYearOptions = {
+  unknownLabel?: string;
+};
 
 const AR_NUMBERING_SYSTEM: NumberFormatOptions = { numberingSystem: 'arab' };
 
@@ -40,4 +43,19 @@ export function formatDate(
     ...(options ?? {}),
   };
   return new Intl.DateTimeFormat(locale, formatOptions).format(date);
+}
+
+export function formatYear(
+  value: number | null | undefined,
+  locale: 'en' | 'ar',
+  options?: FormatYearOptions
+): string {
+  if (value === null || typeof value === 'undefined') {
+    return options?.unknownLabel ?? '';
+  }
+  const digits = formatNumber(Math.abs(value), locale, { useGrouping: false });
+  if (value < 0) {
+    return locale === 'ar' ? `${digits} ق.م.` : `${digits} BCE`;
+  }
+  return digits;
 }

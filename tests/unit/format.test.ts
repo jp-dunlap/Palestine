@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDate, formatNumber } from '@/lib/format';
+import { formatDate, formatNumber, formatYear } from '@/lib/format';
 
 describe('format helpers', () => {
   it('uses Eastern Arabic numerals when formatting numbers for Arabic', () => {
@@ -14,5 +14,16 @@ describe('format helpers', () => {
 
     expect(english).toMatch(/2024/);
     expect(arabic).toMatch(/[٠-٩]/);
+  });
+
+  it('omits grouping separators when formatting years', () => {
+    expect(formatYear(1993, 'en')).toBe('1993');
+    expect(formatYear(1993, 'ar')).toBe('١٩٩٣');
+    expect(formatYear(-1993, 'ar')).toBe('١٩٩٣ ق.م.');
+  });
+
+  it('returns unknown label when provided for missing years', () => {
+    expect(formatYear(null, 'en', { unknownLabel: 'Unknown' })).toBe('Unknown');
+    expect(formatYear(undefined, 'ar', { unknownLabel: 'غير معروف' })).toBe('غير معروف');
   });
 });

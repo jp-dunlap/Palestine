@@ -1,17 +1,6 @@
 import LocaleLink from '@/components/LocaleLink';
-import { formatNumber } from '@/lib/format';
+import { formatYear } from '@/lib/format';
 import type { TimelineEvent, Era } from '@/lib/types';
-
-function formatYear(value: number | null | undefined, locale: 'en' | 'ar'): string {
-  if (value === null || typeof value === 'undefined') {
-    return '';
-  }
-  if (value < 0) {
-    const digits = formatNumber(Math.abs(value), locale);
-    return locale === 'ar' ? `${digits} ق.م.` : `${digits} BCE`;
-  }
-  return formatNumber(value, locale);
-}
 
 export default function Timeline({
   events,

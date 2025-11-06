@@ -1,26 +1,16 @@
 import LocaleLink from '@/components/LocaleLink';
-import { formatNumber } from '@/lib/format';
+import { formatYear } from '@/lib/format';
 import { loadEras, getRelatedTimelineEvents } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
 import type { TimelineEvent } from '@/lib/types';
 
-function formatYear(value: number | null, locale: 'en' | 'ar'): string {
-  if (value === null || typeof value === 'undefined') {
-    return locale === 'ar' ? 'غير معروف' : 'Unknown';
-  }
-  if (value < 0) {
-    const digits = formatNumber(Math.abs(value), locale);
-    return locale === 'ar' ? `${digits} ق.م.` : `${digits} BCE`;
-  }
-  return formatNumber(value, locale);
-}
-
 function formatRange(event: TimelineEvent, locale: 'en' | 'ar'): string {
-  const startLabel = formatYear(event.start, locale);
+  const unknownLabel = locale === 'ar' ? 'غير معروف' : 'Unknown';
+  const startLabel = formatYear(event.start, locale, { unknownLabel });
   if (event.end === null || typeof event.end === 'undefined') {
     return startLabel;
   }
-  const endLabel = formatYear(event.end, locale);
+  const endLabel = formatYear(event.end, locale, { unknownLabel });
   return `${startLabel}–${endLabel}`;
 }
 
