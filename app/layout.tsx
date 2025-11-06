@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { headers } from 'next/headers';
 
+import DocumentLocaleUpdater from '@/components/DocumentLocaleUpdater';
 import { LocaleProvider, type Locale } from '@/components/LocaleLink';
 import SkipLink from '@/components/SkipLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
@@ -194,6 +195,7 @@ export default async function RootLayout({
     <html
       lang={htmlLang}
       dir={direction}
+      data-locale={locale}
       suppressHydrationWarning
       className={[interVariable, naskhVariable, 'no-js'].filter(Boolean).join(' ')}
     >
@@ -201,8 +203,9 @@ export default async function RootLayout({
         <link rel="preconnect" href={tileOrigin} />
         <link rel="dns-prefetch" href={tileOrigin} />
       </head>
-      <body className={bodyClassName}>
+      <body className={bodyClassName} dir={direction} lang={htmlLang} data-locale={locale}>
         <LocaleProvider locale={locale}>
+          <DocumentLocaleUpdater />
           <Script id="init-js" strategy="beforeInteractive">
             {`document.documentElement.classList.remove('no-js');
 document.documentElement.classList.add('js-enabled');`}

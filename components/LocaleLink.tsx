@@ -17,6 +17,10 @@ export function LocaleProvider({ locale, children }: PropsWithChildren<{ locale:
   return <LocaleContext.Provider value={locale}>{children}</LocaleContext.Provider>;
 }
 
+export function useLocale(): Locale {
+  return useContext(LocaleContext);
+}
+
 function isRelativeHref(href: string): boolean {
   if (!href) return false;
   const trimmed = href.trim();
