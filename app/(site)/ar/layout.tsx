@@ -2,7 +2,6 @@ import '../../globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 
-import { LocaleProvider } from '@/components/LocaleLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
 
 const tileOrigin = process.env.NEXT_PUBLIC_TILE_ORIGIN ?? 'https://tile.openstreetmap.org';
@@ -41,15 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href={tileOrigin} />
       </head>
       <body className="font-arabic bg-white text-gray-900">
-        <LocaleProvider locale="ar">
-          <a
-            href="#main"
-            className="sr-only focus:not-sr-only focus:absolute rtl:focus:right-3 ltr:focus:left-3 focus:top-3 focus:z-50 rounded bg-white px-3 py-1 text-sm shadow"
-          >
-            تجاوز إلى المحتوى
-          </a>
-          <div>{children}</div>
-        </LocaleProvider>
+        <div>{children}</div>
       </body>
     </html>
   );
