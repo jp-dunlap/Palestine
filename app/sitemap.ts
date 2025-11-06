@@ -53,6 +53,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       alternates: {
         languages: {
           en: enUrl,
+          // Lessons currently publish in English only; Arabic translations are forthcoming.
           'x-default': enUrl,
         },
       },

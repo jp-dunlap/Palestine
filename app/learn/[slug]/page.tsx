@@ -51,13 +51,15 @@ export default async function LessonPage({ params }: { params: { slug: string } 
   const frontmatter = loadLessonFrontmatter(params.slug);
   const { components } = createMdxComponents('en');
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
+
   const lessonLd = {
     '@context': 'https://schema.org',
     '@type': 'LearningResource',
     headline: frontmatter.title,
     description: frontmatter.summary ?? undefined,
     inLanguage: 'en',
-    url: `/learn/${params.slug}`,
+    url: `${siteUrl}/learn/${params.slug}`,
     dateModified: frontmatter.updated
       ? new Date(frontmatter.updated).toISOString()
       : undefined,
