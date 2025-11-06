@@ -1,11 +1,9 @@
-import '../../globals.css';
 import type { ReactNode } from 'react';
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
-import { LocaleProvider } from '@/components/LocaleLink';
-import { interVariable, naskhVariable } from '@/app/ui/fonts';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
-const tileOrigin = process.env.NEXT_PUBLIC_TILE_ORIGIN ?? 'https://tile.openstreetmap.org';
 const siteName = 'Palestine — 4,000 Years of Memory';
 
 export const metadata: Metadata = {
@@ -29,28 +27,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function ArabicSiteSegmentLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="ar"
+    <div
+      data-locale="ar"
       dir="rtl"
-      className={[interVariable, naskhVariable].filter(Boolean).join(' ')}
+      lang="ar"
+      className="min-h-screen bg-white text-gray-900 font-arabic"
     >
-      <head>
-        <link rel="preconnect" href={tileOrigin} />
-        <link rel="dns-prefetch" href={tileOrigin} />
-      </head>
-      <body className="font-arabic bg-white text-gray-900">
-        <LocaleProvider locale="ar">
-          <a
-            href="#main"
-            className="sr-only focus:not-sr-only focus:absolute rtl:focus:right-3 ltr:focus:left-3 focus:top-3 focus:z-50 rounded bg-white px-3 py-1 text-sm shadow"
-          >
-            تجاوز إلى المحتوى
-          </a>
-          <div>{children}</div>
-        </LocaleProvider>
-      </body>
-    </html>
+      <header className="border-b">
+        <div className="mx-auto flex max-w-4xl justify-end rtl:justify-start px-4 py-3">
+          <Suspense fallback={<span className="text-sm text-gray-400 font-arabic">…</span>}>
+            <LanguageSwitcher />
+          </Suspense>
+        </div>
+      </header>
+      <div>{children}</div>
+    </div>
   );
 }

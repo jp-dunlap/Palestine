@@ -1,10 +1,11 @@
 // app/layout.tsx
 import './globals.css';
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 
-import { LocaleProvider } from '@/components/LocaleLink';
+import { LocaleProvider, type Locale } from '@/components/LocaleLink';
+import SkipLink from '@/components/SkipLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
@@ -34,10 +35,85 @@ export const metadata: Metadata = {
   },
 };
 
+function normaliseLocale(value: unknown): Locale | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed === 'en' || trimmed === 'ar') {
+    return trimmed as Locale;
+  }
+  return null;
+}
+
+function findLocale(node: ReactNode): Locale | null {
+  if (node == null || typeof node === 'boolean') {
+    return null;
+  }
+
+  if (typeof node === 'string' || typeof node === 'number') {
+    return null;
+  }
+
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const matched = findLocale(child);
+      if (matched) {
+        return matched;
+      }
+    }
+    return null;
+  }
+
+  if (isValidElement(node)) {
+    const props = node.props as Record<string, unknown> | undefined;
+    if (props) {
+      const directMatch =
+        normaliseLocale(props['data-locale']) ??
+        normaliseLocale(props.locale) ??
+        normaliseLocale(props.lang);
+      if (directMatch) {
+        return directMatch;
+      }
+
+      const childMatch = findLocale(props.children as ReactNode);
+      if (childMatch) {
+        return childMatch;
+      }
+
+      for (const [key, value] of Object.entries(props)) {
+        if (key === 'children') {
+          continue;
+        }
+        if (typeof value === 'function') {
+          continue;
+        }
+        const nestedMatch = findLocale(value as ReactNode);
+        if (nestedMatch) {
+          return nestedMatch;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function determineLocale(children: ReactNode): Locale {
+  return findLocale(children) ?? 'en';
+}
+
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const locale = determineLocale(children);
+  const isArabic = locale === 'ar';
+  const htmlLang = isArabic ? 'ar' : 'en';
+  const direction = isArabic ? 'rtl' : 'ltr';
+  const bodyClassName = isArabic ? 'font-arabic bg-white text-gray-900' : 'font-sans';
+
   return (
     <html
-      lang="en"
+      lang={htmlLang}
+      dir={direction}
       suppressHydrationWarning
       className={[interVariable, naskhVariable, 'no-js'].filter(Boolean).join(' ')}
     >
@@ -45,18 +121,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href={tileOrigin} />
         <link rel="dns-prefetch" href={tileOrigin} />
       </head>
-      <body className="font-sans">
-        <LocaleProvider locale="en">
+      <body className={bodyClassName}>
+        <LocaleProvider locale={locale}>
           <Script id="init-js" strategy="beforeInteractive">
             {`document.documentElement.classList.remove('no-js');
 document.documentElement.classList.add('js-enabled');`}
           </Script>
-          <a
-            href="#main"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 rounded bg-white px-3 py-1 text-sm shadow"
-          >
-            Skip to main content
-          </a>
+          <SkipLink locale={locale} />
           {children}
         </LocaleProvider>
       </body>
