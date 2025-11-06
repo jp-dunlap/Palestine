@@ -2,6 +2,7 @@
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClientAr from '@/components/MapsPageClient.ar';
+import { AnnouncerProvider } from '@/components/Announcer';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
@@ -36,6 +37,12 @@ export default function MapsPageAr({
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12" dir="rtl">
+      <a
+        href="#map-places-region-ar"
+        className="sr-only focus:not-sr-only focus:absolute focus:right-3 focus:top-3 focus:z-40 rounded bg-white px-3 py-1 text-sm shadow"
+      >
+        تجاوز إلى قائمة الأماكن
+      </a>
       <h1 className="text-2xl font-semibold tracking-tight">الأماكن</h1>
 
       {/* يظهر فقط عندما تكون JavaScript معطّلة */}
@@ -76,7 +83,9 @@ export default function MapsPageAr({
         </div>
       </noscript>
 
-      <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      <AnnouncerProvider>
+        <MapsPageClientAr places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      </AnnouncerProvider>
 
       <p className="mt-8 text-sm text-gray-600">
         <a className="underline hover:no-underline" href={enHref} dir="ltr">
