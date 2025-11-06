@@ -95,11 +95,7 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
       lang={isArabic ? 'ar' : undefined}
     >
       <p className="text-sm text-gray-600">
-        <LocaleLink
-          className="underline hover:no-underline"
-          href={isArabic ? '/ar/timeline' : '/timeline'}
-          locale={locale}
-        >
+        <LocaleLink className="underline hover:no-underline" href="/timeline" locale={locale}>
           {t.returnLink}
         </LocaleLink>
       </p>
@@ -152,18 +148,10 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
               const match = placesIndex.get(key);
               const primaryLabel = match ? (isArabic ? match.name_ar ?? match.name : match.name) : raw;
               const placeId = match?.id;
-              const placeHref = placeId
-                ? isArabic
-                  ? `/ar/places/${placeId}`
-                  : `/places/${placeId}`
-                : null;
-              const altHref = placeId
-                ? isArabic
-                  ? `/places/${placeId}`
-                  : `/ar/places/${placeId}`
-                : null;
-              const mapBase = isArabic ? '/ar/map' : '/map';
-              const mapHref = placeId ? `${mapBase}?place=${encodeURIComponent(placeId)}` : null;
+              const placeHref = placeId ? `/places/${placeId}` : null;
+              const altHref = placeId ? `/places/${placeId}` : null;
+              const altLocale = isArabic ? 'en' : 'ar';
+              const mapHref = placeId ? `/map?place=${encodeURIComponent(placeId)}` : null;
 
               return (
                 <li key={raw} className={isArabic ? 'font-arabic space-y-1' : 'space-y-1'}>
@@ -190,7 +178,11 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
                         {t.viewOnMap} →
                       </LocaleLink>
                       {altHref ? (
-                        <LocaleLink className="underline hover:no-underline" href={altHref} locale={locale}>
+                        <LocaleLink
+                          className="underline hover:no-underline"
+                          href={altHref}
+                          locale={altLocale}
+                        >
                           {t.viewPlaceAlt}
                         </LocaleLink>
                       ) : null}
@@ -208,7 +200,7 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
           <h2 className="text-sm font-semibold text-gray-700">{t.related}</h2>
           <ul className="space-y-2 text-sm">
             {related.map((item) => {
-              const href = isArabic ? `/ar/timeline/${item.id}` : `/timeline/${item.id}`;
+              const href = `/timeline/${item.id}`;
               return (
                 <li key={item.id}>
                   <LocaleLink className="underline hover:no-underline" href={href} locale={locale}>
