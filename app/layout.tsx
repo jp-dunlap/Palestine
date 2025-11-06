@@ -3,6 +3,7 @@ import './globals.css';
 import { isValidElement, type ReactNode } from 'react';
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 
 import { LocaleProvider, type Locale } from '@/components/LocaleLink';
 import SkipLink from '@/components/SkipLink';
@@ -36,13 +37,23 @@ export const metadata: Metadata = {
 };
 
 function normaliseLocale(value: unknown): Locale | null {
-  if (typeof value !== 'string') {
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed === 'en' || trimmed === 'ar') {
+      return trimmed as Locale;
+    }
     return null;
   }
-  const trimmed = value.trim().toLowerCase();
-  if (trimmed === 'en' || trimmed === 'ar') {
-    return trimmed as Locale;
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const matched = normaliseLocale(entry);
+      if (matched) {
+        return matched;
+      }
+    }
   }
+
   return null;
 }
 
@@ -99,12 +110,81 @@ function findLocale(node: ReactNode): Locale | null {
   return null;
 }
 
-function determineLocale(children: ReactNode): Locale {
-  return findLocale(children) ?? 'en';
+type RootLayoutParams = Record<string, string | string[] | undefined> | undefined;
+
+function determineLocaleFromParams(params: RootLayoutParams): Locale | null {
+  if (!params) {
+    return null;
+  }
+
+  const preferredKeys = ['lang', 'locale', 'language'];
+  for (const key of preferredKeys) {
+    const value = params[key];
+    const matched = normaliseLocale(value);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  for (const value of Object.values(params)) {
+    const matched = normaliseLocale(value);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return null;
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const locale = determineLocale(children);
+function determineLocaleFromPath(pathname: string | null): Locale | null {
+  if (!pathname) {
+    return null;
+  }
+
+  const trimmed = pathname.trim().toLowerCase();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed === '/ar' || trimmed.startsWith('/ar/')) {
+    return 'ar';
+  }
+
+  if (trimmed === '/en' || trimmed.startsWith('/en/')) {
+    return 'en';
+  }
+
+  return null;
+}
+
+function resolveLocale(
+  params: RootLayoutParams,
+  pathname: string | null,
+  children: ReactNode,
+): Locale {
+  return (
+    determineLocaleFromParams(params) ??
+    determineLocaleFromPath(pathname) ??
+    findLocale(children) ??
+    'en'
+  );
+}
+
+export default function RootLayout({
+  children,
+  params = {},
+}: {
+  children: ReactNode;
+  params?: Record<string, string | string[]>;
+}) {
+  const headerList = headers();
+  const inferredPathname =
+    headerList.get('x-matched-path') ??
+    headerList.get('x-invoke-path') ??
+    headerList.get('x-url') ??
+    null;
+
+  const locale = resolveLocale(params, inferredPathname, children);
   const isArabic = locale === 'ar';
   const htmlLang = isArabic ? 'ar' : 'en';
   const direction = isArabic ? 'rtl' : 'ltr';
