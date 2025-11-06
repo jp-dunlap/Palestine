@@ -170,14 +170,14 @@ function resolveLocale(
   );
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
   params = {},
 }: {
   children: ReactNode;
-  params?: Record<string, string | string[]>;
+  params?: Record<string, string | string[] | undefined>;
 }) {
-  const headerList = headers();
+  const headerList = await headers();
   const inferredPathname =
     headerList.get('x-matched-path') ??
     headerList.get('x-invoke-path') ??
