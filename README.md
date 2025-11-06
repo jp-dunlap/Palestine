@@ -40,10 +40,6 @@ npm run test:e2e    # playwright
   npx playwright install --with-deps
   ```
 
-## Privacy & Analytics
-
-We do not ship proprietary analytics or tracking packages. This follows the anti-surveillance discipline documented in [AGENTS.md](./AGENTS.md). The existing Content Security Policy already blocks third-party trackers, so no additional CSP allowances are required.
-
 ## Private admin interface
 
 The Decap CMS integration has been replaced with a custom admin SPA at `/admin`. The admin surface speaks directly to the GitHub API using server-side helpers and offers two auth modes:
