@@ -3,6 +3,8 @@ import './globals.css';
 import type { ReactNode } from 'react';
 import Script from 'next/script';
 
+import { inter, naskh } from '@/app/ui/fonts';
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
 
 export const metadata = {
@@ -29,7 +31,11 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className="no-js">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${naskh.variable} no-js`}
+    >
       <body className="font-sans">
         <Script id="init-js" strategy="beforeInteractive">
           {`document.documentElement.classList.remove('no-js');
