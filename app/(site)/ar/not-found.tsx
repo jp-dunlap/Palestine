@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 
 export default function NotFoundAr() {
   return (
@@ -14,21 +14,23 @@ export default function NotFoundAr() {
         لم نعثر على الصفحة المطلوبة. قد تكون أُزيلت أو نُقلت.
       </p>
       <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
-        <Link
+        <LocaleLink
           href="/ar"
+          locale="ar"
           className="rounded px-4 py-2 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
           aria-label="العودة إلى الصفحة الرئيسية العربية"
         >
           العودة إلى الصفحة الرئيسية
-        </Link>
-        <Link
+        </LocaleLink>
+        <LocaleLink
           href="/"
+          locale="en"
           className="rounded px-4 py-2 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
           dir="ltr"
           aria-label="View English homepage"
         >
           English
-        </Link>
+        </LocaleLink>
       </nav>
     </main>
   );

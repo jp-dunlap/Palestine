@@ -1,10 +1,10 @@
 // app/places/[id]/page.tsx
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import JsonLd from '@/components/JsonLd';
 import { loadGazetteer } from '@/lib/loaders.places';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
+import LocaleLink from '@/components/LocaleLink';
 
 export const dynamic = 'force-static';
 
@@ -76,9 +76,13 @@ export default function PlacePage({ params }: { params: { id: string } }) {
       ) : null}
 
       <p className="mt-6 text-sm">
-        <Link className="underline hover:no-underline" href={`/map?place=${encodeURIComponent(p.id)}`}>
+        <LocaleLink
+          className="underline hover:no-underline"
+          href={`/map?place=${encodeURIComponent(p.id)}`}
+          locale="en"
+        >
           View on map →
-        </Link>
+        </LocaleLink>
       </p>
 
       <p className="mt-8 text-sm text-gray-600">

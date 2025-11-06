@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { loadLessonFrontmatter, loadLessonSlugs } from '@/lib/loaders.lessons';
 
 export const metadata = {
@@ -32,9 +32,9 @@ export default function LearnIndexPage() {
         {lessons.map((lesson) => (
           <li key={lesson.slug} className="rounded border p-4 shadow-sm">
             <h2 className="text-lg font-semibold">
-              <Link className="underline hover:no-underline" href={`/learn/${lesson.slug}`}>
+              <LocaleLink className="underline hover:no-underline" href={`/learn/${lesson.slug}`} locale="en">
                 {lesson.title}
-              </Link>
+              </LocaleLink>
             </h2>
             {lesson.summary ? <p className="mt-2 text-sm text-gray-700">{lesson.summary}</p> : null}
             {lesson.updated ? (
@@ -45,7 +45,10 @@ export default function LearnIndexPage() {
       </ul>
 
       <p className="mt-10 text-sm text-gray-700">
-        Have a community curriculum to share? <a className="underline hover:no-underline" href="/submit">Propose it here.</a>
+        Have a community curriculum to share?{' '}
+        <LocaleLink className="underline hover:no-underline" href="/submit" locale="en">
+          Propose it here.
+        </LocaleLink>
       </p>
     </main>
   );

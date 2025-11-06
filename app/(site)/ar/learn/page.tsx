@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 
 export const metadata = {
   title: 'وحدات تعليمية',
@@ -25,13 +25,16 @@ export default function LearnIndexPageAr() {
       </p>
 
       <div className="mt-6 text-sm text-gray-700" dir="ltr">
-        <Link className="underline hover:no-underline" href="/learn">
+        <LocaleLink className="underline hover:no-underline" href="/learn" locale="en">
           View the English lessons →
-        </Link>
+        </LocaleLink>
       </div>
 
       <p className="mt-10 text-sm text-gray-600">
-        لديك منهج مجتمعي لمشاركته؟ <Link className="underline hover:no-underline" href="/ar/submit">أرسل موادك هنا.</Link>
+        لديك منهج مجتمعي لمشاركته؟{' '}
+        <LocaleLink className="underline hover:no-underline" href="/ar/submit" locale="ar">
+          أرسل موادك هنا.
+        </LocaleLink>
       </p>
     </main>
   );

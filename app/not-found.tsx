@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import type { Metadata } from 'next';
 
 import FocusHeading from '@/components/FocusHeading';
@@ -18,15 +18,20 @@ export default function NotFound() {
         The page you requested does not exist or may have been moved. Please return to the homepage or explore the timeline.
       </p>
       <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
-        <Link href="/" className="rounded border border-gray-900 px-4 py-2 text-gray-900 transition hover:bg-gray-900 hover:text-white">
+        <LocaleLink
+          href="/"
+          locale="en"
+          className="rounded border border-gray-900 px-4 py-2 text-gray-900 transition hover:bg-gray-900 hover:text-white"
+        >
           Return home
-        </Link>
-        <Link
+        </LocaleLink>
+        <LocaleLink
           href="/timeline"
+          locale="en"
           className="rounded px-4 py-2 text-gray-900 underline underline-offset-4 transition hover:text-gray-700"
         >
           View the timeline
-        </Link>
+        </LocaleLink>
       </nav>
     </main>
   );

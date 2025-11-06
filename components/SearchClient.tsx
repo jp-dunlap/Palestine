@@ -1,7 +1,8 @@
 'use client';
 
 import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+
+import LocaleLink from '@/components/LocaleLink';
 import { buildSearchIndex, searchIndex, type QueryOptions, type SearchIndex } from '@/lib/search';
 import { normalizeSearchDocs } from '@/lib/search-normalize';
 import type { SearchDoc } from '@/lib/search.types';
@@ -253,8 +254,9 @@ export default function SearchClient({ locale = 'en' }: Props) {
               key={doc.id}
               className="rounded border p-3 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-gray-900 focus-within:ring-offset-2 focus-within:ring-offset-white"
             >
-              <Link
+              <LocaleLink
                 href={doc.href}
+                locale={locale}
                 className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -275,7 +277,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
                 {doc.tags?.length ? (
                   <p className="mt-2 text-xs text-gray-700">#{doc.tags.join(' #')}</p>
                 ) : null}
-              </Link>
+              </LocaleLink>
             </li>
           );
         })}
