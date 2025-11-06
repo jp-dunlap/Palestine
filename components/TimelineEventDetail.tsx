@@ -105,15 +105,15 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
           <p
             className={
               isArabic
-                ? 'text-xs text-gray-500'
-                : 'text-xs uppercase tracking-wide text-gray-500'
+                ? 'text-xs text-gray-700'
+                : 'text-xs uppercase tracking-wide text-gray-700'
             }
           >
             {eraLabel}
           </p>
         ) : null}
         <h1 className="text-3xl font-semibold tracking-tight">{event.title}</h1>
-        <p className="text-sm text-gray-600">{dateLabel}</p>
+        <p className="text-sm text-gray-700">{dateLabel}</p>
       </header>
 
       {event.summary ? (
@@ -131,7 +131,7 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
       {(event.tags?.length ?? 0) > 0 ? (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-gray-700">{t.tags}</h2>
-          <ul className="flex flex-wrap gap-2 text-sm text-gray-600">
+          <ul className="flex flex-wrap gap-2 text-sm text-gray-700">
             {event.tags.map((tag) => (
               <li key={tag} className="rounded border px-2 py-1">#{tag}</li>
             ))}

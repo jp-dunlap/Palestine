@@ -41,13 +41,13 @@ export default function SubmitPage() {
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">Submit materials</h1>
-      <p className="mt-2 text-base text-gray-600">
+      <p className="mt-2 text-base text-gray-700">
         Palestine is stewarded by a volunteer editorial collective. To share sources, memories, or corrections, open a GitHub
         issue with the template below. Submissions are public so the community can collaborate in the open.
       </p>
 
-      <section className="mt-6 space-y-3 text-sm text-gray-700">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-600">How to contribute</h2>
+      <section className="mt-6 space-y-3 text-sm text-gray-800">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">How to contribute</h2>
         <ol className="list-decimal pl-5 space-y-2">
           <li>Review the contribution guidelines in <a className="underline hover:no-underline" href="/CONTRIBUTING">CONTRIBUTING.md</a>.</li>
           <li>Prepare citations, scans, or oral histories. Redact any sensitive metadata before uploading.</li>
@@ -69,15 +69,15 @@ export default function SubmitPage() {
         </a>
       </div>
 
-      <section className="mt-10 text-sm text-gray-700">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-600">What happens next?</h2>
+      <section className="mt-10 text-sm text-gray-800">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">What happens next?</h2>
         <p className="mt-2">
           The collective reviews contributions weekly. We may reach out via the issue thread if we need clarification or follow-up
           sources. Approved submissions are documented publicly so you can cite the contribution in other movement work.
         </p>
       </section>
 
-      <p className="mt-10 text-sm text-gray-600">
+      <p className="mt-10 text-sm text-gray-700">
         <a className="underline hover:no-underline" href={arabicHref}>
           اقرأ هذه الصفحة بالعربية →
         </a>

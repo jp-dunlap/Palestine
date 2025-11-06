@@ -78,15 +78,15 @@ export default async function LessonPage({ params }: { params: { slug: string } 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">{frontmatter.title}</h1>
-      {frontmatter.summary ? <p className="mt-2 text-base text-gray-600">{frontmatter.summary}</p> : null}
+      {frontmatter.summary ? <p className="mt-2 text-base text-gray-700">{frontmatter.summary}</p> : null}
       {frontmatter.updated ? (
-        <p className="mt-2 text-xs text-gray-500">Last updated {frontmatter.updated}</p>
+        <p className="mt-2 text-xs text-gray-700">Last updated {frontmatter.updated}</p>
       ) : null}
 
-      <div className="mt-4 text-sm text-gray-600">
+      <div className="mt-4 text-sm text-gray-700">
         <button
           type="button"
-          className="rounded border px-3 py-1 text-xs text-gray-500"
+          className="rounded border px-3 py-1 text-xs text-gray-700"
           aria-disabled="true"
         >
           العربية — قريبًا
@@ -99,7 +99,7 @@ export default async function LessonPage({ params }: { params: { slug: string } 
         {content}
       </article>
 
-      <footer className="mt-12 text-sm text-gray-600">
+      <footer className="mt-12 text-sm text-gray-700">
         Want to share materials from your class or workshop?{' '}
         <a className="underline hover:no-underline" href="/submit">
           Send them to the collective.

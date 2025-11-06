@@ -1,29 +1,16 @@
-// app/robots.ts
 import type { MetadataRoute } from 'next';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
+
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/admin',
-          '/api/admin',
-          '/timeline?',
-          '/ar/timeline?',
-          '/map?',
-          '/ar/map?',
-          '/chapters/*/opengraph-image',
-          '/timeline/*/opengraph-image',
-          '/places/*/opengraph-image',
-          '/ar/chapters/*/opengraph-image',
-          '/ar/timeline/*/opengraph-image',
-          '/ar/places/*/opengraph-image',
-        ],
+        disallow: ['/admin', '/api/cms', '/api/auth/*'],
       },
     ],
-    sitemap: `${base}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

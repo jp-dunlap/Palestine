@@ -20,11 +20,12 @@ describe('robots.txt configuration', () => {
       .flat();
 
     expect(disallowEntries).toContain('/admin');
-    expect(disallowEntries).toContain('/api/admin');
-    expect(disallowEntries).not.toContain('/api/cms');
+    expect(disallowEntries).toContain('/api/cms');
+    expect(disallowEntries).toContain('/api/auth/*');
+    expect(disallowEntries).not.toContain('/api/admin');
   });
 
-  it('blocks index bloat for filtered pages and open graph assets', () => {
+  it('avoids blocking dynamic timeline and map routes', () => {
     const result = robots();
     const rules = Array.isArray(result.rules)
       ? result.rules
@@ -43,7 +44,7 @@ describe('robots.txt configuration', () => {
         .flat()
     );
 
-    const expectedDisallows = [
+    const unexpectedDisallows = [
       '/timeline?',
       '/ar/timeline?',
       '/map?',
@@ -56,8 +57,8 @@ describe('robots.txt configuration', () => {
       '/ar/places/*/opengraph-image',
     ];
 
-    for (const path of expectedDisallows) {
-      expect(disallowEntries.has(path)).toBe(true);
+    for (const path of unexpectedDisallows) {
+      expect(disallowEntries.has(path)).toBe(false);
     }
   });
 });

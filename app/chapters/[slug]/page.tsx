@@ -120,20 +120,20 @@ export default async function Page({ params }: Props) {
 
         {meta.summary && <p className="mt-4">{meta.summary}</p>}
         {arabicHref ? (
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-700">
             <a className="underline hover:no-underline" href={arabicHref}>
               View this chapter in Arabic →
             </a>
           </p>
         ) : null}
         {meta.places?.length ? (
-          <p className="mt-2 text-sm text-gray-600">Places: {meta.places.join(', ')}</p>
+          <p className="mt-2 text-sm text-gray-700">Places: {meta.places.join(', ')}</p>
         ) : null}
         {meta.tags?.length ? (
-          <p className="mt-1 text-xs text-gray-500">Tags: {meta.tags.join(', ')}</p>
+          <p className="mt-1 text-xs text-gray-700">Tags: {meta.tags.join(', ')}</p>
         ) : null}
         {sourceIds.length ? (
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-700">
             <a href="#sources" className="underline hover:no-underline">Sources</a>: {sourceIds.join(' · ')}
           </p>
         ) : null}

@@ -36,15 +36,15 @@ export default function LearnIndexPage() {
                 {lesson.title}
               </Link>
             </h2>
-            {lesson.summary ? <p className="mt-2 text-sm text-gray-600">{lesson.summary}</p> : null}
+            {lesson.summary ? <p className="mt-2 text-sm text-gray-700">{lesson.summary}</p> : null}
             {lesson.updated ? (
-              <p className="mt-2 text-xs text-gray-500">Last updated {lesson.updated}</p>
+              <p className="mt-2 text-xs text-gray-700">Last updated {lesson.updated}</p>
             ) : null}
           </li>
         ))}
       </ul>
 
-      <p className="mt-10 text-sm text-gray-600">
+      <p className="mt-10 text-sm text-gray-700">
         Have a community curriculum to share? <a className="underline hover:no-underline" href="/submit">Propose it here.</a>
       </p>
     </main>

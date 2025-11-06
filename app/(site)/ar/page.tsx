@@ -72,7 +72,7 @@ export default function Page() {
         </a>
       </p>
 
-      <footer className="mt-12 text-xs text-gray-500 font-arabic">الشيفرة: MIT · المحتوى: CC BY-SA 4.0</footer>
+      <footer className="mt-12 text-xs text-gray-700 font-arabic">الشيفرة: MIT · المحتوى: CC BY-SA 4.0</footer>
     </main>
   );
 }

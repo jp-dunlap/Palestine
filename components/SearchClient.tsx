@@ -1,7 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { buildSearchIndex, searchIndex, type QueryOptions, type SearchIndex } from '@/lib/search';
 import { normalizeSearchDocs } from '@/lib/search-normalize';
@@ -23,6 +22,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
   const [query, setQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<TypeFilter>>(new Set());
+  const searchInputId = useId();
 
   const t = useMemo(() => {
     if (isArabic) {
@@ -46,6 +46,8 @@ export default function SearchClient({ locale = 'en' }: Props) {
         typeFilterLegend: 'تصفية حسب النوع',
         typeFilterAll: 'كل الأنواع',
         typeFilterAria: (label: string) => `تصفية النتائج حسب ${label}`,
+        filterStateSelected: 'محدد',
+        filterStateNotSelected: 'غير محدد',
       } as const;
     }
     return {
@@ -68,6 +70,8 @@ export default function SearchClient({ locale = 'en' }: Props) {
       typeFilterLegend: 'Filter by type',
       typeFilterAll: 'All types',
       typeFilterAria: (label: string) => `Filter results to ${label}`,
+      filterStateSelected: 'selected',
+      filterStateNotSelected: 'not selected',
     } as const;
   }, [isArabic]);
 
@@ -181,18 +185,20 @@ export default function SearchClient({ locale = 'en' }: Props) {
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'}>
-      <label className="mb-1 block text-sm font-medium">{t.label}</label>
+      <label className="mb-1 block text-sm font-medium" htmlFor={searchInputId}>
+        {t.label}
+      </label>
       <input
+        id={searchInputId}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="w-full rounded border px-3 py-2 text-sm"
         placeholder={t.placeholder}
         dir={isArabic ? 'rtl' : 'ltr'}
-        aria-label={t.label}
       />
 
       <fieldset className={`mt-3 border-0 p-0 text-sm ${isArabic ? 'text-right' : ''}`}>
-        <legend className="mb-2 text-xs font-semibold text-gray-600">{t.typeFilterLegend}</legend>
+        <legend className="mb-2 text-xs font-semibold text-gray-700">{t.typeFilterLegend}</legend>
         <div className={`flex flex-wrap gap-2 ${isArabic ? 'justify-end' : ''}`}>
           <button
             type="button"
@@ -219,7 +225,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
                 }`}
                 onClick={() => toggleType(type)}
                 aria-pressed={selected}
-                aria-label={t.typeFilterAria(t.typeLabels[type])}
+                aria-label={`${t.typeFilterAria(t.typeLabels[type])} — ${selected ? t.filterStateSelected : t.filterStateNotSelected}`}
               >
                 {t.typeLabels[type]}
               </button>
@@ -237,7 +243,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
           <li className="rounded border p-3 text-sm text-red-600">{t.error}</li>
         ) : null}
         {status !== 'error' && results.length === 0 && status === 'ready' ? (
-          <li className="rounded border p-3 text-sm text-gray-600">{t.empty}</li>
+          <li className="rounded border p-3 text-sm text-gray-700">{t.empty}</li>
         ) : null}
         {results.map((doc) => {
           const typeLabel = doc.type ? t.typeLabels[doc.type as TypeFilter] : null;
@@ -255,7 +261,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
                   <div className="font-semibold">{highlight(doc.title)}</div>
                   {typeLabel ? (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
+                      className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800"
                       aria-label={typeLabel}
                     >
                       {typeIcon ? <span aria-hidden="true">{typeIcon}</span> : null}
@@ -264,10 +270,10 @@ export default function SearchClient({ locale = 'en' }: Props) {
                   ) : null}
                 </div>
                 {doc.summary ? (
-                  <p className="mt-1 text-sm text-gray-600">{highlight(doc.summary)}</p>
+                  <p className="mt-1 text-sm text-gray-700">{highlight(doc.summary)}</p>
                 ) : null}
                 {doc.tags?.length ? (
-                  <p className="mt-2 text-xs text-gray-500">#{doc.tags.join(' #')}</p>
+                  <p className="mt-2 text-xs text-gray-700">#{doc.tags.join(' #')}</p>
                 ) : null}
               </Link>
             </li>
