@@ -10,6 +10,9 @@ test('timeline filters expose accessible names and focus styles', async ({ page 
   const resultsRegion = page.locator('#timeline-results');
   await resultsRegion.waitFor({ state: 'visible' });
 
+  const liveRegion = page.getByRole('status');
+  await expect(liveRegion).toContainText('Showing');
+
   const foundationsButton = page.getByRole('button', { name: 'Filter by era Foundations' });
   await foundationsButton.waitFor({ state: 'visible' });
   await expect(foundationsButton).toHaveAttribute('aria-controls', 'timeline-results');
@@ -31,10 +34,12 @@ test('timeline filters expose accessible names and focus styles', async ({ page 
   await expect(modernButton).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { level: 3, name: revoltHeading })).toBeVisible();
   await expect(earlyEvent).not.toBeVisible();
+  await expect(liveRegion).toContainText('Modern / Nakba → Present — selected');
 
   await expect(resultsRegion).toHaveAttribute('aria-live', 'polite');
 
   await foundationsButton.click();
   await expect(foundationsButton).toHaveAttribute('aria-pressed', 'true');
   await expect(earlyEvent).toBeVisible();
+  await expect(liveRegion).toContainText('Foundations — selected');
 });
