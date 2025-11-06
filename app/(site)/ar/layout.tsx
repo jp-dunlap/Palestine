@@ -30,10 +30,10 @@ export const metadata: Metadata = {
 export default function ArabicSiteSegmentLayout({ children }: { children: ReactNode }) {
   return (
     <div
+      className="min-h-screen bg-white text-gray-900 font-arabic"
       data-locale="ar"
       dir="rtl"
       lang="ar"
-      className="min-h-screen bg-white text-gray-900 font-arabic"
     >
       <header className="border-b">
         <div className="mx-auto flex max-w-4xl justify-end rtl:justify-start px-4 py-3">
