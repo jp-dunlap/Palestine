@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import type { TimelineEvent, Era } from '@/lib/types';
 
 function yearOf(d: string | number | undefined): string {
@@ -62,13 +62,14 @@ export default function Timeline({
             </p>
           )}
           <div className="mt-3 text-xs font-medium">
-            <Link
+            <LocaleLink
               href={t.href(e.id)}
               className="underline hover:no-underline"
               aria-label={t.aria(e.title)}
+              locale={locale}
             >
               {t.details} →
-            </Link>
+            </LocaleLink>
           </div>
         </div>
       ))}

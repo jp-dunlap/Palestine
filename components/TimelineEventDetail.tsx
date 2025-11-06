@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import LocaleLink from '@/components/LocaleLink';
 import { loadEras, getRelatedTimelineEvents } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
 import type { TimelineEvent } from '@/lib/types';
@@ -95,9 +95,13 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
       lang={isArabic ? 'ar' : undefined}
     >
       <p className="text-sm text-gray-600">
-        <Link className="underline hover:no-underline" href={isArabic ? '/ar/timeline' : '/timeline'}>
+        <LocaleLink
+          className="underline hover:no-underline"
+          href={isArabic ? '/ar/timeline' : '/timeline'}
+          locale={locale}
+        >
           {t.returnLink}
-        </Link>
+        </LocaleLink>
       </p>
 
       <header className={isArabic ? 'font-arabic space-y-2 text-right' : 'space-y-2'}>
@@ -164,16 +168,16 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
               return (
                 <li key={raw} className={isArabic ? 'font-arabic space-y-1' : 'space-y-1'}>
                   {placeHref ? (
-                    <Link className="underline hover:no-underline" href={placeHref}>
+                    <LocaleLink className="underline hover:no-underline" href={placeHref} locale={locale}>
                       {primaryLabel}
-                    </Link>
+                    </LocaleLink>
                   ) : (
                     <span>{primaryLabel}</span>
                   )}
 
                   {mapHref ? (
                     <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                      <Link
+                      <LocaleLink
                         className="underline hover:no-underline"
                         href={mapHref}
                         aria-label={
@@ -181,13 +185,14 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
                             ? `عرض ${primaryLabel} على الخريطة`
                             : `View ${primaryLabel} on the map`
                         }
+                        locale={locale}
                       >
                         {t.viewOnMap} →
-                      </Link>
+                      </LocaleLink>
                       {altHref ? (
-                        <Link className="underline hover:no-underline" href={altHref}>
+                        <LocaleLink className="underline hover:no-underline" href={altHref} locale={locale}>
                           {t.viewPlaceAlt}
-                        </Link>
+                        </LocaleLink>
                       ) : null}
                     </div>
                   ) : null}
@@ -206,9 +211,9 @@ export default function TimelineEventDetail({ event, locale = 'en' }: Props) {
               const href = isArabic ? `/ar/timeline/${item.id}` : `/timeline/${item.id}`;
               return (
                 <li key={item.id}>
-                  <Link className="underline hover:no-underline" href={href}>
+                  <LocaleLink className="underline hover:no-underline" href={href} locale={locale}>
                     {item.title}
-                  </Link>
+                  </LocaleLink>
                 </li>
               );
             })}

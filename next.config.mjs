@@ -161,7 +161,11 @@ const nextConfig = {
 
   // Keep the private CMS shell reachable at /admin → static HTML
   async rewrites() {
-    return [{ source: '/admin', destination: '/admin/index.html' }];
+    return [
+      { source: '/admin', destination: '/admin/index.html' },
+      { source: '/en', destination: '/' },
+      { source: '/en/:path*', destination: '/:path*' },
+    ];
   },
 
   // Preserve legacy map URLs so old links don’t 404

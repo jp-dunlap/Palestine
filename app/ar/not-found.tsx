@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
 
 import FocusHeading from '@/components/FocusHeading';
+import LocaleLink from '@/components/LocaleLink';
 
 export const metadata: Metadata = {
   title: 'الصفحة غير موجودة — فلسطين',
@@ -19,15 +19,20 @@ export default function NotFoundAr() {
         الصفحة التي تبحث عنها غير موجودة أو ربما تم نقلها. يمكنك الرجوع إلى الصفحة الرئيسية أو استكشاف الخط الزمني.
       </p>
       <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
-        <Link href="/ar" className="rounded border border-gray-900 px-4 py-2 text-gray-900 transition hover:bg-gray-900 hover:text-white">
+        <LocaleLink
+          href="/ar"
+          locale="ar"
+          className="rounded border border-gray-900 px-4 py-2 text-gray-900 transition hover:bg-gray-900 hover:text-white"
+        >
           العودة إلى الرئيسية
-        </Link>
-        <Link
+        </LocaleLink>
+        <LocaleLink
           href="/ar/timeline"
+          locale="ar"
           className="rounded px-4 py-2 text-gray-900 underline underline-offset-4 transition hover:text-gray-700"
         >
           استكشاف الخط الزمني
-        </Link>
+        </LocaleLink>
       </nav>
     </main>
   );

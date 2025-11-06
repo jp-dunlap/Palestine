@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect } from 'react';
 
 import FocusHeading from '@/components/FocusHeading';
+import LocaleLink from '@/components/LocaleLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
 
 type GlobalErrorProps = {
@@ -43,18 +43,20 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             >
               Try again
             </button>
-            <Link
+            <LocaleLink
               href="/"
+              locale="en"
               className="rounded border border-transparent px-4 py-2 text-gray-900 underline underline-offset-4 transition hover:text-gray-700"
             >
               Return home
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               href="/timeline"
+              locale="en"
               className="rounded border border-transparent px-4 py-2 text-gray-900 underline underline-offset-4 transition hover:text-gray-700"
             >
               View the timeline
-            </Link>
+            </LocaleLink>
           </div>
         </main>
       </body>
