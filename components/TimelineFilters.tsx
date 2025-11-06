@@ -3,6 +3,12 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Era } from '@/lib/types';
 import * as React from 'react';
+import A11yAnnouncer, { type A11yAnnouncerHandle } from '@/components/A11yAnnouncer';
+import {
+  composeBookmarkAnnouncement,
+  composeTimelineChipAnnouncement,
+  composeTimelineLogicAnnouncement,
+} from '@/lib/a11y-announcements';
 
 type Bookmark = {
   id: string;
@@ -161,21 +167,29 @@ export default function TimelineFilters({
     return new Set(ids);
   }, [sp]);
 
-  const [announcement, setAnnouncement] = React.useState(() =>
-    formatResultMessage(resultCount, locale)
-  );
-  const [bookmarkAnnouncement, setBookmarkAnnouncement] = React.useState('');
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
+
+  const announcerRef = React.useRef<A11yAnnouncerHandle | null>(null);
+  const hasAnnouncedInitialResultsRef = React.useRef(false);
 
   const isArabic = locale === 'ar';
   const t = translations[locale];
+  const resultSummary = React.useMemo(
+    () => formatResultMessage(resultCount, locale),
+    [resultCount, locale]
+  );
 
   const chipRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const searchInputId = React.useId();
 
   React.useEffect(() => {
-    setAnnouncement(formatResultMessage(resultCount, locale));
-  }, [resultCount, locale]);
+    const currentAnnouncer = announcerRef.current;
+    if (!currentAnnouncer) return;
+    if (!hasAnnouncedInitialResultsRef.current) {
+      hasAnnouncedInitialResultsRef.current = true;
+    }
+    currentAnnouncer.announce(resultSummary);
+  }, [resultSummary]);
 
   React.useEffect(() => {
     setLogic(sp.get('logic') === 'and' ? 'and' : 'or');
@@ -228,27 +242,32 @@ export default function TimelineFilters({
   }
 
   function toggleLogic(nextLogic: 'and' | 'or') {
+    const logicLabel = nextLogic === 'and' ? t.logicAnd : t.logicOr;
+    if (logic === nextLogic) {
+      announcerRef.current?.announce(composeTimelineLogicAnnouncement(logicLabel, resultSummary));
+      return;
+    }
     setLogic(nextLogic);
     if (nextLogic === 'and') {
       update('logic', 'and');
     } else {
       update('logic', undefined);
     }
+    announcerRef.current?.announce(composeTimelineLogicAnnouncement(logicLabel, resultSummary));
   }
 
   function clearFilters() {
     setQ('');
     setLogic('or');
-    setBookmarkAnnouncement('');
     const params = new URLSearchParams();
     commitParams(params);
+    announcerRef.current?.announce(composeBookmarkAnnouncement(t.clear, resultSummary));
   }
 
   function handleFormKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
     if (event.key === 'Escape') {
       event.preventDefault();
       clearFilters();
-      setBookmarkAnnouncement('');
     }
   }
 
@@ -284,27 +303,33 @@ export default function TimelineFilters({
       next.sort((a, b) => a.label.localeCompare(b.label));
       return next;
     });
-    setBookmarkAnnouncement(t.savedBookmark(label));
+    announcerRef.current?.announce(
+      composeBookmarkAnnouncement(t.savedBookmark(label), resultSummary)
+    );
   }
 
   function applyBookmark(bookmark: Bookmark) {
     setLogic(bookmark.logic);
     setQ(bookmark.query);
     replace(bookmark.url, { scroll: false });
-    setBookmarkAnnouncement(t.appliedBookmark(bookmark.label));
+    announcerRef.current?.announce(
+      composeBookmarkAnnouncement(t.appliedBookmark(bookmark.label), resultSummary)
+    );
   }
 
   async function copyBookmarkLink(bookmark: Bookmark) {
     if (typeof window === 'undefined' || !navigator?.clipboard) {
-      setBookmarkAnnouncement(t.copyError);
+      announcerRef.current?.announce(composeBookmarkAnnouncement(t.copyError));
       return;
     }
     try {
       const absolute = new URL(bookmark.url, window.location.origin).toString();
       await navigator.clipboard.writeText(absolute);
-      setBookmarkAnnouncement(t.copiedBookmark(bookmark.label));
+      announcerRef.current?.announce(
+        composeBookmarkAnnouncement(t.copiedBookmark(bookmark.label))
+      );
     } catch {
-      setBookmarkAnnouncement(t.copyError);
+      announcerRef.current?.announce(composeBookmarkAnnouncement(t.copyError));
     }
   }
 
@@ -312,7 +337,9 @@ export default function TimelineFilters({
     setBookmarks((prev) => prev.filter((bookmark) => bookmark.id !== id));
     const removed = bookmarks.find((bookmark) => bookmark.id === id);
     if (removed) {
-      setBookmarkAnnouncement(t.deletedBookmark(removed.label));
+      announcerRef.current?.announce(
+        composeBookmarkAnnouncement(t.deletedBookmark(removed.label))
+      );
     }
   }
 
@@ -333,6 +360,7 @@ export default function TimelineFilters({
       dir={isArabic ? 'rtl' : 'ltr'}
       onKeyDown={handleFormKeyDown}
     >
+      <A11yAnnouncer ref={announcerRef} />
       <label className="sr-only" htmlFor={searchInputId}>
         {t.label}
       </label>
@@ -397,7 +425,14 @@ export default function TimelineFilters({
                 aria-pressed={selected}
                 aria-controls="timeline-results"
                 aria-label={t.filterAria(label, selected)}
-                onClick={() => toggleEra(era.id)}
+                onClick={() => {
+                  const nextSelected = !selected;
+                  const stateLabel = nextSelected ? t.filterStateSelected : t.filterStateNotSelected;
+                  announcerRef.current?.announce(
+                    composeTimelineChipAnnouncement(label, stateLabel, resultSummary)
+                  );
+                  toggleEra(era.id);
+                }}
                 data-selected={selected ? 'true' : 'false'}
                 onKeyDown={(event) => handleChipKeyDown(event, era.id)}
                 ref={(node) => {
@@ -470,10 +505,6 @@ export default function TimelineFilters({
         <p className="text-xs text-gray-700">{t.emptyBookmarks}</p>
       )}
 
-      <div aria-live="polite" className="sr-only">
-        {announcement}
-        {bookmarkAnnouncement ? ` ${bookmarkAnnouncement}` : ''}
-      </div>
     </form>
   );
 }

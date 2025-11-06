@@ -1,11 +1,24 @@
 'use client';
 
-import { Fragment, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import LocaleLink from '@/components/LocaleLink';
+import {
+  composeSearchFilterAnnouncement,
+  composeSearchQueryAnnouncement,
+} from '@/lib/a11y-announcements';
 import { buildSearchIndex, searchIndex, type QueryOptions, type SearchIndex } from '@/lib/search';
 import { normalizeSearchDocs } from '@/lib/search-normalize';
 import type { SearchDoc } from '@/lib/search.types';
+import A11yAnnouncer, { type A11yAnnouncerHandle } from '@/components/A11yAnnouncer';
 
 type Props = {
   locale?: 'en' | 'ar';
@@ -49,6 +62,10 @@ export default function SearchClient({ locale = 'en' }: Props) {
         typeFilterAria: (label: string) => `تصفية النتائج حسب ${label}`,
         filterStateSelected: 'محدد',
         filterStateNotSelected: 'غير محدد',
+        queryAnnouncement: (value: string) => `بحث عن «${value}»`,
+        queryClearedAnnouncement: 'تم مسح البحث',
+        filterAnnouncementSingular: 'مرشح',
+        filterAnnouncementPlural: 'مرشحات',
       } as const;
     }
     return {
@@ -73,6 +90,10 @@ export default function SearchClient({ locale = 'en' }: Props) {
       typeFilterAria: (label: string) => `Filter results to ${label}`,
       filterStateSelected: 'selected',
       filterStateNotSelected: 'not selected',
+      queryAnnouncement: (value: string) => `Search for “${value}”`,
+      queryClearedAnnouncement: 'Search cleared',
+      filterAnnouncementSingular: 'filter',
+      filterAnnouncementPlural: 'filters',
     } as const;
   }, [isArabic]);
 
@@ -130,6 +151,54 @@ export default function SearchClient({ locale = 'en' }: Props) {
   const activeQuery = useMemo(() => query.trim(), [query]);
   const activeQueryLower = useMemo(() => activeQuery.toLowerCase(), [activeQuery]);
 
+  const announcerRef = useRef<A11yAnnouncerHandle | null>(null);
+  const previousQueryRef = useRef(activeQuery);
+  const previousTypeKeyRef = useRef('');
+
+  useEffect(() => {
+    const currentAnnouncer = announcerRef.current;
+    if (!currentAnnouncer) {
+      previousQueryRef.current = activeQuery;
+      return;
+    }
+    if (previousQueryRef.current === activeQuery) {
+      return;
+    }
+    previousQueryRef.current = activeQuery;
+    const message = composeSearchQueryAnnouncement(activeQuery, {
+      describeQuery: t.queryAnnouncement,
+      clearedMessage: t.queryClearedAnnouncement,
+      resultCountText: t.count(results.length),
+    });
+    currentAnnouncer.announce(message);
+  }, [activeQuery, results.length, t]);
+
+  useEffect(() => {
+    const selections = [...typeSelections].sort();
+    const key = selections.join('|');
+    const currentAnnouncer = announcerRef.current;
+    if (!currentAnnouncer) {
+      previousTypeKeyRef.current = key;
+      return;
+    }
+    if (previousTypeKeyRef.current === key) {
+      return;
+    }
+    previousTypeKeyRef.current = key;
+    const labels = selections.length
+      ? selections.map((selection) => t.typeLabels[selection as TypeFilter])
+      : [t.typeFilterAll];
+    const joiner = isArabic ? '، ' : ', ';
+    const message = composeSearchFilterAnnouncement(labels, {
+      joiner,
+      singularWord: t.filterAnnouncementSingular,
+      pluralWord: t.filterAnnouncementPlural,
+      resultCountText: t.count(results.length),
+      resultSeparator: joiner,
+    });
+    currentAnnouncer.announce(message);
+  }, [typeSelections, results.length, t, isArabic]);
+
   const statusMessage = useMemo(() => {
     if (status === 'loading') return t.loading;
     if (status === 'error') return `${t.error}${errorMessage ? ` (${errorMessage})` : ''}`;
@@ -186,6 +255,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'}>
+      <A11yAnnouncer ref={announcerRef} />
       <label className="mb-1 block text-sm font-medium" htmlFor={searchInputId}>
         {t.label}
       </label>
