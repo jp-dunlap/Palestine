@@ -1,24 +1,31 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+import FocusHeading from '@/components/FocusHeading';
+
+export const metadata: Metadata = {
+  title: 'Page not found — Palestine',
+};
 
 export default function NotFound() {
   return (
-    <main id="main" tabIndex={-1} className="min-h-screen flex flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">404 — Page not found</h1>
-      <p className="max-w-xl text-base text-gray-600">
-        We couldn’t find the page you were looking for. It might have been moved or removed.
+    <main
+      id="main"
+      className="mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center justify-center gap-6 px-6 py-16 text-center"
+    >
+      <FocusHeading className="text-4xl font-bold tracking-tight">Page not found</FocusHeading>
+      <p className="max-w-xl text-base text-gray-700">
+        The page you requested does not exist or may have been moved. Please return to the homepage or explore the timeline.
       </p>
       <nav className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
-        <Link
-          href="/"
-          className="rounded px-4 py-2 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
-        >
+        <Link href="/" className="rounded border border-gray-900 px-4 py-2 text-gray-900 transition hover:bg-gray-900 hover:text-white">
           Return home
         </Link>
         <Link
-          href="/ar"
-          className="rounded px-4 py-2 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+          href="/timeline"
+          className="rounded px-4 py-2 text-gray-900 underline underline-offset-4 transition hover:text-gray-700"
         >
-          العربية
+          View the timeline
         </Link>
       </nav>
     </main>

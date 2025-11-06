@@ -204,16 +204,16 @@ export default function MapsPageClientAr({
                 title="انقر للتركيز على الخريطة"
               >
                 <div className="font-medium">{displayName(p)}</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-700">
                   {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
                 </div>
                 {p.alt_names?.length ? (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-700 mt-1">
                     أسماء أخرى: {p.alt_names.join('، ')}
                   </div>
                 ) : null}
               </button>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-700">
                 <a
                   href={`/ar/places/${p.id}`}
                   className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"

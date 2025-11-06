@@ -1,61 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
 
-const REALM = 'Palestine CMS'
+import { requireBasicAuth } from '@/lib/auth';
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
-}
-
-const unauthorized = () =>
-  new Response('Unauthorized', {
-    status: 401,
-    headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
-  })
+  matcher: ['/admin', '/admin/:path*', '/api/cms/:path*', '/api/admin/:path*'],
+};
 
 export function middleware(req: NextRequest) {
-  if (req.method === 'OPTIONS') {
-    return NextResponse.next()
+  const { pathname } = req.nextUrl;
+  const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isCmsApiRoute = pathname.startsWith('/api/cms');
+  const isAdminApiRoute = pathname.startsWith('/api/admin');
+
+  if (!isAdminPage && !isCmsApiRoute && !isAdminApiRoute) {
+    return NextResponse.next();
   }
 
-  const pathname = req.nextUrl.pathname
-  const mode = (process.env.CMS_AUTH_MODE ?? 'oauth').toLowerCase()
-  if (mode !== 'token') {
-    const isAdminApi = pathname.startsWith('/api/admin')
-    const isAdminPage = pathname.startsWith('/admin')
-    if (isAdminPage && !isAdminApi) {
-      const session = req.cookies.get('cms_session')?.value
-      if (!session) {
-        return NextResponse.redirect(new URL('/api/auth/signin', req.url), 302)
-      }
-    }
-    return NextResponse.next()
-  }
-
-  const user = process.env.BASIC_AUTH_USER
-  const pass = process.env.BASIC_AUTH_PASS
+  const user = process.env.BASIC_AUTH_USER;
+  const pass = process.env.BASIC_AUTH_PASS;
   if (!user || !pass) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
-  const header = req.headers.get('authorization')
-  if (!header || !header.startsWith('Basic ')) {
-    return unauthorized()
-  }
-
-  try {
-    const decoded = Buffer.from(header.slice(6), 'base64').toString()
-    const separatorIndex = decoded.indexOf(':')
-    if (separatorIndex === -1) {
-      return unauthorized()
+  const authResult = requireBasicAuth(req);
+  if ('status' in authResult && authResult.status === 401) {
+    if (isAdminPage) {
+      return new NextResponse('Not Found', { status: 404 });
     }
-    const name = decoded.slice(0, separatorIndex)
-    const password = decoded.slice(separatorIndex + 1)
-    if (name !== user || password !== pass) {
-      return unauthorized()
-    }
-  } catch {
-    return unauthorized()
+
+    return authResult;
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }

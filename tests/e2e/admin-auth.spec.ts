@@ -1,9 +1,21 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('admin access control', () => {
-  test('rejects unauthenticated visitors', async ({ request }) => {
+  test('returns 404 for unauthenticated /admin', async ({ request }) => {
     const response = await request.get('/admin');
+    expect(response.status()).toBe(404);
+  });
+
+  test('returns 401 for unauthenticated CMS API with WWW-Authenticate header', async ({ request }) => {
+    const response = await request.get('/api/cms/config');
     expect(response.status()).toBe(401);
+    expect(response.headers()['www-authenticate']).toContain('Basic');
+  });
+
+  test('returns 401 for unauthenticated admin API with WWW-Authenticate header', async ({ request }) => {
+    const response = await request.get('/api/admin/me');
+    expect(response.status()).toBe(401);
+    expect(response.headers()['www-authenticate']).toContain('Basic');
   });
 
   test('allows authenticated access to the CMS shell', async ({ browser }, testInfo) => {
@@ -22,6 +34,9 @@ test.describe('admin access control', () => {
 
     await expect(page.locator('#cms-status h1')).toHaveText(/Palestine CMS/i);
     await expect(page.locator('#cms-status-message')).toContainText('Loading secure editor');
+
+    const cmsResponse = await context.request.get('/api/cms/config');
+    expect(cmsResponse.status()).toBe(200);
 
     await context.close();
   });

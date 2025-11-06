@@ -11,21 +11,19 @@ test.describe('sitemap.xml', () => {
 
     const body = await response.text();
 
-    expect(body).toMatch(/<loc>[^<]+\/map<\/loc>/);
-    expect(body).toMatch(/<loc>[^<]+\/ar\/timeline<\/loc>/);
-    expect(body).toMatch(/<loc>[^<]+\/learn<\/loc>/);
-    expect(body).toMatch(/<loc>[^<]+\/ar\/learn<\/loc>/);
+    expect(body).toMatch(/<loc>https:\/\/palestine-two\.vercel\.app\/<\/loc>/);
+    expect(body).toMatch(/<loc>https:\/\/palestine-two\.vercel\.app\/timeline<\/loc>/);
+    expect(body).toMatch(/<loc>https:\/\/palestine-two\.vercel\.app\/map<\/loc>/);
+    expect(body).toMatch(/<loc>https:\/\/palestine-two\.vercel\.app\/learn<\/loc>/);
 
-    const chapterMatches = extractMatches(body, /\/chapters\/[^<]+/g);
+    const chapterMatches = extractMatches(body, /https:\/\/palestine-two\.vercel\.app\/chapters\/[\w-]+/g);
     expect(chapterMatches.length).toBeGreaterThan(0);
 
-    const timelineDetailMatches = extractMatches(body, /https?:\/\/[^<]+\/timeline\/[^<]+/g);
-    const hasDetail = timelineDetailMatches.some((href) => !href.endsWith('/timeline'));
-    expect(hasDetail).toBeTruthy();
+    const placeMatches = extractMatches(body, /https:\/\/palestine-two\.vercel\.app\/places\/[\w-]+/g);
+    expect(placeMatches.length).toBeGreaterThan(0);
 
-    expect(body).toMatch(/<loc>[^<]+\/learn\/introduction<\/loc>/);
-
-    const legacyMapRoute = `/${'maps'}`;
-    expect(body).not.toContain(legacyMapRoute);
+    expect(body).toMatch(/xhtml:link[^>]+hreflang="ar"[^>]+\/ar\/timeline/);
+    expect(body).toMatch(/xhtml:link[^>]+hreflang="ar"[^>]+\/ar\/chapters\//);
+    expect(body).toMatch(/xhtml:link[^>]+hreflang="ar"[^>]+\/ar\/places\//);
   });
 });

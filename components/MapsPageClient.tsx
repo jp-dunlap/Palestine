@@ -183,16 +183,16 @@ export default function MapsPageClient({
                 title="Click to focus on the map"
               >
                 <div className="font-medium">{p.name}</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-700">
                   {formatKind(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
                 </div>
                 {p.alt_names?.length ? (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-700 mt-1">
                     Also known as: {p.alt_names.join(', ')}
                   </div>
                 ) : null}
               </button>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-700">
                 <a
                   href={`/places/${p.id}`}
                   className="underline hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2"

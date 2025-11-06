@@ -21,7 +21,7 @@ type Translation = {
   placeholder: string;
   label: string;
   legend: string;
-  filterAria: (era: string) => string;
+  filterAria: (era: string, selected: boolean) => string;
   logicGroupLabel: string;
   logicOr: string;
   logicAnd: string;
@@ -43,6 +43,8 @@ type Translation = {
   deletedBookmark: (label: string) => string;
   resultMessage: (count: number) => string;
   resultMessageArabic: (count: number) => string;
+  filterStateSelected: string;
+  filterStateNotSelected: string;
 };
 
 const translations: Record<Locale, Translation> = {
@@ -50,7 +52,7 @@ const translations: Record<Locale, Translation> = {
     placeholder: 'Search timeline…',
     label: 'Search',
     legend: 'Filter by era',
-    filterAria: (era) => `Filter by era ${era}`,
+    filterAria: (era, selected) => `Era: ${era} — ${selected ? 'selected' : 'not selected'}`,
     logicGroupLabel: 'Filter logic',
     logicOr: 'Match any era (OR)',
     logicAnd: 'Match all eras (AND)',
@@ -72,12 +74,14 @@ const translations: Record<Locale, Translation> = {
     deletedBookmark: (label) => `Deleted filter set “${label}”`,
     resultMessage: (count) => (count === 1 ? 'Showing 1 event' : `Showing ${count} events`),
     resultMessageArabic: (count) => (count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`),
+    filterStateSelected: 'selected',
+    filterStateNotSelected: 'not selected',
   },
   ar: {
     placeholder: 'ابحث في الخط الزمني…',
     label: 'ابحث',
     legend: 'تصفية حسب الحقبة',
-    filterAria: (era) => `تصفية حسب الحقبة ${era}`,
+    filterAria: (era, selected) => `الحقبة: ${era} — ${selected ? 'محددة' : 'غير محددة'}`,
     logicGroupLabel: 'منطق التصفية',
     logicOr: 'مطابقة أي حقبة (أو)',
     logicAnd: 'مطابقة جميع الحقب (و)',
@@ -99,6 +103,8 @@ const translations: Record<Locale, Translation> = {
     deletedBookmark: (label) => `تم حذف مجموعة المرشحات «${label}»`,
     resultMessage: (count) => (count === 1 ? 'Showing 1 event' : `Showing ${count} events`),
     resultMessageArabic: (count) => (count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`),
+    filterStateSelected: 'محددة',
+    filterStateNotSelected: 'غير محددة',
   },
 };
 
@@ -165,6 +171,7 @@ export default function TimelineFilters({
   const t = translations[locale];
 
   const chipRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const searchInputId = React.useId();
 
   React.useEffect(() => {
     setAnnouncement(formatResultMessage(resultCount, locale));
@@ -326,7 +333,11 @@ export default function TimelineFilters({
       dir={isArabic ? 'rtl' : 'ltr'}
       onKeyDown={handleFormKeyDown}
     >
+      <label className="sr-only" htmlFor={searchInputId}>
+        {t.label}
+      </label>
       <input
+        id={searchInputId}
         name="q"
         value={q}
         onChange={(e) => {
@@ -334,7 +345,6 @@ export default function TimelineFilters({
           update('q', e.target.value);
         }}
         placeholder={t.placeholder}
-        aria-label={t.label}
         className={`w-full rounded border px-3 py-2 text-sm ${isArabic ? 'text-right' : ''}`}
       />
 
@@ -386,7 +396,7 @@ export default function TimelineFilters({
                 className={`${chipBaseClasses} ${stateClasses}`}
                 aria-pressed={selected}
                 aria-controls="timeline-results"
-                aria-label={t.filterAria(label)}
+                aria-label={t.filterAria(label, selected)}
                 onClick={() => toggleEra(era.id)}
                 data-selected={selected ? 'true' : 'false'}
                 onKeyDown={(event) => handleChipKeyDown(event, era.id)}
@@ -423,7 +433,7 @@ export default function TimelineFilters({
 
       {bookmarkList.length > 0 ? (
         <section aria-label={t.bookmarksHeading} className="rounded border px-3 py-2 text-xs text-gray-700">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-700">
             {t.bookmarksHeading}
           </h3>
           <ul className="mt-2 space-y-2">
@@ -457,7 +467,7 @@ export default function TimelineFilters({
           </ul>
         </section>
       ) : (
-        <p className="text-xs text-gray-500">{t.emptyBookmarks}</p>
+        <p className="text-xs text-gray-700">{t.emptyBookmarks}</p>
       )}
 
       <div aria-live="polite" className="sr-only">
