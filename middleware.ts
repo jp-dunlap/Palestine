@@ -2,23 +2,17 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { requireBasicAuth } from '@/lib/auth';
 
-const REALM = 'Palestine CMS';
-
 export const config = {
-  matcher: ['/admin', '/admin/:path*', '/api/cms/:path*'],
+  matcher: ['/admin', '/admin/:path*', '/api/cms/:path*', '/api/admin/:path*'],
 };
-
-function hasValidBasicAuth(req: NextRequest): boolean {
-  const result = requireBasicAuth(req);
-  return result.status !== 401;
-}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
   const isCmsApiRoute = pathname.startsWith('/api/cms');
+  const isAdminApiRoute = pathname.startsWith('/api/admin');
 
-  if (!isAdminRoute && !isCmsApiRoute) {
+  if (!isAdminPage && !isCmsApiRoute && !isAdminApiRoute) {
     return NextResponse.next();
   }
 
@@ -28,16 +22,14 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (hasValidBasicAuth(req)) {
-    return NextResponse.next();
+  const authResult = requireBasicAuth(req);
+  if ('status' in authResult && authResult.status === 401) {
+    if (isAdminPage) {
+      return new NextResponse('Not Found', { status: 404 });
+    }
+
+    return authResult;
   }
 
-  if (isAdminRoute) {
-    return new NextResponse('Not Found', { status: 404 });
-  }
-
-  return new NextResponse('Unauthorized', {
-    status: 401,
-    headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
-  });
+  return NextResponse.next();
 }

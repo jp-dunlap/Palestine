@@ -12,6 +12,12 @@ test.describe('admin access control', () => {
     expect(response.headers()['www-authenticate']).toContain('Basic');
   });
 
+  test('returns 401 for unauthenticated admin API with WWW-Authenticate header', async ({ request }) => {
+    const response = await request.get('/api/admin/me');
+    expect(response.status()).toBe(401);
+    expect(response.headers()['www-authenticate']).toContain('Basic');
+  });
+
   test('allows authenticated access to the CMS shell', async ({ browser }, testInfo) => {
     const baseURL = testInfo.project.use.baseURL;
     const context = await browser.newContext({
@@ -29,8 +35,8 @@ test.describe('admin access control', () => {
     await expect(page.locator('#cms-status h1')).toHaveText(/Palestine CMS/i);
     await expect(page.locator('#cms-status-message')).toContainText('Loading secure editor');
 
-    const apiResponse = await context.request.get('/api/cms/config');
-    expect(apiResponse.status()).toBe(200);
+    const cmsResponse = await context.request.get('/api/cms/config');
+    expect(cmsResponse.status()).toBe(200);
 
     await context.close();
   });
