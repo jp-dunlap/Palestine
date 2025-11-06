@@ -87,15 +87,15 @@ export function formatSources(sources: SourceRef[]): FormattedSource[] {
   return sources.map(source => {
     const ref = normalizeSourceRef(source);
     if (ref.id) {
-      const label = (ref.label ?? citeById(ref.id)).trim();
+      const label = ref.label?.trim() ?? citeById(ref.id);
       const href = ref.url ?? resolveUrlForId(ref.id);
       return { label, href };
     }
     if (ref.url) {
-      const label = (ref.label ?? ref.url).trim();
+      const label = ref.label?.trim() ?? ref.url;
       return { label, href: ref.url };
     }
-    const label = (ref.label ?? '[unrecognized source]').trim();
+    const label = ref.label?.trim() ?? '[unrecognized source]';
     return { label };
   });
 }
