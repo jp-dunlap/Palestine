@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useId } from 'react';
 import dynamic from 'next/dynamic';
 
+import { formatNumber } from '@/lib/format';
+
 import { useAnnouncer } from './Announcer';
 
 // Load MapClient only on the client so SSR never touches Leaflet/window.
@@ -113,7 +115,8 @@ export default function MapsPageClientAr({
   const mapStatus = useMemo(() => {
     const total = places.length;
     const modeLabel = mode === 'map' ? 'عرض الخريطة' : 'عرض القائمة';
-    return `${modeLabel}. عرض ${total} مكانًا.`;
+    const totalLabel = formatNumber(total, 'ar');
+    return `${modeLabel}. عرض ${totalLabel} مكانًا.`;
   }, [mode, places.length]);
 
   const handleShowMap = useCallback(() => {
@@ -293,7 +296,16 @@ export default function MapsPageClientAr({
                 >
                   <div className="font-medium">{displayName(p)}</div>
                   <div className="text-sm text-gray-700">
-                    {formatKindAr(p.kind)} · {p.lat.toFixed(3)}, {p.lon.toFixed(3)}
+                    {formatKindAr(p.kind)} ·{' '}
+                    {formatNumber(p.lat, 'ar', {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })}
+                    {'، '}
+                    {formatNumber(p.lon, 'ar', {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })}
                   </div>
                   {p.alt_names?.length ? (
                     <div className="text-xs text-gray-700 mt-1">
