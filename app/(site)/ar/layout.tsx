@@ -1,10 +1,14 @@
 import '../../globals.css';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 
 import { LocaleProvider } from '@/components/LocaleLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
 
-export const metadata = {
+const tileOrigin = process.env.NEXT_PUBLIC_TILE_ORIGIN ?? 'https://tile.openstreetmap.org';
+const siteName = 'Palestine — 4,000 Years of Memory';
+
+export const metadata: Metadata = {
   title: 'فلسطين',
   description: 'تاريخ عام وفني لفلسطين',
   openGraph: {
@@ -12,11 +16,16 @@ export const metadata = {
     description: 'تاريخ عام وفني لفلسطين',
     type: 'website',
     url: '/ar',
+    siteName,
   },
   twitter: {
     card: 'summary_large_image',
     title: 'فلسطين',
     description: 'تاريخ عام وفني لفلسطين',
+  },
+  alternates: {
+    canonical: '/ar',
+    languages: { en: '/', ar: '/ar', 'x-default': '/' },
   },
 };
 
@@ -27,6 +36,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       dir="rtl"
       className={[interVariable, naskhVariable].filter(Boolean).join(' ')}
     >
+      <head>
+        <link rel="preconnect" href={tileOrigin} />
+        <link rel="dns-prefetch" href={tileOrigin} />
+      </head>
       <body className="font-arabic bg-white text-gray-900">
         <LocaleProvider locale="ar">
           <a

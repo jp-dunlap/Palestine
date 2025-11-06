@@ -1,32 +1,36 @@
 // app/layout.tsx
 import './globals.css';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import Script from 'next/script';
 
 import { LocaleProvider } from '@/components/LocaleLink';
 import { interVariable, naskhVariable } from '@/app/ui/fonts';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine-two.vercel.app';
+const tileOrigin = process.env.NEXT_PUBLIC_TILE_ORIGIN ?? 'https://tile.openstreetmap.org';
+const siteName = 'Palestine — 4,000 Years of Memory';
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'Palestine — 4,000 Years of Memory',
+  title: siteName,
   description:
     'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
   openGraph: {
-    title: 'Palestine — 4,000 Years of Memory',
+    title: siteName,
     description:
       'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
     type: 'website',
+    siteName,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Palestine — 4,000 Years of Memory',
+    title: siteName,
     description:
       'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
   },
   alternates: {
-    languages: { ar: '/ar' },
+    languages: { en: '/', ar: '/ar', 'x-default': '/' },
   },
 };
 
@@ -37,6 +41,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
       className={[interVariable, naskhVariable, 'no-js'].filter(Boolean).join(' ')}
     >
+      <head>
+        <link rel="preconnect" href={tileOrigin} />
+        <link rel="dns-prefetch" href={tileOrigin} />
+      </head>
       <body className="font-sans">
         <LocaleProvider locale="en">
           <Script id="init-js" strategy="beforeInteractive">

@@ -6,6 +6,9 @@ type SeoExpectation = {
   alternates: Record<string, string>;
 };
 
+const siteName = 'Palestine — 4,000 Years of Memory';
+const tileOrigin = process.env.NEXT_PUBLIC_TILE_ORIGIN ?? 'https://tile.openstreetmap.org';
+
 const pages: SeoExpectation[] = [
   {
     path: '/',
@@ -72,6 +75,27 @@ test.describe('SEO metadata', () => {
       const canonicalUrl = new URL(canonicalHref ?? '', page.url());
       expect(canonicalUrl.pathname).toBe(expectedCanonical.pathname);
       expect(canonicalUrl.search).toBe(expectedCanonical.search);
+
+      await expect(
+        page.locator(`link[rel="preconnect"][href="${tileOrigin}"]`),
+      ).toHaveCount(1);
+      await expect(
+        page.locator(`link[rel="dns-prefetch"][href="${tileOrigin}"]`),
+      ).toHaveCount(1);
+
+      const ogType = await page
+        .locator('meta[property="og:type"]')
+        .first()
+        .getAttribute('content');
+      expect(ogType).toBe('website');
+
+      await expect(
+        page.locator('meta[property="og:site_name"]'),
+      ).toHaveAttribute('content', siteName);
+
+      await expect(
+        page.locator('meta[name="twitter:card"]'),
+      ).toHaveAttribute('content', 'summary_large_image');
 
       for (const [lang, href] of Object.entries(pageConfig.alternates)) {
         const alternateLocator = page.locator(
