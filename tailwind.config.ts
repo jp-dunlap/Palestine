@@ -7,7 +7,26 @@ const config: Config = {
     './content/**/*.{md,mdx}'
   ],
   theme: {
-    extend: {}
+    extend: {
+      fontFamily: {
+        sans: [
+          'var(--font-inter)',
+          'system-ui',
+          '-apple-system',
+          "'Segoe UI'",
+          'Roboto',
+          'Arial',
+          'sans-serif',
+        ],
+        arabic: [
+          'var(--font-naskh)',
+          "'Noto Naskh Arabic'",
+          "'Amiri'",
+          "'Scheherazade New'",
+          'serif',
+        ],
+      },
+    },
   },
   plugins: []
 };

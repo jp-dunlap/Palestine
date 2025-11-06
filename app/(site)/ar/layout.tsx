@@ -1,6 +1,8 @@
 import '../../globals.css';
 import type { ReactNode } from 'react';
 
+import { interVariable, naskhVariable } from '@/app/ui/fonts';
+
 export const metadata = {
   title: 'فلسطين',
   description: 'تاريخ عام وفني لفلسطين',
@@ -19,7 +21,11 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html
+      lang="ar"
+      dir="rtl"
+      className={[interVariable, naskhVariable].filter(Boolean).join(' ')}
+    >
       <body className="font-arabic bg-white text-gray-900">
         <a
           href="#main"

@@ -46,6 +46,10 @@ Per the [AGENTS.md](./AGENTS.md) governance guidance, this project does not ship
 All runtime dependencies are screened to keep `@vercel/analytics`, `@vercel/speed-insights`, and similar trackers out of the
 bundle, so our existing Content Security Policy in `next.config.mjs` requires no additional allowances.
 
+- Fonts are self-hosted via [`next/font`](https://nextjs.org/docs/14/app/building-your-application/optimizing/fonts) to avoid
+  requests to Google Fonts, reduce layout shift, and prevent third-party exposure of visitor IP addresses (a risk highlighted by
+  [German case law on Google Fonts](https://externer-datenschutzbeauftragter-dresden.de/en/data-protection/damages-for-disclosure-of-dynamic-ip-address-when-using-google-fonts/)).
+
 ## Private admin interface
 
 The Decap CMS integration has been replaced with a custom admin SPA at `/admin`. The admin surface speaks directly to the GitHub API using server-side helpers and offers two auth modes:
