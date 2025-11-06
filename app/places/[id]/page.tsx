@@ -37,7 +37,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: p.name,
       description: `${p.kind ?? 'place'} · ${p.lat}, ${p.lon}`,
-      images: [`/places/${p.id}/opengraph-image`],
+      images: [`/places/${p.id}/twitter-image`],
     },
   };
 }

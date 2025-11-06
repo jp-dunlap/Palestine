@@ -1,18 +1,17 @@
-// app/opengraph-image.tsx
+// app/(site)/ar/opengraph-image.tsx
 import { createSocialImage, socialImageContentType, socialImageSize } from '@/app/_og/renderer';
 
 export const size = socialImageSize;
 export const contentType = socialImageContentType;
 
-export default function Og() {
+export default function OgAr() {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
   const domain = site.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return createSocialImage({
-    locale: 'en',
-    title: '4,000 Years of Memory',
-    description:
-      'A bilingual, anti-colonial history of Palestine — timelines, maps, and chapters rooted in liberation.',
-    eyebrow: 'PALESTINE • MOVEMENT ARCHIVE',
+    locale: 'ar',
+    title: '٤٠٠٠ سنة من الذاكرة',
+    description: 'تاريخ ثنائي اللغة من فلسطين — خرائط وخطوط زمنية وفصول تمركز الذاكرة والتحرر.',
+    eyebrow: 'فلسطين • أرشيف المقاومة',
     footer: domain,
   });
 }

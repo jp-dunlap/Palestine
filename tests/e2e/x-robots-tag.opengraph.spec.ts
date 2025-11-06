@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
 
-const ogTargets = [
+const socialTargets = [
   '/chapters/001-prologue/opengraph-image',
+  '/chapters/001-prologue/twitter-image',
   '/ar/timeline/foundations-canaanite-city-states/opengraph-image',
+  '/ar/timeline/foundations-canaanite-city-states/twitter-image',
 ];
 
-test.describe('open graph image headers', () => {
-  for (const target of ogTargets) {
+test.describe('social image headers', () => {
+  for (const target of socialTargets) {
     test(`applies noindex directives for ${target}`, async ({ request }) => {
       const response = await request.get(target);
       expect(response.ok()).toBeTruthy();

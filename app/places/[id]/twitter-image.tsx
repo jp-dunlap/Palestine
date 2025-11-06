@@ -4,7 +4,7 @@ import { loadGazetteer } from '@/lib/loaders.places';
 export const size = socialImageSize;
 export const contentType = socialImageContentType;
 
-export default function PlaceOgImage({ params }: { params: { id: string } }) {
+export default function PlaceTwitterImage({ params }: { params: { id: string } }) {
   const place = loadGazetteer().find((entry) => entry.id === params.id);
   const title = place?.name ?? 'Palestine Place';
   const description = place
