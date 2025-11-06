@@ -13,8 +13,7 @@ const nextConfig = {
       'https://b.tile.openstreetmap.org',
       'https://c.tile.openstreetmap.org',
     ];
-    const openGraphCacheControl =
-      'public, s-maxage=86400, max-age=3600, stale-while-revalidate=604800';
+    const openGraphCacheControl = 'public, max-age=31536000, immutable';
     const csp = [
       "default-src 'self'",
       "base-uri 'none'",
@@ -60,6 +59,10 @@ const nextConfig = {
             key: 'Cache-Control',
             value: openGraphCacheControl,
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
+          },
         ],
       },
       {
@@ -68,6 +71,10 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: openGraphCacheControl,
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
           },
         ],
       },
@@ -78,6 +85,10 @@ const nextConfig = {
             key: 'Cache-Control',
             value: openGraphCacheControl,
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
+          },
         ],
       },
       {
@@ -86,6 +97,10 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: openGraphCacheControl,
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
           },
         ],
       },
@@ -96,6 +111,10 @@ const nextConfig = {
             key: 'Cache-Control',
             value: openGraphCacheControl,
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
+          },
         ],
       },
       {
@@ -104,6 +123,10 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: openGraphCacheControl,
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
           },
         ],
       },
@@ -114,6 +137,10 @@ const nextConfig = {
             key: 'Cache-Control',
             value: openGraphCacheControl,
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
+          },
         ],
       },
       {
@@ -122,6 +149,10 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: openGraphCacheControl,
+          },
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, noimageindex',
           },
         ],
       },
