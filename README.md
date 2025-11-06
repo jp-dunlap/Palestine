@@ -40,6 +40,12 @@ npm run test:e2e    # playwright
   npx playwright install --with-deps
   ```
 
+## Privacy & Analytics
+
+Per the [AGENTS.md](./AGENTS.md) governance guidance, this project does not ship proprietary analytics or surveillance tooling.
+All runtime dependencies are screened to keep `@vercel/analytics`, `@vercel/speed-insights`, and similar trackers out of the
+bundle, so our existing Content Security Policy in `next.config.mjs` requires no additional allowances.
+
 ## Private admin interface
 
 The Decap CMS integration has been replaced with a custom admin SPA at `/admin`. The admin surface speaks directly to the GitHub API using server-side helpers and offers two auth modes:
