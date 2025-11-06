@@ -182,7 +182,6 @@ export default function SearchClient({ locale = 'en' }: Props) {
       return;
     }
     if (previousTypeKeyRef.current === key) {
-      previousTypeKeyRef.current = key;
       return;
     }
     previousTypeKeyRef.current = key;
