@@ -1,4 +1,5 @@
 import LocaleLink from '@/components/LocaleLink';
+import { formatNumber } from '@/lib/format';
 import { loadEras, getRelatedTimelineEvents } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
 import type { TimelineEvent } from '@/lib/types';
@@ -8,10 +9,10 @@ function formatYear(value: number | null, locale: 'en' | 'ar'): string {
     return locale === 'ar' ? 'غير معروف' : 'Unknown';
   }
   if (value < 0) {
-    const year = Math.abs(value);
-    return locale === 'ar' ? `${year} ق.م.` : `${year} BCE`;
+    const digits = formatNumber(Math.abs(value), locale);
+    return locale === 'ar' ? `${digits} ق.م.` : `${digits} BCE`;
   }
-  return String(value);
+  return formatNumber(value, locale);
 }
 
 function formatRange(event: TimelineEvent, locale: 'en' | 'ar'): string {

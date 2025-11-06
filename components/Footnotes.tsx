@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { formatNumber } from '@/lib/format';
+
 type FootnoteEntry = {
   index: number;
   noteId: string;
@@ -10,15 +12,10 @@ type FootnoteEntry = {
 
 type Locale = 'en' | 'ar';
 
-function numberFormatter(locale: Locale) {
-  return new Intl.NumberFormat(locale === 'ar' ? 'ar' : 'en');
-}
-
 export function createFootnotesManager(locale: Locale = 'en') {
   let counter = 0;
   const notes: FootnoteEntry[] = [];
 
-  const formatter = numberFormatter(locale);
   const heading = locale === 'ar' ? 'حواشي' : 'Footnotes';
   const backLabel = locale === 'ar' ? 'عودة إلى النص' : 'Back to text';
   const footnoteLabel = (value: string) =>
@@ -36,7 +33,7 @@ export function createFootnotesManager(locale: Locale = 'en') {
   function Footnote({ children }: { children: React.ReactNode }) {
     counter += 1;
     const index = counter;
-    const displayNumber = formatter.format(index);
+    const displayNumber = formatNumber(index, locale);
     const noteId = `footnote-${index}`;
     const refId = `footnote-ref-${index}`;
 

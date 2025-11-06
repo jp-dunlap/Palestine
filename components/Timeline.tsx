@@ -1,11 +1,16 @@
 import LocaleLink from '@/components/LocaleLink';
+import { formatNumber } from '@/lib/format';
 import type { TimelineEvent, Era } from '@/lib/types';
 
-function yearOf(d: string | number | undefined): string {
-  if (d === undefined || d === null) return '';
-  const s = String(d);
-  const m = s.match(/^(-?\d{1,4})/);
-  return m ? m[1] : s;
+function formatYear(value: number | null | undefined, locale: 'en' | 'ar'): string {
+  if (value === null || typeof value === 'undefined') {
+    return '';
+  }
+  if (value < 0) {
+    const digits = formatNumber(Math.abs(value), locale);
+    return locale === 'ar' ? `${digits} ق.م.` : `${digits} BCE`;
+  }
+  return formatNumber(value, locale);
 }
 
 export default function Timeline({
@@ -50,8 +55,8 @@ export default function Timeline({
           }
         >
           <div className="text-xs text-gray-700">
-            {e.era ? eraById.get(e.era) : '—'} · {yearOf(e.start)}
-            {e.end ? `–${yearOf(e.end)}` : ''}
+            {e.era ? eraById.get(e.era) : '—'} · {formatYear(e.start, locale)}
+            {typeof e.end === 'number' ? `–${formatYear(e.end, locale)}` : ''}
           </div>
           <h3 className="text-base font-semibold mt-1">{e.title}</h3>
           {e.summary && <p className="mt-1 text-sm">{e.summary}</p>}

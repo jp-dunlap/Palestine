@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { Era } from '@/lib/types';
 import * as React from 'react';
 import A11yAnnouncer, { type A11yAnnouncerHandle } from '@/components/A11yAnnouncer';
+import { formatNumber } from '@/lib/format';
 import {
   composeBookmarkAnnouncement,
   composeTimelineChipAnnouncement,
@@ -47,8 +48,8 @@ type Translation = {
   copyError: string;
   appliedBookmark: (label: string) => string;
   deletedBookmark: (label: string) => string;
-  resultMessage: (count: number) => string;
-  resultMessageArabic: (count: number) => string;
+  resultMessage: (count: number, formatted: string) => string;
+  resultMessageArabic: (count: number, formatted: string) => string;
   filterStateSelected: string;
   filterStateNotSelected: string;
 };
@@ -78,8 +79,10 @@ const translations: Record<Locale, Translation> = {
     copyError: 'Unable to copy link. Copy it manually from the address bar.',
     appliedBookmark: (label) => `Applied filter set “${label}”`,
     deletedBookmark: (label) => `Deleted filter set “${label}”`,
-    resultMessage: (count) => (count === 1 ? 'Showing 1 event' : `Showing ${count} events`),
-    resultMessageArabic: (count) => (count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`),
+    resultMessage: (count, formatted) =>
+      count === 1 ? 'Showing 1 event' : `Showing ${formatted} events`,
+    resultMessageArabic: (count, formatted) =>
+      count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${formatted} من الأحداث`,
     filterStateSelected: 'selected',
     filterStateNotSelected: 'not selected',
   },
@@ -107,8 +110,10 @@ const translations: Record<Locale, Translation> = {
     copyError: 'تعذّر نسخ الرابط. انسخه يدويًا من شريط العنوان.',
     appliedBookmark: (label) => `تم تطبيق مجموعة المرشحات «${label}»`,
     deletedBookmark: (label) => `تم حذف مجموعة المرشحات «${label}»`,
-    resultMessage: (count) => (count === 1 ? 'Showing 1 event' : `Showing ${count} events`),
-    resultMessageArabic: (count) => (count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${count} من الأحداث`),
+    resultMessage: (count, formatted) =>
+      count === 1 ? 'Showing 1 event' : `Showing ${formatted} events`,
+    resultMessageArabic: (count, formatted) =>
+      count === 1 ? 'تم العثور على حدث واحد' : `تم العثور على ${formatted} من الأحداث`,
     filterStateSelected: 'محددة',
     filterStateNotSelected: 'غير محددة',
   },
@@ -116,7 +121,10 @@ const translations: Record<Locale, Translation> = {
 
 function formatResultMessage(count: number, locale: Locale): string {
   const t = translations[locale];
-  return locale === 'ar' ? t.resultMessageArabic(count) : t.resultMessage(count);
+  const formatted = formatNumber(count, locale);
+  return locale === 'ar'
+    ? t.resultMessageArabic(count, formatted)
+    : t.resultMessage(count, formatted);
 }
 
 function loadStoredBookmarks(): Bookmark[] {

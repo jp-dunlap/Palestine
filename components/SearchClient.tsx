@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 
 import LocaleLink from '@/components/LocaleLink';
+import { formatNumber } from '@/lib/format';
 import {
   composeSearchFilterAnnouncement,
   composeSearchQueryAnnouncement,
@@ -46,7 +47,8 @@ export default function SearchClient({ locale = 'en' }: Props) {
         loading: 'جاري تحميل الفهرس…',
         error: 'تعذّر تحميل الفهرس. حاول مجددًا.',
         empty: 'لا توجد نتائج مطابقة.',
-        count: (n: number) => (n === 1 ? 'نتيجة واحدة' : `${n} من النتائج`),
+        count: (n: number) =>
+          n === 1 ? 'نتيجة واحدة' : `${formatNumber(n, 'ar')} من النتائج`,
         typeLabels: {
           chapter: 'فصل',
           event: 'حدث',
@@ -74,7 +76,7 @@ export default function SearchClient({ locale = 'en' }: Props) {
       loading: 'Loading search index…',
       error: 'Unable to load the search index. Please try again.',
       empty: 'No matching results yet.',
-      count: (n: number) => (n === 1 ? '1 result' : `${n} results`),
+      count: (n: number) => (n === 1 ? '1 result' : `${formatNumber(n, 'en')} results`),
       typeLabels: {
         chapter: 'Chapter',
         event: 'Timeline event',
