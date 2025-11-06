@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { compileMDX } from 'next-mdx-remote/rsc';
+import JsonLd from '@/components/JsonLd';
 import { createMdxComponents } from '@/mdx-components';
 import {
   loadLessonFrontmatter,
@@ -50,6 +51,24 @@ export default async function LessonPage({ params }: { params: { slug: string } 
   const frontmatter = loadLessonFrontmatter(params.slug);
   const { components } = createMdxComponents('en');
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
+
+  const lessonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LearningResource',
+    headline: frontmatter.title,
+    description: frontmatter.summary ?? undefined,
+    inLanguage: 'en',
+    url: `${siteUrl}/learn/${params.slug}`,
+    dateModified: frontmatter.updated
+      ? new Date(frontmatter.updated).toISOString()
+      : undefined,
+    keywords:
+      Array.isArray(frontmatter.tags) && frontmatter.tags.length > 0
+        ? frontmatter.tags
+        : undefined,
+  } as const;
+
   const { content } = await compileMDX({
     source,
     components,
@@ -73,6 +92,8 @@ export default async function LessonPage({ params }: { params: { slug: string } 
           العربية — قريبًا
         </button>
       </div>
+
+      <JsonLd id={`ld-lesson-${params.slug}`} data={lessonLd} />
 
       <article className="prose prose-sm mt-8 max-w-none prose-a:text-blue-600 hover:prose-a:underline">
         {content}
