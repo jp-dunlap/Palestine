@@ -25,12 +25,14 @@ export const metadata: Metadata = {
       'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
     type: 'website',
     siteName,
+    images: ['/opengraph-image'],
   },
   twitter: {
     card: 'summary_large_image',
     title: siteName,
     description:
       'A bilingual, anti-colonial history of Palestine across 4,000 years — maps, timelines, sources, and chapters.',
+    images: ['/twitter-image'],
   },
   alternates: {
     languages: { en: '/', ar: '/ar', 'x-default': '/' },

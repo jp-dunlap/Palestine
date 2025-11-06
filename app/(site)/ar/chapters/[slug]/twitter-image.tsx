@@ -4,7 +4,7 @@ import { loadChapterFrontmatterAr } from '@/lib/loaders.chapters';
 export const size = socialImageSize;
 export const contentType = socialImageContentType;
 
-export default function ChapterOgImageAr({ params }: { params: { slug: string } }) {
+export default function ChapterTwitterImageAr({ params }: { params: { slug: string } }) {
   const { frontmatter, isFallback } = loadChapterFrontmatterAr(params.slug);
   const title = frontmatter.title_ar ?? frontmatter.title ?? 'فلسطين: الفصل';
   const description = frontmatter.summary_ar ?? frontmatter.summary ?? null;

@@ -13,7 +13,43 @@ const nextConfig = {
       'https://b.tile.openstreetmap.org',
       'https://c.tile.openstreetmap.org',
     ];
-    const openGraphCacheControl = 'public, max-age=31536000, immutable';
+    const socialImageCacheControl = 'public, max-age=31536000, immutable';
+    const socialImageRoutes = [
+      '/opengraph-image',
+      '/twitter-image',
+      '/ar/opengraph-image',
+      '/ar/twitter-image',
+      '/map/opengraph-image',
+      '/map/twitter-image',
+      '/ar/map/opengraph-image',
+      '/ar/map/twitter-image',
+      '/timeline/:id/opengraph-image',
+      '/timeline/:id/twitter-image',
+      '/ar/timeline/:id/opengraph-image',
+      '/ar/timeline/:id/twitter-image',
+      '/chapters/:slug/opengraph-image',
+      '/chapters/:slug/twitter-image',
+      '/ar/chapters/:slug/opengraph-image',
+      '/ar/chapters/:slug/twitter-image',
+      '/places/:id/opengraph-image',
+      '/places/:id/twitter-image',
+      '/ar/places/:id/opengraph-image',
+      '/ar/places/:id/twitter-image',
+      '/learn/:slug/opengraph-image',
+    ];
+    const socialHeaders = socialImageRoutes.map((source) => ({
+      source,
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: socialImageCacheControl,
+        },
+        {
+          key: 'X-Robots-Tag',
+          value: 'noindex, noimageindex',
+        },
+      ],
+    }));
     const csp = [
       "default-src 'self'",
       "base-uri 'none'",
@@ -52,110 +88,7 @@ const nextConfig = {
         source: '/_next/static/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
-      {
-        source: '/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/chapters/:slug/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/ar/chapters/:slug/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/places/:id/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/ar/places/:id/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/timeline/:id/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/ar/timeline/:id/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
-      {
-        source: '/learn/:slug/opengraph-image',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: openGraphCacheControl,
-          },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, noimageindex',
-          },
-        ],
-      },
+      ...socialHeaders,
     ];
   },
 

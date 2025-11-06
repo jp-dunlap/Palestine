@@ -4,7 +4,7 @@ import { hasEnChapter, loadChapterFrontmatter } from '@/lib/loaders.chapters';
 export const size = socialImageSize;
 export const contentType = socialImageContentType;
 
-export default function ChapterOgImage({ params }: { params: { slug: string } }) {
+export default function ChapterTwitterImage({ params }: { params: { slug: string } }) {
   const isAvailable = hasEnChapter(params.slug);
   const frontmatter = isAvailable ? loadChapterFrontmatter(params.slug) : null;
   return createSocialImage({

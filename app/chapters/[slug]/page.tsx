@@ -48,7 +48,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
       card: 'summary_large_image',
       title: fm.title,
       description: fm.summary,
-      images: [`/chapters/${params.slug}/opengraph-image`],
+      images: [`/chapters/${params.slug}/twitter-image`],
     },
   };
 }

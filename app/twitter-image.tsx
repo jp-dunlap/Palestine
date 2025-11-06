@@ -1,18 +1,18 @@
-// app/opengraph-image.tsx
+// app/twitter-image.tsx
 import { createSocialImage, socialImageContentType, socialImageSize } from '@/app/_og/renderer';
 
 export const size = socialImageSize;
 export const contentType = socialImageContentType;
 
-export default function Og() {
+export default function TwitterImage() {
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.example';
   const domain = site.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return createSocialImage({
     locale: 'en',
-    title: '4,000 Years of Memory',
+    title: 'Palestine — 4,000 Years of Memory',
     description:
-      'A bilingual, anti-colonial history of Palestine — timelines, maps, and chapters rooted in liberation.',
-    eyebrow: 'PALESTINE • MOVEMENT ARCHIVE',
+      'Explore anti-colonial timelines, maps, and chapters centering Palestinian life across millennia.',
+    eyebrow: 'PALESTINE • SOCIAL GRAPH',
     footer: domain,
   });
 }

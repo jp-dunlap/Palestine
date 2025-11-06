@@ -14,7 +14,7 @@ function formatYearRange(start: number, end: number | null): string | null {
   return null;
 }
 
-export default function TimelineOgImage({ params }: { params: { id: string } }) {
+export default function TimelineTwitterImage({ params }: { params: { id: string } }) {
   const event = getTimelineEventById(params.id, { locale: 'en' });
   const range = event ? formatYearRange(event.start, event.end) : null;
   return createSocialImage({
