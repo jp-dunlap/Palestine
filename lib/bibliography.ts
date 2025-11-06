@@ -5,16 +5,29 @@ import type { CSL } from '@/lib/types';
 
 let _cache: Record<string, CSL> | null = null;
 
-export type SourceRef = string | { id?: string; url?: string };
+export type SourceRef = string | { id?: string; url?: string; label?: string };
 
-function normalizeSourceRef(source: SourceRef | null | undefined): {
+type NormalizedSourceRef = {
   id?: string;
   url?: string;
-} {
+  label?: string;
+};
+
+export type FormattedSource = {
+  label: string;
+  href?: string;
+};
+
+function normalizeSourceRef(source: SourceRef | null | undefined): NormalizedSourceRef {
   if (typeof source === 'string') {
-    return { id: source };
+    return { id: source.trim() };
   }
-  return source ?? {};
+  const ref = source ?? {};
+  return {
+    id: ref.id?.trim(),
+    url: ref.url?.trim(),
+    label: ref.label?.trim(),
+  };
 }
 
 function loadAll(): Record<string, CSL> {
@@ -63,19 +76,34 @@ export function shortCiteById(id: string): string {
   return [who, year].filter(Boolean).join(' ');
 }
 
-export function formatSources(sources: SourceRef[]): string[] {
+function resolveUrlForId(id: string): string | undefined {
+  const db = loadAll();
+  const record = db[id] as any;
+  if (!record) return undefined;
+  return record.URL ?? record.url ?? undefined;
+}
+
+export function formatSources(sources: SourceRef[]): FormattedSource[] {
   return sources.map(source => {
     const ref = normalizeSourceRef(source);
-    if (ref.id) return citeById(ref.id);
-    if (ref.url) return ref.url;
-    return '[unrecognized source]';
+    if (ref.id) {
+      const label = ref.label?.trim() ?? citeById(ref.id);
+      const href = ref.url ?? resolveUrlForId(ref.id);
+      return { label, href };
+    }
+    if (ref.url) {
+      const label = ref.label?.trim() ?? ref.url;
+      return { label, href: ref.url };
+    }
+    const label = ref.label?.trim() ?? '[unrecognized source]';
+    return { label };
   });
 }
 
 export function formatSourceIds(sources: SourceRef[]): string[] {
   return sources.map(source => {
     const ref = normalizeSourceRef(source);
-    if (ref.id) return ref.id.trim();
+    if (ref.id) return ref.id;
     if (ref.url) {
       try {
         return new URL(ref.url).host;
