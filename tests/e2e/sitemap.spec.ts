@@ -13,6 +13,8 @@ test.describe('sitemap.xml', () => {
 
     expect(body).toMatch(/<loc>[^<]+\/map<\/loc>/);
     expect(body).toMatch(/<loc>[^<]+\/ar\/timeline<\/loc>/);
+    expect(body).toMatch(/<loc>[^<]+\/learn<\/loc>/);
+    expect(body).toMatch(/<loc>[^<]+\/ar\/learn<\/loc>/);
 
     const chapterMatches = extractMatches(body, /\/chapters\/[^<]+/g);
     expect(chapterMatches.length).toBeGreaterThan(0);
@@ -20,6 +22,8 @@ test.describe('sitemap.xml', () => {
     const timelineDetailMatches = extractMatches(body, /https?:\/\/[^<]+\/timeline\/[^<]+/g);
     const hasDetail = timelineDetailMatches.some((href) => !href.endsWith('/timeline'));
     expect(hasDetail).toBeTruthy();
+
+    expect(body).toMatch(/<loc>[^<]+\/learn\/introduction<\/loc>/);
 
     const legacyMapRoute = `/${'maps'}`;
     expect(body).not.toContain(legacyMapRoute);

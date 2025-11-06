@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { MetadataRoute } from 'next';
 import { loadChapterFrontmatter, loadChapterSlugsAr, hasArChapter, hasEnChapter } from '@/lib/loaders.chapters';
+import { loadLessonFrontmatter, loadLessonSlugs } from '@/lib/loaders.lessons';
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadTimelineEvents } from '@/lib/loaders.timeline';
 
@@ -33,10 +34,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/`, lastModified: now, alternates: buildLanguageAlternates(`${base}/`, `${base}/ar`) },
     { url: `${base}/map`, lastModified: now, alternates: buildLanguageAlternates(`${base}/map`, `${base}/ar/map`) },
     { url: `${base}/timeline`, lastModified: now, alternates: buildLanguageAlternates(`${base}/timeline`, `${base}/ar/timeline`) },
+    { url: `${base}/learn`, lastModified: now, alternates: buildLanguageAlternates(`${base}/learn`, `${base}/ar/learn`) },
     { url: `${base}/ar`, lastModified: now, alternates: buildLanguageAlternates(`${base}/`, `${base}/ar`) },
     { url: `${base}/ar/map`, lastModified: now, alternates: buildLanguageAlternates(`${base}/map`, `${base}/ar/map`) },
     { url: `${base}/ar/timeline`, lastModified: now, alternates: buildLanguageAlternates(`${base}/timeline`, `${base}/ar/timeline`) },
+    { url: `${base}/ar/learn`, lastModified: now, alternates: buildLanguageAlternates(`${base}/learn`, `${base}/ar/learn`) },
   ];
+
+  const lessonSlugs = loadLessonSlugs().sort();
+  for (const slug of lessonSlugs) {
+    const { _file } = loadLessonFrontmatter(slug);
+    const lastModified = getFileMtimeIso(_file);
+    const enUrl = `${base}/learn/${slug}`;
+
+    urls.push({
+      url: enUrl,
+      lastModified,
+      alternates: {
+        languages: {
+          en: enUrl,
+          'x-default': enUrl,
+        },
+      },
+    });
+  }
 
   const chapterSlugs = Array.from(new Set(loadChapterSlugsAr())).sort();
   for (const slug of chapterSlugs) {

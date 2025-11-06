@@ -116,6 +116,15 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/learn/:slug/opengraph-image',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: openGraphCacheControl,
+          },
+        ],
+      },
     ];
   },
 
