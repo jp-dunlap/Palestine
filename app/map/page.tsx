@@ -2,6 +2,7 @@
 import { loadGazetteer } from '@/lib/loaders.places';
 import { loadMapConfig } from '@/lib/loaders.config';
 import MapsPageClient from '@/components/MapsPageClient';
+import { AnnouncerProvider } from '@/components/Announcer';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
 
 export const metadata = {
@@ -36,6 +37,12 @@ export default function MapsPage({
 
   return (
     <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-12">
+      <a
+        href="#map-places-region"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-40 rounded bg-white px-3 py-1 text-sm shadow"
+      >
+        Skip to places list
+      </a>
       <h1 className="text-2xl font-semibold tracking-tight">Places</h1>
 
       {/* Rendered only when JS is disabled */}
@@ -80,7 +87,9 @@ export default function MapsPage({
         Loaded from <code>data/gazetteer.json</code>
       </p>
 
-      <MapsPageClient places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      <AnnouncerProvider>
+        <MapsPageClient places={places} cfg={cfg} initialFocusId={initialFocusId} />
+      </AnnouncerProvider>
 
       <p className="mt-8 text-sm text-gray-600">
         <a

@@ -15,6 +15,9 @@ type MapProps = {
   focus?: { lat: number; lon: number } | null;
   fitTrigger?: number;
   ariaLabel?: string;
+  ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
+  onContainerReady?: (el: HTMLDivElement | null) => void;
 };
 
 export default function MapClient({
@@ -28,11 +31,20 @@ export default function MapClient({
   focus,
   fitTrigger = 0,
   ariaLabel,
+  ariaLabelledBy,
+  ariaDescribedBy,
+  onContainerReady,
 }: MapProps) {
   const innerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const [status, setStatus] = useState('mounted');
   const latLngsRef = useRef<L.LatLngExpression[]>([]);
+
+  useEffect(() => {
+    return () => {
+      onContainerReady?.(null);
+    };
+  }, [onContainerReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,6 +168,26 @@ export default function MapClient({
       (clusterGroup as any).addTo(map);
       latLngsRef.current = latLngs;
 
+      const labelControls = () => {
+        const container = target.closest('.leaflet-container') ?? target;
+        const zoomIn = container.querySelector<HTMLAnchorElement>('.leaflet-control-zoom-in');
+        const zoomOut = container.querySelector<HTMLAnchorElement>('.leaflet-control-zoom-out');
+        if (zoomIn) {
+          zoomIn.setAttribute('aria-label', 'Zoom in');
+          zoomIn.setAttribute('title', 'Zoom in');
+        }
+        if (zoomOut) {
+          zoomOut.setAttribute('aria-label', 'Zoom out');
+          zoomOut.setAttribute('title', 'Zoom out');
+        }
+        const attr = container.querySelector<HTMLElement>('.leaflet-control-attribution');
+        if (attr) {
+          attr.setAttribute('aria-label', 'Map tile attribution');
+        }
+      };
+
+      setTimeout(labelControls, 0);
+
       if (latLngs.length) {
         const b = L.latLngBounds(latLngs);
         map.fitBounds(b, { padding: [40, 40], animate: false });
@@ -210,8 +242,18 @@ export default function MapClient({
       style={{ height: 420, position: 'relative' }}
       role="region"
       aria-label={label}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
+      tabIndex={-1}
     >
-      <div ref={innerRef} style={{ position: 'absolute', inset: 0 }} />
+      <div
+        ref={(node) => {
+          innerRef.current = node;
+          onContainerReady?.(node);
+        }}
+        style={{ position: 'absolute', inset: 0 }}
+        tabIndex={-1}
+      />
       <div
         style={{
           position: 'absolute',
