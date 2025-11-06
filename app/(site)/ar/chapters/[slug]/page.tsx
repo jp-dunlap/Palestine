@@ -13,6 +13,8 @@ import { loadEras } from '@/lib/loaders.timeline';
 import { loadGazetteer } from '@/lib/loaders.places';
 import JsonLd from '@/components/JsonLd';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
+import { formatSourceIds, formatSources, type SourceRef } from '@/lib/bibliography';
+import SourceLink from '@/components/SourceLink';
 
 export function generateStaticParams() {
   return loadChapterSlugsAr().map(slug => ({ slug }));
@@ -81,6 +83,7 @@ export default async function Page({ params }: Props) {
     tags?: string[];
     era?: string;
     date?: string;
+    sources?: SourceRef[];
   };
 
   const enAvailable = hasEn;
@@ -141,6 +144,10 @@ export default async function Page({ params }: Props) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
   };
 
+  const sourceIds = Array.isArray(meta.sources) ? formatSourceIds(meta.sources) : [];
+  const renderedSources = Array.isArray(meta.sources) ? formatSources(meta.sources) : [];
+  const hasManualSources = /^\s*#{2,3}\s+(Sources|المصادر)\b/im.test(source);
+
   const englishHref = buildLanguageToggleHref(`/ar/chapters/${params.slug}`, undefined, 'en');
 
   return (
@@ -192,11 +199,30 @@ export default async function Page({ params }: Props) {
           ) : null}
         </dl>
 
+        {sourceIds.length ? (
+          <p className="mt-1 text-xs text-gray-700 font-arabic">
+            <a href="#sources" className="underline hover:no-underline">المصادر</a>: {sourceIds.join(' · ')}
+          </p>
+        ) : null}
+
         <article className="mt-8 space-y-4 font-arabic">
           {content}
         </article>
 
         <FootnotesSection />
+
+        {!hasManualSources && renderedSources.length > 0 && (
+          <section id="sources" className="mt-10 font-arabic">
+            <h2 className="text-sm font-semibold text-gray-700">المصادر</h2>
+            <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
+              {renderedSources.map((source, i) => (
+                <li key={source.href ?? `${source.label}-${i}`}>
+                  <SourceLink dir="auto" href={source.href}>{source.label}</SourceLink>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
       </main>
     </>
   );

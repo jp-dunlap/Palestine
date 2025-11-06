@@ -11,6 +11,7 @@ import { formatSources, formatSourceIds, type SourceRef } from '@/lib/bibliograp
 import { createMdxComponents } from '@/mdx-components';
 import JsonLd from '@/components/JsonLd';
 import { buildLanguageToggleHref } from '@/lib/i18nRoutes';
+import SourceLink from '@/components/SourceLink';
 
 export function generateStaticParams() {
   return loadChapterSlugs().map(slug => ({ slug }));
@@ -148,8 +149,10 @@ export default async function Page({ params }: Props) {
           <section id="sources" className="mt-10">
             <h2 className="text-sm font-semibold text-gray-700">Sources</h2>
             <ol className="mt-2 list-decimal pl-6 text-sm text-gray-700 space-y-1">
-              {renderedSources.map((s, i) => (
-                <li key={i}>{s}</li>
+              {renderedSources.map((source, i) => (
+                <li key={source.href ?? `${source.label}-${i}`}>
+                  <SourceLink href={source.href}>{source.label}</SourceLink>
+                </li>
               ))}
             </ol>
           </section>
