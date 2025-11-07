@@ -5,7 +5,7 @@ export const size = socialImageSize;
 export const contentType = socialImageContentType;
 export const runtime = 'nodejs';
 
-export default async function ChapterOgImage({ params }: { params: { slug: string } }) {
+export default async function ChapterTwitterImage({ params }: { params: { slug: string } }) {
   const isAvailable = hasEnChapter(params.slug);
   const frontmatter = isAvailable ? loadChapterFrontmatter(params.slug) : null;
   return createSocialImage({

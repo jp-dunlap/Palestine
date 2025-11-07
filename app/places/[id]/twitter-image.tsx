@@ -5,7 +5,7 @@ export const size = socialImageSize;
 export const contentType = socialImageContentType;
 export const runtime = 'nodejs';
 
-export default async function PlaceOgImage({ params }: { params: { id: string } }) {
+export default async function PlaceTwitterImage({ params }: { params: { id: string } }) {
   const place = loadGazetteer().find((entry) => entry.id === params.id);
   const title = place?.name ?? 'Palestine Place';
   const description = place

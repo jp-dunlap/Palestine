@@ -53,7 +53,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
       card: 'summary_large_image',
       title: isFallback ? `${title} (English)` : title,
       description: summary,
-      images: [`/ar/chapters/${params.slug}/opengraph-image`],
+      images: [`/ar/chapters/${params.slug}/twitter-image`],
     },
   };
 }

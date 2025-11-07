@@ -12,11 +12,15 @@ export const metadata = {
     canonical: '/map',
     languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
   },
-  openGraph: { url: '/map' },
+  openGraph: {
+    url: '/map',
+    images: ['/map/opengraph-image'],
+  },
   twitter: {
     card: 'summary_large_image',
     title: 'Map of Palestinian places',
     description: 'Interactive map drawn from the project gazetteer.',
+    images: ['/map/twitter-image'],
   },
 };
 

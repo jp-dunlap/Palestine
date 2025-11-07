@@ -12,11 +12,15 @@ export const metadata = {
     canonical: '/ar/map',
     languages: { en: '/map', ar: '/ar/map', 'x-default': '/map' },
   },
-  openGraph: { url: '/ar/map' },
+  openGraph: {
+    url: '/ar/map',
+    images: ['/ar/map/opengraph-image'],
+  },
   twitter: {
     card: 'summary_large_image',
     title: 'خريطة الأماكن الفلسطينية',
     description: 'خريطة تفاعلية مستمدة من دليل المشروع.',
+    images: ['/ar/map/twitter-image'],
   },
 };
 

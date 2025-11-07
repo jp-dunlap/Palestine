@@ -15,7 +15,7 @@ function formatYearRange(start: number, end: number | null): string | null {
   return null;
 }
 
-export default async function TimelineOgImageAr({ params }: { params: { id: string } }) {
+export default async function TimelineTwitterImageAr({ params }: { params: { id: string } }) {
   const event = getTimelineEventById(params.id, { locale: 'ar' });
   const range = event ? formatYearRange(event.start, event.end) : null;
   return createSocialImage({

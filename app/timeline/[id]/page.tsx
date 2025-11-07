@@ -46,7 +46,7 @@ export function generateMetadata({
       card: 'summary_large_image',
       title: event.title,
       description: event.summary ?? undefined,
-      images: [`/timeline/${event.id}/opengraph-image`],
+      images: [`/timeline/${event.id}/twitter-image`],
     },
   };
 }

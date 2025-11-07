@@ -15,13 +15,13 @@ function formatYearRange(start: number, end: number | null): string | null {
   return null;
 }
 
-export default async function TimelineOgImageAr({ params }: { params: { id: string } }) {
-  const event = getTimelineEventById(params.id, { locale: 'ar' });
+export default async function TimelineTwitterImage({ params }: { params: { id: string } }) {
+  const event = getTimelineEventById(params.id, { locale: 'en' });
   const range = event ? formatYearRange(event.start, event.end) : null;
   return createSocialImage({
-    locale: 'ar',
-    title: event?.title ?? 'الخط الزمني لفلسطين',
+    locale: 'en',
+    title: event?.title ?? 'Palestine Timeline',
     description: event?.summary ?? null,
-    eyebrow: range ? `الخط الزمني • ${range}` : 'الخط الزمني • فلسطين',
+    eyebrow: range ? `TIMELINE • ${range}` : 'TIMELINE • PALESTINE',
   });
 }
