@@ -58,7 +58,7 @@ export async function createSocialImage(options: SocialImageOptions): Promise<Im
   const eyebrow = normaliseText(options.eyebrow) ?? fallbackEyebrow[locale];
   const footerEnv = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://palestine.technology';
   const footerDomain = normaliseText(options.footer)
-    ?? footerEnv.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    ?? normaliseText(footerEnv.replace(/^https?:\/\//, '').replace(/\/$/, ''))
     ?? fallbackFooter[locale];
   const fontFamily = 'DejaVu Sans, system-ui, sans-serif';
   const [regularFontData, boldFontData] = [dejavuSansRegular, dejavuSansBold];
