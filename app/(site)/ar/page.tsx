@@ -15,12 +15,14 @@ export const metadata = {
       'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
     type: 'website',
     url: '/ar',
+    images: ['/ar/opengraph-image'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'فلسطين',
     description:
       'سِجلّ عام وتاريخ رقمي فنّي يمتد على ٤٠٠٠ سنة — يركّز على الحياة الفلسطينية والذاكرة المناهضة للاستعمار.',
+    images: ['/ar/twitter-image'],
   },
 } as const;
 

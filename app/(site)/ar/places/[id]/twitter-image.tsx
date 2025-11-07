@@ -5,15 +5,15 @@ export const size = socialImageSize;
 export const contentType = socialImageContentType;
 export const runtime = 'nodejs';
 
-export default async function PlaceOgImage({ params }: { params: { id: string } }) {
+export default async function PlaceTwitterImageAr({ params }: { params: { id: string } }) {
   const place = loadGazetteer().find((entry) => entry.id === params.id);
-  const title = place?.name ?? 'Palestine Place';
+  const title = place?.name_ar ?? place?.name ?? 'مكان في فلسطين';
   const description = place
-    ? `${place.kind ?? 'place'} · ${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`
-    : 'Geographies of liberation across Palestine.';
-  const eyebrow = place ? 'PLACE • PALESTINE' : 'PLACE • MEMORY';
+    ? `${place.kind ?? 'مكان'} · ${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`
+    : 'جغرافيات التحرر في فلسطين.';
+  const eyebrow = place ? 'المكان • فلسطين' : 'المكان • الذاكرة';
   return createSocialImage({
-    locale: 'en',
+    locale: 'ar',
     title,
     description,
     eyebrow,

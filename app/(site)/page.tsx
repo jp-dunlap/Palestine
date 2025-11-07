@@ -10,12 +10,16 @@ export const metadata = {
     canonical: '/',
     languages: { en: '/', ar: '/ar', 'x-default': '/' },
   },
-  openGraph: { url: '/' },
+  openGraph: {
+    url: '/',
+    images: ['/opengraph-image'],
+  },
   twitter: {
     card: 'summary_large_image',
     title: 'Palestine',
     description:
       'A public, art-grade digital history spanning 4,000 years — centering Palestinian life, sources, and anti-colonial memory.',
+    images: ['/twitter-image'],
   },
 } as const;
 
